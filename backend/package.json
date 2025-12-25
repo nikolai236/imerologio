@@ -1,0 +1,40 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "build:schema": "prisma-schema-merge prisma/base.prisma prisma/models/**/*.prisma > prisma/schema.prisma",
+    "migrate": "npm run build:schema && npx prisma migrate dev",
+    "test": "jest",
+    "migrate_test_db": "dotenv -e .env.test -- prisma migrate deploy"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@fastify/cors": "^11.2.0",
+    "@fastify/websocket": "^11.2.0",
+    "duckdb": "^1.4.3",
+    "fastify": "^5.6.2"
+  },
+  "devDependencies": {
+    "@fastify/multipart": "^9.3.0",
+    "@fastify/static": "^8.3.0",
+    "@prisma/adapter-pg": "^7.1.0",
+    "@prisma/client": "^7.1.0",
+    "@types/jest": "^30.0.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^25.0.0",
+    "dotenv-cli": "^11.0.0",
+    "jest": "^30.2.0",
+    "prisma": "^7.2.0",
+    "prisma-merge": "^0.2.0",
+    "ts-jest": "^29.4.6",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.9.3"
+  }
+}

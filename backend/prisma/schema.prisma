@@ -1,0 +1,84 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum SymbolType {
+	Futures
+	CFD
+}
+
+enum OrderType {
+	BUY
+	SELL
+}
+
+model Symbol {
+	id Int @id @default(autoincrement())
+
+	name String @unique
+	type SymbolType
+
+	trades Trade[]
+}
+
+model Trade {
+	id Int @id @default(autoincrement())
+
+	target Decimal?
+	stop   Decimal
+	pnl    Decimal?
+
+	description String @default("") @db.Text
+
+	labels Label[]
+	orders Order[]
+	charts Chart[]
+
+	symbolId Int
+	symbol   Symbol @relation(fields: [symbolId], references: [id], onDelete: Cascade)
+
+	@@index([symbolId])
+}
+
+model Order {
+	id Int @id @default(autoincrement())
+
+	quantity Int
+	date     DateTime
+	price    Decimal
+	type     OrderType
+
+	tradeId Int
+	trade   Trade @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+}
+
+model Label {
+	id Int @id @default(autoincrement())
+
+	name   String @unique
+	trades Trade[]
+}
+
+model Chart {
+	id Int @id @default(autoincrement())
+
+	timeframe Int
+
+	start Decimal
+	end   Decimal
+
+	tradeId Int
+	trade   Trade @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+
+	@@index([tradeId])
+}
