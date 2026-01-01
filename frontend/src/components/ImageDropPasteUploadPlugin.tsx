@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { $insertNodes } from "lexical";
 import { $createImageNode } from "./ImageNode";
@@ -29,10 +29,9 @@ export default function ImageDropPasteUploadPlugin({
 
 			setIsUploading(true);
 			try {
-				const urls = await Promise.all(
-					images
-						.filter(i => i.size <= maxBytes)
-						.map(i => api.postFile(uploadUrl, i).then(({ url }) => url ))
+				const urls = await Promise.all(images
+					.filter(i => i.size <= maxBytes)
+					.map(i => api.postFile(uploadUrl, i).then(({ url }) => url ))
 				);
 
 				if (urls.length > 0) {

@@ -1,3 +1,5 @@
+import { Chart } from "./trades.types";
+
 export interface Candle {
 	time: number;
 	open: number;
@@ -7,7 +9,11 @@ export interface Candle {
 	volume: number;
 }
 
-export const enum Timeframe {
+export interface ChartStringTf extends Omit<Chart, 'timeframe'> {
+	timeframe: Timeframe
+}
+
+export enum Timeframe {
 	tf1s  = '1s',
 	tf5s  = '5s',
 	tf15s = '15s',

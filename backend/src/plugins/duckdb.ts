@@ -17,7 +17,7 @@ const duckdbPlugin: FastifyPluginAsync = async (server) => {
 
 	const query = <T=any>(sql: string, params: unknown[]=[]) => new Promise<T[]>(
 		(resolve, reject) => connection.all(
-			sql, params, (err, rows) => err ? reject(err) : resolve(rows as T[])
+			sql, ...params, (err, rows) => err ? reject(err) : resolve(rows as T[])
 		)
 	);
 

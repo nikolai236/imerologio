@@ -1,10 +1,12 @@
 import Fastify from "fastify";
+import compress from "@fastify/compress";
 import cors from "@fastify/cors";
 
 import prismaPlugin from "./plugins/prisma";
 import uploadsPlugin from "./plugins/upload";
 import duckdbPlugin from "./plugins/duckdb";
 
+import candlesRouter from "./routes/candles";
 import tradesRouter  from "./routes/trades";
 import symbolsRouter from "./routes/symbols";
 import labelsRouter  from './routes/labels';
@@ -14,7 +16,16 @@ import "dotenv/config";
 const PORT = 4000;
 
 const buildApp = async () => {
-	const server = Fastify({ logger: true, });
+	const transport = {
+		target: 'pino-pretty',
+		options: { 
+			ignore: 'pid,hostname',
+			messageFormat: '{req.method} {req.url} -> {res.statusCode}',
+			translateTime: 'HH:MM:ss',
+			colorize: true,
+		}
+	};
+	const server = Fastify({logger: { transport } });
 
 	await server.register(cors, {
 		origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
@@ -22,6 +33,10 @@ const buildApp = async () => {
 		allowedHeaders: ["Content-Type", "Authorization"],
 	});
 
+	await server.register(compress, {
+		global: true,
+		encodings: ['gzip', 'deflate', 'br'],
+	});
 	await server.register(prismaPlugin);
 	await server.register(duckdbPlugin);
 	await server.register(uploadsPlugin);
@@ -33,9 +48,10 @@ const buildApp = async () => {
 
 	await server.register(tradesRouter,  { prefix: '/trades'  });
 	await server.register(symbolsRouter, { prefix: '/symbols' });
-	await server.register(labelsRouter,  { prefix: '/labels' });
+	await server.register(labelsRouter,  { prefix: '/labels'  });
+	await server.register(candlesRouter, { prefix: '/candles' });
 
-	server.get('/ping', async () => ({ msg: 'pong', }));
+	server.get('/ping', async () => ({ message: 'pong', }));
 
 	return server;
 };

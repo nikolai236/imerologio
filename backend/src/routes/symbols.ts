@@ -27,7 +27,7 @@ const router: FastifyPluginAsync = async (server) => {
 
 		const symbol = await getSymbolById(id);
 		if (symbol == null) {
-			return reply.send(404).send({ message: 'Symbol not found!', });
+			return reply.code(404).send({ message: 'Symbol not found!', });
 		}
 		return reply.code(200).send({ symbol });
 	});
@@ -49,7 +49,7 @@ const router: FastifyPluginAsync = async (server) => {
 			const id = Number(req.params.id);
 
 			const curr = await getSymbolById(id);
-			if (curr == null) return reply.send(404).send({ message: 'Symbol not found!', });
+			if (curr == null) return reply.code(404).send({ message: 'Symbol not found!', });
 
 			const symbol = await updateSymbol(id, req.body);
 			return reply.code(200).send({ symbol });

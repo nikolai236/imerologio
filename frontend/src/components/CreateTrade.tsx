@@ -19,6 +19,10 @@ import type { LabelWithId, Order, SymbolWithId, TradeWithOrders } from "../../..
 import SelectLabels from "./SelectLabels";
 import DescriptionEditor from "./DescriptionEditor";
 import useTrades from "../hooks/useTrades";
+import ChartPreview from "./ChartPreview";
+import useTradeCharts from "../hooks/useTradeCharts";
+import useCandles from "../hooks/useCandles";
+import type { ChartStringTf } from "../../../shared/candles.types";
 
 const parseDecimalString = (s: string) => {
 	if (!s) return null;
@@ -32,12 +36,21 @@ export default function CreateTrade() {
 	const {
 		orders,
 		orderSum,
+	
 		setOrders,
 		updateOrder,
 		addOrder,
 		removeOrder,
 	} = useTradeOrders(new Date());
 
+	const {
+		charts,
+		addChart,
+		removeChart,
+		updateChart,
+	} = useTradeCharts();
+
+	const { isSupported } = useCandles();
 	const { getSymbols } = useSymbols();
 	const { getLabels } = useLabels();
 	const { createTrade } = useTrades();
@@ -58,6 +71,7 @@ export default function CreateTrade() {
 		[selectedLabelIds, labels]
 	);
 
+	const [chartsDisabled, setChartsDisabled] = useState(true);
 	const [formError, setFormError] = useState<string | null>(null);
 	const [submitting, setSubmitting] = useState(false);
 
@@ -78,6 +92,15 @@ export default function CreateTrade() {
 			.catch(console.error)
 			.then(() => setLoadingLabels(false));
 	}, []);
+
+	useEffect(() => {
+		if (!symbolId) return;
+
+		isSupported(Number(symbolId))
+			.then(v => !v)
+			.then(setChartsDisabled)
+			.catch(console.error);
+	}, [symbolId]);
 
 	const removeLabel = (id: number) => setSelectedLabelIds(
 		(prev) => prev.filter((x) => x !== id)
@@ -101,21 +124,26 @@ export default function CreateTrade() {
 			throw new Error(`Orders must net to 0. Current net quantity is ${orderSum} (BUY is +, SELL is -).`);
 		}
 
-		const validated = orders.map(({ price, quantity, date, type }) => ({
+		const validatedOrders = orders.map(({ price, quantity, date, type }) => ({
 			price: Number(price),
 			quantity: Number(quantity),
 			date,
 			type,
 		}));
 
-		const ret: TradeWithOrders = {
+		const validatedCharts: ChartStringTf[] = charts.map(c => ({
+			...c,
+			tempId: undefined,
+		}));
+
+		const ret: TradeWithOrders<ChartStringTf> = {
 			stop: Number(stop.trim()),
 			target: target.trim() != '' ? Number(target.trim()) : undefined,
 			description,
 			pnl: undefined,
 			labels: selectedLabelIds.map(id => ({ id })),
-			charts: [],
-			orders: validated,
+			charts: validatedCharts,
+			orders: validatedOrders,
 			symbolId: Number(symbolId),
 		};
 
@@ -126,44 +154,45 @@ export default function CreateTrade() {
 			throw new Error("Trade value is not a number");
 		}
 
-		if (validated.some(({ quantity }) => !Number.isInteger(quantity) || quantity < 1)) {
+		if (validatedOrders.some(({ quantity }) => !Number.isInteger(quantity) || quantity < 1)) {
 			throw new Error("Quantities should be whole numbers >= 1")
 		}
 
 		const orderThrowCond = (o: Order) => [o.price, o.quantity, o.date.getTime()].some(r => isNaN(r))
-		if (validated.some(orderThrowCond)) {
+		if (validatedOrders.some(orderThrowCond)) {
 			throw new Error("Trade value is not a number");
 		}
 
 		return ret;
-	}
+	};
 
 	const submit = async() => {
-		let trade: TradeWithOrders;
+		let trade: TradeWithOrders<ChartStringTf>;
 		try {
 			trade = validate();
 		} catch (err: any) {
-			setFormError(err.message);
-			return;
+			return setFormError(err.message);
 		}
 
 		setSubmitting(true);
 		setFormError(null);
+
 		try {
 
 			await createTrade(trade);
-			// reset
+
 			setStop("");
 			setTarget("");
 			setDescription("");
 			setSelectedLabelIds([]);
 			setOrders([]);
+
 		} catch (e: any) {
 			setFormError(e?.message ?? "Failed to create trade");
 		} finally {
 			setSubmitting(false);
 		}
-	}
+	};
 
 	return (
 		<Box p={6} maxW="1000px" mx="auto">
@@ -225,8 +254,11 @@ export default function CreateTrade() {
 							</Text>
 						</Box>
 
-						<Button variant="outline" onClick={() => setLabelsOpen(true)} disabled={loadingLabels}>
-							Add / Search Labels
+						<Button
+							variant="outline"
+							onClick={() => setLabelsOpen(true)}
+							disabled={loadingLabels}
+						> Add / Search Labels
 						</Button>
 					</Flex>
 
@@ -280,6 +312,56 @@ export default function CreateTrade() {
 						Saves HTML to your description field.
 					</Text>
 				</Box>
+
+				{/* divider replacement */}
+				<Box borderBottomWidth="1px" />
+
+				{/* Charts */}
+				<Box>
+					<Flex justify="space-between" align="center" mb={3}>
+						<Box>
+							<Text fontSize="sm" color="fg.muted">
+								Charts
+							</Text>
+							<Text fontSize="xs" color="fg.muted">
+								Attach any number of chart previews to this trade.
+							</Text>
+						</Box>
+
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={addChart}
+							disabled={chartsDisabled}
+						> Add Chart
+						</Button>
+					</Flex>
+
+					{charts.length === 0 && (
+						<Text fontSize="sm" color="fg.muted">
+							No charts added. Click &quot;Add Chart&quot; to attach one.
+						</Text>
+					)}
+
+					<VStack align="stretch" gap={4} mt={charts.length ? 2 : 0}>
+					{charts.map((c, i) =>
+						<ChartPreview
+							num={i+1}
+							timeframe={c.timeframe}
+							symbol={symbols.find(s => s.id == Number(symbolId))!.name}
+							id={c.tempId}
+							key={c.tempId}
+							start={c.start}
+							end={c.end}
+							removeChart={removeChart}
+							updateChart={updateChart}
+						/>)
+					}
+					</VStack>
+				</Box>
+
+				{/* divider replacement */}
+				<Box borderBottomWidth="1px" />
 
 				{/* Submit */}
 				<Flex justify="flex-end" gap={3}>

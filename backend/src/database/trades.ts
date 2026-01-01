@@ -59,7 +59,7 @@ const useTrades = (db: PrismaClient) => {
 		return _cleanTrade(trade);
 	};
 
-	const createTrade = async (trade: TradeWithOrders) => {
+	const createTrade = async (trade: TradeWithOrders<any>) => {
 		const data = {
 			...trade,
 			orders: { create: trade.orders, },

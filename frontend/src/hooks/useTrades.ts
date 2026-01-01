@@ -1,6 +1,7 @@
 import useApi from "./useApi";
 
-import { type Order, type TradeFull, type TradeFullWithId, type TradeWithId, type TradeWithOrders } from '../../../shared/trades.types';
+import { type Order, type TradeFullWithId, type TradeWithId, type TradeWithOrders } from '../../../shared/trades.types';
+import type { ChartStringTf } from "../../../shared/candles.types";
 
 const useTrades = () => {
   const api = useApi();
@@ -20,7 +21,7 @@ const useTrades = () => {
     return trade as TradeFullWithId;
   };
 
-  const createTrade = async (payload: TradeWithOrders) => {
+  const createTrade = async (payload: TradeWithOrders<ChartStringTf>) => {
     const { trade } = await api.post(path, payload);
     trade.orders.forEach(_assureIsDate);
     return trade as TradeFullWithId;

@@ -35,10 +35,10 @@ export interface Trade {
 	stop: number;
 }
 
-export interface TradeWithOrders extends Trade {
+export interface TradeWithOrders<T=ChartWithTradeId> extends Trade {
 	symbolId: number;
 
-	charts: Chart[];
+	charts: T[];
 	orders: Order[];
 
 	labels: { id: number; }[];
@@ -83,11 +83,13 @@ export interface Chart {
 
 	start: number;
 	end:   number;
+}
 
+export interface ChartWithTradeId extends Chart {
 	tradeId: number;
 }
 
-export interface ChartWithId extends Chart {
+export interface ChartWithId extends ChartWithTradeId {
 	id: number;
 	trade?: Trade;
 }

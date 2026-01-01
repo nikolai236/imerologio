@@ -39,7 +39,7 @@ const router: FastifyPluginAsync = async (server) => {
 			const id = Number(req.params.id);
 
 			const curr = await getLabelById(id);
-			if (curr == null) return reply.send(404).send({ message: 'Label not found!', });
+			if (curr == null) return reply.code(404).send({ message: 'Label not found!', });
 
 			const label = await updateLabel(id, req.body);
 			return reply.code(200).send({ label });
@@ -55,7 +55,7 @@ const router: FastifyPluginAsync = async (server) => {
 
 		const label = await getLabelById(id);
 		if (label == null) {
-			return reply.send(404).send({ message: 'Label not found!', });
+			return reply.code(404).send({ message: 'Label not found!', });
 		}
 
 		await deleteLabel(id);

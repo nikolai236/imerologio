@@ -4,14 +4,17 @@ import useSymbols from "../database/symbols";
 import useTrades from "../database/trades";
 import useTradeService from "../services/trades";
 
-import type { TradeWithOrders } from "../../../shared/trades.types";
+import type { Chart, TradeWithOrders } from "../../../shared/trades.types";
 import useLabels from "../database/labels";
+import { ChartStringTf } from "../../../shared/candles.types";
+import useCandleService from "../services/candles";
 
 const router: FastifyPluginAsync = async (server) => {
 	const { getAllTrades, getTradeById, createTrade } = useTrades(server.prisma);
-	const { deleteTradeFromLabel, updateLabel } = useLabels(server.prisma);
+	const { deleteTradeFromLabel } = useLabels(server.prisma);
 	const { getSymbolById } = useSymbols(server.prisma);
 
+	const { tfToNumber } = useCandleService();
 	const { calculatePnL, checkQuantities } = useTradeService();
 
 	server.get('/', async (_req, reply) => {
@@ -29,14 +32,14 @@ const router: FastifyPluginAsync = async (server) => {
 
 		const trade = await getTradeById(id);
 		if (trade == null) {
-			return reply.send(404).send({ message: 'Trade not found!', });
+			return reply.code(404).send({ message: 'Trade not found!', });
 		}
 		return reply.code(200).send({ trade });
 	});
 
-	interface IPost { Body: TradeWithOrders; }
+	interface IPost { Body: TradeWithOrders<ChartStringTf>; }
 	server.post<IPost>('/', async (req, reply) => {
-		let { target, stop, pnl, symbolId, orders } = req.body;
+		let { target, stop, pnl, symbolId, orders, charts } = req.body;
 
 		if (!checkQuantities(orders)) {
 			return reply.code(400).send({ message: 'Trade is open!' });
@@ -44,7 +47,7 @@ const router: FastifyPluginAsync = async (server) => {
 
 		const symbol = await getSymbolById(Number(symbolId));
 		if (symbol == null) {
-			return reply.send(400).send({ message: 'Symbol not found!' });
+			return reply.code(400).send({ message: 'Symbol not found!' });
 		}
 
 		orders = orders.map(o => ({
@@ -54,12 +57,27 @@ const router: FastifyPluginAsync = async (server) => {
 			price:    Number(o.price),
 		}));
 
-		const trade: TradeWithOrders = {
+		const transformedCharts: Chart[] = charts.map(c => ({
+			start: Number(c.start),
+			end: Number(c.end),
+			timeframe: tfToNumber(c.timeframe),
+		}));
+
+		const badCharts = transformedCharts.some(
+			c => [c.start, c.end, c.timeframe].some(isNaN)
+		);
+		if (badCharts) {
+			const message = "Bad charts provided";
+			return reply.code(400).send({ message });
+		}
+
+		const trade: TradeWithOrders<Chart> = {
 			...req.body,
 			target: target && Number(target),
 			pnl: pnl && Number(pnl),
 			stop: Number(stop),
 			orders,
+			charts: transformedCharts,
 		};
 
 		if (pnl == null) calculatePnL(trade);
@@ -80,7 +98,7 @@ const router: FastifyPluginAsync = async (server) => {
 
 		const trade = await getTradeById(tradeId);
 		if (trade == null) {
-			return reply.send(404).send({ message: 'Trade not found!', });
+			return reply.code(404).send({ message: 'Trade not found!', });
 		}
 
 		await deleteTradeFromLabel(labelId, tradeId);

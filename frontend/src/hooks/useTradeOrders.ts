@@ -12,7 +12,7 @@ const useTradeOrders = (date: Date) => {
 		Math.random().toString(16).slice(2) +
 		Date.now().toString(16);
 
-	const _getDefaultOrder = (): TempOrder => orders.length == 0 ?
+	const _getDefaultOrder = (orders: TempOrder[]): TempOrder => orders.length == 0 ?
 		{ date, price: 0, type: 'BUY', quantity: 1, tempId: _uid(), } :
 		{ ...orders.at(-1)!, tempId: _uid() };
 
@@ -25,7 +25,7 @@ const useTradeOrders = (date: Date) => {
 	);
 
 	const addOrder = () => setOrders(
-		orders => [...orders, _getDefaultOrder()]
+		orders => [...orders, _getDefaultOrder(orders)]
 	);
 
 	const removeOrder = (id: string) => setOrders(
