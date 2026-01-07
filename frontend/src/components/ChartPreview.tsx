@@ -6,7 +6,8 @@ import {
 	IconButton,
 } from '@chakra-ui/react';
 import { useState, useEffect, useRef } from 'react';
-import type { Candle, ChartStringTf, Timeframe } from '../../../shared/candles.types';
+import type { Chart } from '../../../shared/trades.types';
+import type { Candle, Timeframe } from '../../../shared/candles.types';
 import useCandles from '../hooks/useCandles';
 import { CandlestickSeries, ColorType, type IChartApi, createChart } from 'lightweight-charts';
 import useTradeCharts from '../hooks/useTradeCharts';
@@ -17,10 +18,12 @@ type Props = {
 	symbol: string;
 	start: number;
 	end: number;
+
 	timeframe: Timeframe;
+	disabled?: boolean;
 
 	removeChart: (id: string) => void;
-	updateChart: (id: string, payload: Partial<ChartStringTf>) => void;
+	updateChart: (id: string, payload: Partial<Chart<Timeframe>>) => void;
 };
 
 const epochToDateStr = (epochStr?: string) => {
@@ -51,6 +54,7 @@ export default function ChartPreview({
 	start,
 	end,
 	timeframe,
+	disabled = false,
 
 	removeChart,
 	updateChart,
@@ -83,13 +87,11 @@ export default function ChartPreview({
 		};
 	}, [symbol, id, start, end]);
 
-	// render lightweight-charts when data changes
 	useEffect(() => {
 		if (!containerRef.current || candles.length === 0) {
 			return;
 		}
 
-		// dispose previous chart
 		if (chartRef.current) {
 			chartRef.current.remove();
 			chartRef.current = null;
@@ -115,7 +117,8 @@ export default function ChartPreview({
 		series.setData(
 			candles.map((row) => {
 				const timeSeconds =
-					row.time > 2_000_000_000 ? Math.floor(row.time / 1000) : row.time;
+					row.time > 2_000_000_000 ?
+						Math.floor(row.time / 1000) : row.time;
 
 				return {
 					time: timeSeconds as any,
@@ -183,12 +186,19 @@ export default function ChartPreview({
 				<Text fontSize="sm" fontWeight="medium">
 					Chart #{num}
 				</Text>
-				<IconButton
-					aria-label="Remove chart"
-					size="xs"
-					variant="ghost"
-					onClick={() => removeChart(id)}
-				> ✕ </IconButton>
+				<Flex gap={2} align="center">
+
+				{disabled ? null : (
+					<IconButton
+						aria-label="Remove chart"
+						size="xs"
+						variant="ghost"
+						onClick={() => removeChart(id)}
+					>
+						✕
+					</IconButton>
+				)}
+				</Flex>
 			</Flex>
 
 		<Flex gap={3} wrap="wrap" mb={3}>
@@ -198,6 +208,7 @@ export default function ChartPreview({
 					Timeframe
 				</Text>
 				<Input
+					disabled={disabled}
 					value={timeframe}
 					onChange={e => handleTimeframeChange(e.target.value)}
 					placeholder="e.g. 5m or 15000"
@@ -229,6 +240,7 @@ export default function ChartPreview({
 						Start
 					</Text>
 					<Input
+						disabled={disabled}
 						type="datetime-local"
 						value={epochToDateStr(start != undefined ? start.toString() : start)}
 						onChange={(e) => handleStartChange(e.target.value)}
@@ -240,6 +252,7 @@ export default function ChartPreview({
 						End
 					</Text>
 					<Input
+						disabled={disabled}
 						type="datetime-local"
 						value={epochToDateStr(end != undefined ? end.toString() : end)}
 						onChange={(e: any) => handleEndChange(e.target.value)}

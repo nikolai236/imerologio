@@ -1,21 +1,28 @@
 import { Box, Flex, NativeSelect, VStack, Text, Input, Button } from '@chakra-ui/react'
 import type { Order, OrderEnum } from '../../../shared/trades.types';
 import type { TempOrder } from '../hooks/useTradeOrders';
+import EditButton from './EditButton';
 
 type Props = {
-	updateOrder: (id: string, payload: Partial<Order>) => void;
-	addOrder: () => void,
-	removeOrder: (id: string) => void;
 	orderSum: number;
 	orders: TempOrder[];
+	disabled?: boolean;
+
+	handleEditClick?: () => void,
+	addOrder: () => void,
+	removeOrder: (id: string) => void;
+	updateOrder: (id: string, payload: Partial<Order>) => void;
 };
 
 export default function Orders({
+	orders,
+	orderSum,
+	disabled = false,
+
 	updateOrder,
 	addOrder,
 	removeOrder,
-	orders,
-	orderSum,
+	handleEditClick,
 }: Props) {
 	return (
 		<Box>
@@ -28,9 +35,15 @@ export default function Orders({
 						Net quantity must be 0. Current: {orderSum}
 					</Text>
 				</Box>
-				<Button onClick={addOrder} variant="outline">
-				Add Order
-				</Button>
+				<Flex align="center" gap={2}>
+					<EditButton
+						visible={disabled}
+						onClick={handleEditClick ?? (()=>{})}
+					/>
+					<Button onClick={addOrder} variant="outline">
+						Add Order
+					</Button>
+				</Flex>
 			</Flex>
 
 			<VStack align="stretch" gap={3}>
@@ -41,7 +54,7 @@ export default function Orders({
 							<Text fontSize="sm" color="fg.muted" mb={1}>
 								Type
 							</Text>
-							<NativeSelect.Root>
+							<NativeSelect.Root disabled={disabled}>
 								<NativeSelect.Field
 									value={o.type}
 									onChange={(e) =>
@@ -59,6 +72,7 @@ export default function Orders({
 								Quantity
 							</Text>
 						<Input
+							disabled={disabled}
 							value={o.quantity}
 							onChange={(e) => updateOrder(o.tempId, { quantity: Number(e.target.value) })}
 							placeholder="int > 0"
@@ -70,6 +84,7 @@ export default function Orders({
 								Price
 							</Text>
 						<Input
+							disabled={disabled}
 							value={o.price}
 							onChange={(e) => updateOrder(o.tempId, { price: Number(e.target.value) })}
 							placeholder="e.g. 19280.50"
@@ -81,6 +96,7 @@ export default function Orders({
 							Date/Time
 						</Text>
 						<Input
+							disabled={disabled}
 							type="datetime-local"
 							value={o.date.toString()}
 							onChange={(e) => updateOrder(o.tempId, { date: new Date(e.target.value) })}
@@ -91,7 +107,7 @@ export default function Orders({
 							colorScheme="red"
 							variant="outline"
 							onClick={() => removeOrder(o.tempId)}
-							disabled={orders.length <= 1}
+							disabled={disabled || orders.length <= 1}
 							title={orders.length <= 1 ? "Must have at least one order" : ""}
 						> Remove </Button>
 

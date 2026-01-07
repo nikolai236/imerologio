@@ -1,33 +1,44 @@
 import useApi from "./useApi";
 
-import { type Order, type TradeFullWithId, type TradeWithId, type TradeWithOrders } from '../../../shared/trades.types';
-import type { ChartStringTf } from "../../../shared/candles.types";
+import { type Chart, type Order, type TradeFullWithId, type TradeWithId, type TradeWithOrders } from '../../../shared/trades.types';
+import type { Timeframe } from "../../../shared/candles.types";
 
 const useTrades = () => {
-  const api = useApi();
-  const path = '/trades';
+	const api = useApi();
+	const path = '/trades';
 
-  const _assureIsDate = (o: Order) => o.date = new Date(o.date);
+	const _assureIsDate = (o: Order) => o.date = new Date(o.date);
 
-  const getTrades = async () => {
-    const { trades } = await api.get(path) as { trades: TradeWithId[] };
-    trades.forEach(({ orders }) => orders.forEach(_assureIsDate));
-    return trades;
-  };
+	const getTrades = async () => {
+		const { trades } = await api.get(path) as { trades: TradeWithId<Chart<Timeframe>>[] };
+		trades.forEach(({ orders }) => orders.forEach(_assureIsDate));
+		return trades;
+	};
 
-  const getTrade = async (id: number) => {
-    const { trade } = await api.get(path + `/${id}`);
-    trade.orders.forEach(_assureIsDate);
-    return trade as TradeFullWithId;
-  };
+	const getTrade = async (id: number) => {
+		const { trade } = await api.get(path + `/${id}`);
+		trade.orders.forEach(_assureIsDate);
+		return trade as TradeFullWithId<Chart<Timeframe>>;
+	};
 
-  const createTrade = async (payload: TradeWithOrders<ChartStringTf>) => {
-    const { trade } = await api.post(path, payload);
-    trade.orders.forEach(_assureIsDate);
-    return trade as TradeFullWithId;
-  };
+	const editTrade = async (id: number, paylaod: Partial<TradeWithOrders<Chart<Timeframe>>>) => {
+		const { trade } = await api.patch(path + `/${id}`, paylaod);
+		trade.orders.forEach(_assureIsDate);
+		return trade as TradeFullWithId;
+	};
 
-  return { getTrade, getTrades, createTrade, };
+	const createTrade = async (payload: TradeWithOrders<Chart<Timeframe>>) => {
+		const { trade } = await api.post(path, payload);
+		trade.orders.forEach(_assureIsDate);
+		return trade as TradeFullWithId;
+	};
+
+	return {
+		getTrade,
+		getTrades,
+		createTrade,
+		editTrade,
+	};
 };
 
 export default useTrades;

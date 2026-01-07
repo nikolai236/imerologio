@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { $insertNodes } from "lexical";
+import { $createParagraphNode, $insertNodes } from "lexical";
 import { $createImageNode } from "./ImageNode";
 import useApi from "../hooks/useApi";
 
@@ -36,7 +36,11 @@ export default function ImageDropPasteUploadPlugin({
 
 				if (urls.length > 0) {
 					editor.update(() => {
-						$insertNodes(urls.map(url => $createImageNode(url)));
+						$insertNodes(urls.map(url => $createImageNode({ src: url })));
+
+						const p = $createParagraphNode();
+						$insertNodes([p]);
+						p.selectEnd();
 					});
 				}
 			} finally {

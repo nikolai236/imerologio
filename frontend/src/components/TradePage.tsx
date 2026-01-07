@@ -1,4 +1,3 @@
-import { useMemo, useState } from "react";
 import {
 	Box,
 	Button,
@@ -6,8 +5,12 @@ import {
 	Text,
 	VStack,
 } from "@chakra-ui/react";
-import Orders from "./Orders";
-import type { LabelWithId, Order, TradeWithOrders, Chart } from "../../../shared/trades.types";
+import { useMemo, useState } from "react";
+import useSingleEditor from "../hooks/useSingleEditor";
+import type { LabelWithId } from "../../../shared/trades.types";
+import useEditTrade from "../hooks/useEditTrade";
+import useFetchSymbols from "../hooks/useFetchSymbols";
+import useFetchLabels from "../hooks/useFetchLabels";
 import SelectLabels from "./SelectLabels";
 import DescriptionEditor from "./DescriptionEditor";
 import SelectLabelButton from "./SelectLabelButton";
@@ -15,20 +18,30 @@ import Charts from "./Charts";
 import SymbolSelect from "./SymbolSelect";
 import StopInput from "./StopInput";
 import TargetInput from "./TargetInput";
-import useFetchLabels from "../hooks/useFetchLabels";
-import useFetchSymbols from "../hooks/useFetchSymbols";
-import useEditTrade from "../hooks/useEditTrade";
+import Orders from "./Orders";
+import { useParams } from "react-router-dom";
 
-export default function CreateTrade() {
+const Sections = {
+	symbol: "symbol",
+	stop: "stop",
+	target: "target",
+	labels: "labels",
+	orders: "orders",
+	description: "description",
+	charts: "charts",
+} as const;
+
+export default function TradePage() {
+	const { id: tradeId } = useParams();
 	const { labels, loadingLabels   } = useFetchLabels();
 	const { symbols, loadingSymbols } = useFetchSymbols();
 
 	const {
-		symbolId,
-		isSupported,
 		formError,
 		submitting,
 
+		symbolId,
+		isSupported,
 		stop,
 		target,
 		description,
@@ -39,6 +52,7 @@ export default function CreateTrade() {
 		setStop,
 		setTarget,
 		setDescription,
+		setSymbolId,
 
 		addChart,
 		removeChart,
@@ -47,10 +61,11 @@ export default function CreateTrade() {
 		updateOrder,
 		addOrder,
 		removeOrder,
-		setSymbolId,
 
-		submit,
-	} = useEditTrade();
+		submitTradeEdit,
+	} = useEditTrade(Number(tradeId));
+
+	const { isActive, setActive, lockAll } = useSingleEditor();
 
 	const [labelsOpen, setLabelsOpen] = useState(false);
 	const [selectedLabelIds, setSelectedLabelIds] = useState<number[]>([]);
@@ -75,15 +90,27 @@ export default function CreateTrade() {
 			) : null}
 
 			<VStack align="stretch" gap={5}>
+				{/* Top row: Symbol / Stop / Target */}
 				<Flex gap={4} wrap="wrap" align="flex-end">
 					<SymbolSelect
 						symbols={symbols}
 						loading={loadingSymbols}
 						symbolId={symbolId}
+						handleEditClick={setActive(Sections.symbol)}
+						disabled={!isActive(Sections.symbol)}
 						setSymbolId={setSymbolId} />
 
-					<StopInput stop={stop} setStop={setStop} />
-					<TargetInput target={target} setTarget={setTarget} />
+					<StopInput
+						stop={stop}
+						setStop={setStop}
+						handleEditClick={setActive(Sections.stop)}
+						disabled={!isActive(Sections.stop)} />
+
+					<TargetInput
+						target={target}
+						setTarget={setTarget} 
+						handleEditClick={setActive(Sections.target)}
+						disabled={!isActive(Sections.target)} />
 
 				</Flex>
 
@@ -91,9 +118,10 @@ export default function CreateTrade() {
 					selectedIds={selectedLabelIds}
 					selected={selectedLabels}
 					loading={loadingLabels}
+					handleEditClick={setActive(Sections.labels)}
+					disabled={!isActive(Sections.labels)}
 					setOpen={setLabelsOpen}
-					setLabelIds={setSelectedLabelIds}
-				/>
+					setLabelIds={setSelectedLabelIds} />
 
 				<Box borderBottomWidth="1px" />
 
@@ -102,45 +130,43 @@ export default function CreateTrade() {
 					addOrder={addOrder}
 					orders={orders}
 					orderSum={orderSum}
+					handleEditClick={setActive(Sections.orders)}
+					disabled={!isActive(Sections.orders)}
 					updateOrder={updateOrder} />
 
 				<Box borderBottomWidth="1px" />
 
-				<Box>
-					<Text fontSize="sm" color="fg.muted" mb={2}>
-						Description
-					</Text>
-
-					<DescriptionEditor
-						valueHtml={description}
-						onChangeHtml={setDescription}
-						placeholder="Write your trade notes…"
+				<DescriptionEditor
+					valueHtml={description}
+					onChangeHtml={setDescription}
+					placeholder="Write your trade notes…"
+					handleEditClick={setActive(Sections.description)}
+					disabled={!isActive(Sections.description)}
 					/>
-
-					<Text fontSize="xs" color="fg.muted" mt={2}>
-						Saves HTML to your description field.
-					</Text>
-				</Box>
 
 				<Box borderBottomWidth="1px" />
 
-				<Charts		
+				<Charts
 					updateChart={updateChart}
 					removeChart={removeChart}
 					addChart={addChart}
+					
+					handleEditClick={setActive(Sections.charts)}
+					disabled={!isActive(Sections.charts)}
 
 					disabledForEdits={!isSupported}
 					charts={charts}
 					symbols={symbols}
 					symbolId={symbolId} />
+
 				<Box borderBottomWidth="1px" />
 
 				<Flex justify="flex-end" gap={3}>
-					<Button variant="outline" onClick={() => window.history.back()}>
+					<Button variant="outline" onClick={lockAll}>
 						Cancel
 					</Button>
-					<Button onClick={submit} loading={submitting} disabled={submitting}>
-						Create Trade
+					<Button onClick={submitTradeEdit} loading={submitting} disabled={submitting}>
+						Submit Change
 					</Button>
 				</Flex>
 			</VStack>
@@ -150,8 +176,8 @@ export default function CreateTrade() {
 				open={labelsOpen}
 				selectedIds={selectedLabelIds}
 				setSelectedIds={setSelectedLabelIds}
-				setOpen={setLabelsOpen}
-			/>
+				setOpen={setLabelsOpen} />
+
 		</Box>
 	);
 }

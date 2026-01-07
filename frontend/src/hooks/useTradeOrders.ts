@@ -5,8 +5,12 @@ export type TempOrder = Order & {
 	tempId: string;
 }
 
-const useTradeOrders = (date: Date) => {
-	const [orders, setOrders] = useState<TempOrder[]>([]);
+const useTradeOrders = (date: Date, inp?: Order[]) => {
+	let initial: TempOrder[] = [];
+	if (inp != null) {
+		initial = inp.map(o => ({ ...o, tempId: _uid() }));
+	}
+	const [orders, setOrders] = useState<TempOrder[]>(initial);
 
 	const _uid = () =>
 		Math.random().toString(16).slice(2) +
@@ -34,11 +38,14 @@ const useTradeOrders = (date: Date) => {
 
 	const orderSum = useMemo(_calculateOrderSum, [orders]);
 
+	const overwriteOrders = (orders: Order[]) =>
+		setOrders(orders.map(o => ({ ...o, tempId: _uid() })));
+
 	return {
 		orders,
 		orderSum,
 
-		setOrders,
+		setOrders: overwriteOrders,
 		updateOrder,
 
 		addOrder,

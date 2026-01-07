@@ -1,5 +1,5 @@
 import type { Prisma, PrismaClient } from '@prisma/client'
-import type { TradeWithOrders, TradeFullWithId, OrderWithId } from '../../../shared/trades.types';
+import type { TradeWithOrders, TradeFullWithId, OrderWithId, Chart, Order, ChartWithId } from '../../../shared/trades.types';
 
 const useTrades = (db: PrismaClient) => {
 	const include = {
@@ -15,6 +15,27 @@ const useTrades = (db: PrismaClient) => {
 		price: Number(o.price),
 		date: new Date(o.date),
 	});
+
+	const _produceIncludeObj = <T extends { id?: number }>(elements: T[]) => {
+		const existingIds = elements
+			.map(c => c.id)
+			.filter((id): id is number => id != null);
+
+		const deleteMany = existingIds.length > 0 ?
+			{ id: { notIn: existingIds } } : {}
+
+		const upsert = elements.filter(c => c.id != null).map(c => ({
+			where: { id: c.id },
+			create: { ...c, id: undefined },
+			update: { ...c, id: undefined },
+		}));
+
+		const create = elements
+			.filter(c => c.id == null)
+			.map(c => ({ ...c }));
+
+		return { deleteMany, create, upsert };
+	};
 
 	const _cleanTrade = (t: any): TradeFullWithId => ({
 		...t,
@@ -70,6 +91,49 @@ const useTrades = (db: PrismaClient) => {
 		return _cleanTrade(ret);
 	};
 
+	type TradeType= Partial<
+		TradeWithOrders<
+			(Chart & { id?: number }),
+			(Order & { id?: number })
+		>
+	>;
+
+	const updateTrade = async (
+		id: number,
+		trade: TradeWithOrders,
+		payload: TradeType,
+	) => {
+		const charts = payload.charts == null ?
+			undefined :
+			_produceIncludeObj(payload.charts);
+
+		const orders = payload.orders == null ?
+			undefined :
+			_produceIncludeObj(payload.orders);
+
+		const labels = payload.labels &&
+			{ set: payload.labels.map(({ id }) => ({ id })) };
+
+		const data = {
+			...payload,
+			charts,
+			orders,
+			labels,
+		};
+
+		const include = {
+			labels: true,
+			charts: true,
+			orders: true,
+		};
+
+		const ret = await db.trade.update({
+			where: { id }, data, include,
+		});
+
+		return _cleanTrade(ret);
+	};
+
 	const deleteTrade = async (id: number) => {
 		return await db.trade.delete({ where: { id }});
 	};
@@ -84,6 +148,7 @@ const useTrades = (db: PrismaClient) => {
 		getTradeById,
 		createTrade,
 		deleteTrade,
+		updateTrade,
 		getOrderById,
 	};
 };

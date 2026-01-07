@@ -1,3 +1,5 @@
+import { Timeframe } from "./candles.types";
+
 export type OrderEnum  = 'BUY' | 'SELL';
 export type SymbolEnum = 'CFD' | 'Futures';
 
@@ -35,30 +37,33 @@ export interface Trade {
 	stop: number;
 }
 
-export interface TradeWithOrders<T=ChartWithTradeId> extends Trade {
+export interface TradeWithOrders<
+	ChartType=ChartWithTradeId,
+	OrderType=Order
+> extends Trade {
 	symbolId: number;
 
-	charts: T[];
-	orders: Order[];
+	charts: ChartType[];
+	orders: OrderType[];
 
 	labels: { id: number; }[];
 }
 
-export interface TradeFull extends TradeWithOrders {
+export interface TradeFull<C=ChartWithTradeId, O=Order> extends TradeWithOrders<C, O> {
 	symbol: Symbol;
 }
 
-export interface TradeWithId extends Omit<TradeWithOrders, 'orders'|'charts'|'labels'> {
+export interface TradeWithId<C=ChartWithTradeId, O=Order> extends Omit<TradeWithOrders<C,O>, 'orders'|'charts'|'labels'> {
 	id: number;
 	entryDate?: Date;
 	orders: OrderWithId[];
 }
 
-export interface TradeFullWithId extends TradeWithId {
+export interface TradeFullWithId<C=ChartWithId, O=Order> extends TradeWithId<C,O> {
 	symbol: SymbolWithId;
 
 	labels: LabelWithId[];
-	charts: ChartWithId[];
+	charts: C[];
 }
 
 export interface Label {
@@ -78,18 +83,19 @@ export interface LabelWithId extends Label {
 	tradesCount?: number;
 }
 
-export interface Chart {
-	timeframe: number;
+
+export interface Chart<T extends number|Timeframe = number> {
+	timeframe: T;
 
 	start: number;
 	end:   number;
 }
 
-export interface ChartWithTradeId extends Chart {
+export interface ChartWithTradeId<T extends number|Timeframe = number> extends Chart<T> {
 	tradeId: number;
 }
 
-export interface ChartWithId extends ChartWithTradeId {
+export interface ChartWithId<T extends number|Timeframe = number> extends ChartWithTradeId<T> {
 	id: number;
 	trade?: Trade;
 }

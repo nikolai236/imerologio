@@ -1,0 +1,227 @@
+import { useEffect, useState } from "react";
+import type { Chart, ChartWithId, Order, TradeWithOrders } from "../../../shared/trades.types";
+import useTradeOrders from "./useTradeOrders";
+import type { Timeframe } from "../../../shared/candles.types";
+import useTradeCharts from "./useTradeCharts";
+import useTrades from "./useTrades";
+import useReload from "./useReload";
+import useSymbolId from "./useSymbolId";
+
+const parseDecimalString = (s: string) => {
+	if (!s) return null;
+	const n = Number(s);
+
+	if (!Number.isFinite(n)) return null;
+	return s;
+};
+
+const useEditTrade = (tradeId?: number) => {
+	const {
+		orders,
+		orderSum,
+		setOrders,
+		updateOrder,
+		addOrder,
+		removeOrder,
+	} = useTradeOrders(new Date());
+
+	const {
+		charts,
+		setCharts,
+		addChart,
+		removeChart,
+		updateChart,
+	} = useTradeCharts();
+
+	const { symbolId, isSupported, setSymbolId } = useSymbolId();
+	const { createTrade, editTrade, getTrade } = useTrades();
+
+	const [formError, setFormError] = useState<string | null>(null);
+	const [submitting, setSubmitting] = useState(false);
+	const [reloadToken, reload] = useReload();
+
+	const [stop, setStop] = useState('');
+	const [target, setTarget] = useState('');
+
+	const [selectedLabelIds, setSelectedLabelIds] = useState<number[]>([]);
+	const [description, setDescription] = useState('');
+
+	const setNull = () => {
+		setSymbolId('');
+		setStop('');
+		setTarget('');
+		setDescription('');
+
+		setSelectedLabelIds([]);
+		setOrders([]);
+		setCharts([]);
+	};
+
+	useEffect(() => {
+		if (tradeId == null) {
+			setNull();
+			return;
+		}
+
+		getTrade(tradeId)
+			.then(t => {
+				const ids = t.labels.map(({ id }) => id);
+
+				setSymbolId(t.symbolId.toString());
+				setStop(t.stop.toString());
+				setTarget(t.target?.toString() ?? '');
+				setDescription(t.description ?? '');
+
+				setSelectedLabelIds(ids);
+				setOrders(t.orders);
+				setCharts(t.charts);
+			})
+			.catch((err) => {
+				console.error(err);
+				setNull();
+			});
+	}, [reloadToken]);
+
+	const validate = () => {
+		setFormError(null);
+
+		const sId = Number(symbolId);
+		if (!Number.isInteger(sId) || sId <= 0) throw new Error("Please select a valid symbol.");
+
+		const stopStr = parseDecimalString(stop);
+		if (!stopStr) throw new Error("Stop must be a valid number.");
+
+		const targetStr = parseDecimalString(target);
+		if (target.trim() && !targetStr) throw new Error("Target must be a valid number.");
+
+		if (orders.length === 0) throw new Error("Please add at least one order.");
+
+		if (orderSum !== 0) {
+			throw new Error(`Orders must net to 0. Current net quantity is ${orderSum} (BUY is +, SELL is -).`);
+		}
+
+		const validatedOrders = orders.map(({ price, quantity, date, type }) => ({
+			price: Number(price),
+			quantity: Number(quantity),
+			date,
+			type,
+		}));
+
+		const validatedCharts: Chart<Timeframe>[] = charts.map(c => ({
+			...c,
+			tempId: undefined,
+		}));
+
+		const ret: TradeWithOrders<Chart<Timeframe>> = {
+			stop: Number(stop.trim()),
+			target: target.trim() != '' ? Number(target.trim()) : undefined,
+			description,
+			pnl: undefined,
+			labels: selectedLabelIds.map(id => ({ id })),
+			charts: validatedCharts,
+			orders: validatedOrders,
+			symbolId: Number(symbolId),
+		};
+
+		const tradeBodythrowConds = [ret.target, ret.stop, ret.symbolId]
+			.some(r => r != undefined && isNaN(r));
+
+		if (tradeBodythrowConds) {
+			throw new Error("Trade value is not a number");
+		}
+
+		if (validatedOrders.some(({ quantity }) => !Number.isInteger(quantity) || quantity < 1)) {
+			throw new Error("Quantities should be whole numbers >= 1")
+		}
+
+		const orderThrowCond = (o: Order) => [o.price, o.quantity, o.date.getTime()].some(r => isNaN(r))
+		if (validatedOrders.some(orderThrowCond)) {
+			throw new Error("Trade value is not a number");
+		}
+
+		return ret;
+	};
+
+	const submitNewTrade = async () => {
+		let trade: TradeWithOrders<Chart<Timeframe>>;
+		try {
+			trade = validate();
+		} catch (err: any) {
+			console.error(err);
+			return setFormError(err.message);
+		}
+
+		setSubmitting(true);
+		setFormError(null);
+
+		try {
+
+			await createTrade(trade);
+
+		} catch (e: any) {
+			console.error(e);
+			setFormError(e?.message ?? "Failed to create trade");
+		} finally {
+			reload();
+			setSubmitting(false);
+		}
+	};
+
+	const submitTradeEdit = async () => {
+		if (!tradeId) throw new Error('Trade id is null!.');
+
+		let trade: TradeWithOrders<Chart<Timeframe>>;
+		try {
+			trade = validate();
+		} catch (err: any) {
+			return setFormError(err.message);
+		}
+
+		setSubmitting(true);
+		setFormError(null);
+
+		try {
+			console.log(trade);
+			await editTrade(tradeId, trade);
+
+		} catch (e: any) {
+			console.error(e);
+			setFormError(e?.message ?? "Failed to edit trade");
+		} finally {
+			reload();
+			setSubmitting(false);
+		}
+	};
+
+	return {
+		formError,
+		submitting,
+
+		symbolId,
+		stop,
+		target,
+		description,
+		charts,
+		orders,
+		orderSum,
+		isSupported,
+
+		setStop,
+		setTarget,
+		setDescription,
+
+		addChart,
+		removeChart,
+		updateChart,
+
+		updateOrder,
+		addOrder,
+		removeOrder,
+
+		submit: submitNewTrade,
+		submitTradeEdit,
+		setSymbolId
+	};
+};
+
+export default useEditTrade;

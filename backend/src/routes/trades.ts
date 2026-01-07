@@ -4,18 +4,28 @@ import useSymbols from "../database/symbols";
 import useTrades from "../database/trades";
 import useTradeService from "../services/trades";
 
-import type { Chart, TradeWithOrders } from "../../../shared/trades.types";
+import type { Chart, ChartWithId, Order, TradeWithOrders } from "../../../shared/trades.types";
 import useLabels from "../database/labels";
-import { ChartStringTf } from "../../../shared/candles.types";
 import useCandleService from "../services/candles";
+import { Timeframe } from "../../../shared/candles.types";
 
 const router: FastifyPluginAsync = async (server) => {
-	const { getAllTrades, getTradeById, createTrade } = useTrades(server.prisma);
+	const {
+		getAllTrades,
+		getTradeById,
+		createTrade,
+		updateTrade
+	} = useTrades(server.prisma);
+
 	const { deleteTradeFromLabel } = useLabels(server.prisma);
 	const { getSymbolById } = useSymbols(server.prisma);
 
-	const { tfToNumber } = useCandleService();
-	const { calculatePnL, checkQuantities } = useTradeService();
+	const { tfToNumber, numberToTf } = useCandleService();
+	const {
+		calculatePnL,
+		validateOrderQuantities,
+		parseOrders
+	} = useTradeService();
 
 	server.get('/', async (_req, reply) => {
 		const trades = await getAllTrades();
@@ -34,14 +44,19 @@ const router: FastifyPluginAsync = async (server) => {
 		if (trade == null) {
 			return reply.code(404).send({ message: 'Trade not found!', });
 		}
+
+		trade.charts = trade.charts.map(c => ({
+			...c, timeframe: numberToTf(c.timeframe),
+		}));
+
 		return reply.code(200).send({ trade });
 	});
 
-	interface IPost { Body: TradeWithOrders<ChartStringTf>; }
+	interface IPost { Body: TradeWithOrders<Chart<Timeframe>>; }
 	server.post<IPost>('/', async (req, reply) => {
 		let { target, stop, pnl, symbolId, orders, charts } = req.body;
 
-		if (!checkQuantities(orders)) {
+		if (!validateOrderQuantities(orders)) {
 			return reply.code(400).send({ message: 'Trade is open!' });
 		}
 
@@ -50,12 +65,7 @@ const router: FastifyPluginAsync = async (server) => {
 			return reply.code(400).send({ message: 'Symbol not found!' });
 		}
 
-		orders = orders.map(o => ({
-			...o,
-			quantity: Number(o.quantity),
-			date:     new Date(o.date),
-			price:    Number(o.price),
-		}));
+		orders = parseOrders(orders);
 
 		const transformedCharts: Chart[] = charts.map(c => ({
 			start: Number(c.start),
@@ -91,6 +101,66 @@ const router: FastifyPluginAsync = async (server) => {
 		}
 	});
 
+	interface IPatch {
+		Params: { tradeId: number };
+		Body: Partial<TradeWithOrders<
+			ChartWithId<Timeframe>,
+			Order & { id?: number }
+		>>;
+	};
+	server.patch<IPatch>('/:tradeId', async (req, reply) => {
+		const id = Number(req.params.tradeId);
+		const trade = await getTradeById(id);
+
+		if (!trade) {
+			const message = "Trade not found.";
+			return reply.code(404).send({ message });
+		}
+
+		let { target, stop, orders, charts } = req.body;
+
+		if (orders != null && !validateOrderQuantities(orders)) {
+			return reply.code(400).send({ message: 'Invalid order quantities provided.' });
+		}
+
+		if (orders != null) orders = parseOrders(orders);
+
+		const transformedCharts = charts != null ? charts.map(c => ({
+			start: Number(c.start),
+			end: Number(c.end),
+			timeframe: tfToNumber(c.timeframe),
+			id: c.id != null ? Number(c.id) : undefined,
+		})) : undefined;
+
+		const badCharts = transformedCharts && transformedCharts.some(
+			c => [c.start, c.end, c.timeframe].some(isNaN)
+		);
+		if (badCharts) {
+			const message = "Bad charts provided";
+			return reply.code(400).send({ message });
+		}
+
+		const payload: Partial<TradeWithOrders<(Chart & {id?: number}), (Order & {id?: number})>> = {
+			...req.body,
+			target: target != null ? Number(target) : target,
+			stop: stop != null ? Number(stop) : stop,
+			orders,
+			charts: transformedCharts,
+		};
+
+		payload.pnl = calculatePnL({
+			...trade, ...payload
+		});
+
+		try {
+			const ret = await updateTrade(id, trade, payload);
+			return reply.code(200).send({ trade: ret });
+		} catch(err) {
+			server.log.error(err);
+			return reply.code(400).send({ message: err });
+		}
+	});
+
 	interface IDelete { Params: { tradeId: number; labelId: number }; };
 	server.delete<IDelete>('/:tradeId/labels/:labelId', async (req, reply) => {
 		const tradeId = Number(req.params.tradeId);
@@ -102,7 +172,7 @@ const router: FastifyPluginAsync = async (server) => {
 		}
 
 		await deleteTradeFromLabel(labelId, tradeId);
-		return reply.code(201).send();
+		return reply.code(201).send({ message: 'Label deleted from trade!' });
 	});
 };
 

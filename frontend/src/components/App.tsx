@@ -4,14 +4,13 @@ import Navbar from "./Navbar";
 import Symbols from "./Symbols";
 import Labels from "./Labels";
 import CreateTrade from "./CreateTrade";
+import TradePage from "./TradePage";
 
 function RootLayout() {
-	return (
-		<>
-			<Navbar />
-			<Outlet />
-		</>
-	);
+	return (<>
+		<Navbar />
+		<Outlet />
+	</>);
 }
 
 export default function App() {
@@ -22,11 +21,11 @@ export default function App() {
 				<Route path='trades'>
 					<Route index element={<Trades />} />
 					<Route path='create' element={<CreateTrade />} />
+					<Route path="/trades/:id" element={<TradePage />} />
 				</Route>
 				<Route path='symbols' element={<Symbols />} />
 				<Route path='labels' element={<Labels />} />
 			</Route>
-			{/* <Route path="/trades/:id" element={<TradePage />} /> */}
 		</Routes>
 	);
 }

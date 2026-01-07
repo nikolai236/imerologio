@@ -1,12 +1,18 @@
 import { useState } from "react";
-import { Timeframe, type ChartStringTf } from "../../../shared/candles.types";
+import { Timeframe } from "../../../shared/candles.types";
+import type { Chart, ChartWithId } from "../../../shared/trades.types";
 
-export type TempChart = ChartStringTf & {
+export type TempChart = Chart<Timeframe> & {
 	tempId: string;
 };
 
-const useTradeCharts = () => {
-	const [charts, setCharts] = useState<TempChart[]>([]);
+const useTradeCharts = (inp?: ChartWithId<Timeframe>[]) => {
+	let initial: TempChart[] = [];
+	if (inp != null) {
+		initial = inp.map(o => ({ ...o, tempId: _uid() }));
+	}
+
+	const [charts, setCharts] = useState<TempChart[]>(initial);
 
 	const _uid = () =>
 		Math.random().toString(16).slice(2) +
@@ -24,7 +30,7 @@ const useTradeCharts = () => {
 		} :
 		{ ...charts.at(-1)!, tempId: _uid() };
 
-	const updateChart = (id: string, payload: Partial<ChartStringTf>) => {
+	const updateChart = (id: string, payload: Partial<Chart<Timeframe>>) => {
 		setCharts(cs =>
 			cs.map(c => id == c.tempId ? { ...c, ...payload } : c)
 		);
@@ -38,8 +44,12 @@ const useTradeCharts = () => {
 		cs => cs.filter(c => c.tempId != id)
 	);
 
+	const overwriteCharts = (charts: Chart<Timeframe>[]) =>
+		setCharts(charts.map(c => ({ ...c, tempId: _uid(), })));
+
 	return {
 		charts,
+		setCharts: overwriteCharts,
 		isTimeframeValid,
 		addChart,
 		removeChart,
