@@ -19,7 +19,7 @@ const useTradeCharts = (inp?: ChartWithId<Timeframe>[]) => {
 		Date.now().toString(16);
 
 	const isTimeframeValid = (tf: string) =>
-		Object.keys(Timeframe).includes(tf);
+		Object.values(Timeframe).includes(tf as Timeframe);
 
 	const _defaultChart = (charts: TempChart[]) => charts.length == 0 ?
 		{

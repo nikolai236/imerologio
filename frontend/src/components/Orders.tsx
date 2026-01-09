@@ -11,7 +11,27 @@ type Props = {
 	handleEditClick?: () => void,
 	addOrder: () => void,
 	removeOrder: (id: string) => void;
-	updateOrder: (id: string, payload: Partial<Order>) => void;
+	updateOrder: (id: string, payload: Partial<TempOrder>) => void;
+};
+
+const epochToDateStr = (epoch?: string) => {
+	if (epoch == null) return "";
+
+	const d = new Date(epoch);
+
+	const parts = new Intl.DateTimeFormat("en-US", {
+		timeZone: "America/New_York",
+		year: "numeric",
+		month: "2-digit",
+		day: "2-digit",
+		hour: "2-digit",
+		minute: "2-digit",
+		hour12: false,
+	}).formatToParts(d);
+
+	const get = (t: string) => parts.find(p => p.type === t)?.value ?? "";
+
+	return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`;
 };
 
 export default function Orders({
@@ -74,7 +94,7 @@ export default function Orders({
 						<Input
 							disabled={disabled}
 							value={o.quantity}
-							onChange={(e) => updateOrder(o.tempId, { quantity: Number(e.target.value) })}
+							onChange={(e) => updateOrder(o.tempId, { quantity: e.target.value })}
 							placeholder="int > 0"
 						/>
 						</Box>
@@ -86,7 +106,7 @@ export default function Orders({
 						<Input
 							disabled={disabled}
 							value={o.price}
-							onChange={(e) => updateOrder(o.tempId, { price: Number(e.target.value) })}
+							onChange={(e) => updateOrder(o.tempId, { price: e.target.value })}
 							placeholder="e.g. 19280.50"
 						/>
 						</Box>
@@ -98,7 +118,7 @@ export default function Orders({
 						<Input
 							disabled={disabled}
 							type="datetime-local"
-							value={o.date.toString()}
+							value={epochToDateStr(o.date != undefined ? o.date.toString() : o.date)}
 							onChange={(e) => updateOrder(o.tempId, { date: new Date(e.target.value) })}
 						/>
 						</Box>

@@ -1,12 +1,7 @@
 import type { FastifyPluginAsync } from "fastify";
-import { $Enums } from '@prisma/client';
+import type { Symbol, UpdateSymbol } from "../../../shared/trades.types";
 import useSymbols from "../database/symbols";
-import { UpdateSymbol } from "../../../shared/trades.types";
 
-interface Symbol {
-	name: string;
-	type: $Enums.SymbolType;
-}
 
 const router: FastifyPluginAsync = async (server) => {
 	const {

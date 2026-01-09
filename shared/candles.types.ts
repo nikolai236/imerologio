@@ -29,3 +29,19 @@ export enum Timeframe {
 	tf1d  = '1d',
 	tf1w  = '1w',
 }
+
+interface PartialOrder {
+	price: number;
+	time: number; // in seconds
+}
+
+type negative = number;
+type positive = number;
+
+export interface Exit extends PartialOrder {
+	quantity: negative;
+}
+
+export interface Entry extends PartialOrder {
+	quantity: positive;
+}

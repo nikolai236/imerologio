@@ -7,10 +7,12 @@ import {
 } from '@chakra-ui/react';
 import { useState, useEffect, useRef } from 'react';
 import type { Chart } from '../../../shared/trades.types';
-import type { Candle, Timeframe } from '../../../shared/candles.types';
+import type { Candle, Entry, Exit, Timeframe } from '../../../shared/candles.types';
 import useCandles from '../hooks/useCandles';
-import { CandlestickSeries, ColorType, type IChartApi, createChart } from 'lightweight-charts';
+import { CandlestickSeries, ColorType, type IChartApi, type Time, type UTCTimestamp, createChart } from 'lightweight-charts';
 import useTradeCharts from '../hooks/useTradeCharts';
+import TradePosition from '../chart-plugins/trade-position';
+import TextLabel from '../chart-plugins/text-label';
 
 type Props = {
 	num: number;
@@ -22,9 +24,31 @@ type Props = {
 	timeframe: Timeframe;
 	disabled?: boolean;
 
+	stop: number;
+	target?: number;
+
+	getEntry: (tf: Timeframe) => Entry,
+	getExits: (tf: Timeframe) => Exit[],
+
 	removeChart: (id: string) => void;
 	updateChart: (id: string, payload: Partial<Chart<Timeframe>>) => void;
 };
+
+const SECOND = 1000;
+
+export function formatTime(unixEpoch: number) {
+	return new Date(unixEpoch * SECOND)
+		.toLocaleString('en-US', {
+			timeZone: "America/New_York",
+			day: "numeric",
+			month: "short",
+			year: "2-digit",
+			hour: "numeric",
+			minute: "2-digit"
+		});
+
+	return unixEpoch;
+}
 
 const epochToDateStr = (epochStr?: string) => {
 	if (!epochStr) return "";
@@ -48,6 +72,9 @@ const epochToDateStr = (epochStr?: string) => {
 };
 
 export default function ChartPreview({
+	stop,
+	target,
+
 	num,
 	symbol,
 	id,
@@ -55,6 +82,9 @@ export default function ChartPreview({
 	end,
 	timeframe,
 	disabled = false,
+
+	getEntry,
+	getExits,
 
 	removeChart,
 	updateChart,
@@ -77,7 +107,7 @@ export default function ChartPreview({
 		setLoading(true);
 		setError(null);
 
-		getCandlesForRange(symbol, Number(start), Number(end))
+		getCandlesForRange(symbol, timeframe, Number(start), Number(end))
 			.then((rows) => !cancelled && setCandles(rows))
 			.catch((e: any) => !cancelled && setError(e?.message ?? "Failed to load OHLCV"))
 			.finally(() => !cancelled && setLoading(false));
@@ -85,7 +115,7 @@ export default function ChartPreview({
 		return () => {
 			cancelled = true;
 		};
-	}, [symbol, id, start, end]);
+	}, [symbol, id, start, end, timeframe]);
 
 	useEffect(() => {
 		if (!containerRef.current || candles.length === 0) {
@@ -110,18 +140,17 @@ export default function ChartPreview({
 			timeScale: {
 				borderVisible: false,
 			},
+			localization: { timeFormatter: formatTime }
 		});
 
 		const series = chart.addSeries(CandlestickSeries, {});
 
 		series.setData(
 			candles.map((row) => {
-				const timeSeconds =
-					row.time > 2_000_000_000 ?
-						Math.floor(row.time / 1000) : row.time;
+				const timeSeconds = Math.floor(row.time / 1000);
 
 				return {
-					time: timeSeconds as any,
+					time: timeSeconds as UTCTimestamp,
 					open: row.open,
 					high: row.high,
 					low: row.low,
@@ -129,6 +158,8 @@ export default function ChartPreview({
 				};
 			})
 		);
+		
+		// const r = new TradePosition([getEntry(timeframe)], getExits(timeframe), stop, 'SELL', target);
 
 		chartRef.current = chart;
 

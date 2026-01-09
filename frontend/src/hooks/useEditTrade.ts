@@ -19,6 +19,8 @@ const useEditTrade = (tradeId?: number) => {
 	const {
 		orders,
 		orderSum,
+		getEntry,
+		getExits,
 		setOrders,
 		updateOrder,
 		addOrder,
@@ -181,7 +183,6 @@ const useEditTrade = (tradeId?: number) => {
 		setFormError(null);
 
 		try {
-			console.log(trade);
 			await editTrade(tradeId, trade);
 
 		} catch (e: any) {
@@ -205,6 +206,9 @@ const useEditTrade = (tradeId?: number) => {
 		orders,
 		orderSum,
 		isSupported,
+
+		getEntry,
+		getExits,
 
 		setStop,
 		setTarget,

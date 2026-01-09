@@ -82,3 +82,24 @@ model Chart {
 
 	@@index([tradeId])
 }
+
+enum FolderColor {
+	Grey
+	Yellow
+	Orange
+	Red
+}
+
+model NewsEvent {
+	id Int @id @default(autoincrement())
+
+	name   	String
+	eventTs DateTime @db.Timestamptz(6)
+
+	folderColor FolderColor
+	currencies  String[] @default([])
+
+	source String?
+
+	@@index([eventTs])
+}

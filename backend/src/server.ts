@@ -10,6 +10,7 @@ import candlesRouter from "./routes/candles";
 import tradesRouter  from "./routes/trades";
 import symbolsRouter from "./routes/symbols";
 import labelsRouter  from './routes/labels';
+import newsRouter    from "./routes/news";
 
 import "dotenv/config";
 
@@ -25,7 +26,7 @@ const buildApp = async () => {
 			colorize: true,
 		}
 	};
-	const server = Fastify({logger: { transport } });
+	const server = Fastify({ logger: { transport } });
 
 	await server.register(cors, {
 		origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
@@ -50,6 +51,7 @@ const buildApp = async () => {
 	await server.register(symbolsRouter, { prefix: '/symbols' });
 	await server.register(labelsRouter,  { prefix: '/labels'  });
 	await server.register(candlesRouter, { prefix: '/candles' });
+	await server.register(newsRouter,    { prefix: '/news'    });
 
 	server.get('/ping', async () => ({ message: 'pong', }));
 
@@ -60,11 +62,15 @@ const startServer = async () => {
 	const app = await buildApp();
 
 	try {
+
 		await app.listen({ port: PORT, host: '127.0.0.1', });
 		console.log('Server running on ' + PORT);
+
 	} catch (err) {
+
 		app.log.error(err);
 		process.exit(1);
+
 	}
 };
 

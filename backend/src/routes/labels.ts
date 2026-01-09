@@ -1,6 +1,6 @@
 import type { FastifyPluginAsync } from "fastify";
-import useLabels from "../database/labels";
 import { LabelWithId, LabelWithTradeIds, UpdateLabel } from "../../../shared/trades.types";
+import useLabels from "../database/labels";
 
 const router: FastifyPluginAsync = async (server) => {
 	const {

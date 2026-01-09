@@ -49,6 +49,9 @@ export default function TradePage() {
 		orders,
 		orderSum,
 
+		getEntry,
+		getExits,
+
 		setStop,
 		setTarget,
 		setDescription,
@@ -90,7 +93,6 @@ export default function TradePage() {
 			) : null}
 
 			<VStack align="stretch" gap={5}>
-				{/* Top row: Symbol / Stop / Target */}
 				<Flex gap={4} wrap="wrap" align="flex-end">
 					<SymbolSelect
 						symbols={symbols}
@@ -147,6 +149,10 @@ export default function TradePage() {
 				<Box borderBottomWidth="1px" />
 
 				<Charts
+					stop={Number(stop)}
+					target={target == '' ? undefined : Number(target)}
+					getEntry={getEntry}
+					getExits={getExits}
 					updateChart={updateChart}
 					removeChart={removeChart}
 					addChart={addChart}

@@ -1,16 +1,21 @@
 import { FastifyPluginAsync } from "fastify";
-import useCandleService from "../services/candles";
-import useCandles from "../database/candles";
 import { Timeframe } from "../../../shared/candles.types";
+
+import useCandles from "../database/candles";
 import useSymbols from "../database/symbols";
+import useCandleService from "../services/candles";
 
 const router: FastifyPluginAsync = async (server) => {
 	const {
-		isSymbolSupported, getCandlesInRange,
+		isSymbolSupported,
+		getCandlesInRange,
 	} = useCandles(server.duckdb);
 
 	const {
-		validateCandleLength, setTimeFrame,
+		validateCandleLength,
+		setTimeFrame,
+		fillBlanks,
+		tfToNumber,
 	} = useCandleService();
 
 	const { getSymbolById } = useSymbols(server.prisma);
@@ -37,10 +42,10 @@ const router: FastifyPluginAsync = async (server) => {
 		Body: { start: string, end: string; timeframe: string }
 	};
 	server.post<IPost>('/:symbol', async (req, reply) => {
-		const tfs = Object.keys(Timeframe);
+		const tfs = Object.values(Timeframe);
 		let { timeframe } = req.body;
 
-		if (timeframe != undefined && !tfs.includes(timeframe)) {
+		if (timeframe != undefined && !tfs.includes(timeframe as Timeframe)) {
 			const message = "Bad timeframe input!";
 			return reply.code(400).send({ message });
 		}
@@ -65,6 +70,9 @@ const router: FastifyPluginAsync = async (server) => {
 		
 		let candles = await getCandlesInRange(start, end, symbol);
 		candles = setTimeFrame(candles, timeframe as Timeframe);
+
+		const tf = tfToNumber(timeframe as Timeframe);
+		candles = fillBlanks(candles, tf);
 
 		return reply.code(200).send({ candles });
 	});

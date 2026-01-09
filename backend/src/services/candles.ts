@@ -38,7 +38,7 @@ const useCandleService = () => {
 	};
 
 	const numberToTf = (inp: number) => {
-		const tfs = Object.keys(Timeframe) as Timeframe[];
+		const tfs = Object.values(Timeframe);
 		const tfNumbers = tfs.map(tfToNumber);
 
 		const ret = tfNumbers.find(n => n == inp);
@@ -71,7 +71,35 @@ const useCandleService = () => {
 		return ret;
 	};
 
+	const _createInsertArr = (baseTime: number, n: number, frame: number) => {
+		const ret = new Array(n).fill(null);
+		return ret.map((_, i) =>
+			({ time: baseTime + (i + 1) * frame })
+		);
+	};
+
+	const fillBlanks = (candles: Candle[], frame: number) => {
+		if (candles.length < 2) return [];
+
+		for (let i = 1; i < candles.length; i++) {
+
+			const diff = candles[i].time - candles[i-1].time;
+			if (diff <= frame) continue;
+
+			const missing = Math.floor(diff / frame) - 1;
+			const time = candles[i-1].time;
+
+			const toInsert = _createInsertArr(time, missing, frame);
+			candles.splice(i, 0, ...toInsert as Candle[]);
+
+			i += missing;
+		}
+
+		return candles;
+	}
+
 	return {
+		fillBlanks,
 		setTimeFrame,
 		tfToNumber,
 		numberToTf,

@@ -36,6 +36,9 @@ export default function CreateTrade() {
 		orders,
 		orderSum,
 
+		getEntry,
+		getExits,
+
 		setStop,
 		setTarget,
 		setDescription,
@@ -124,7 +127,11 @@ export default function CreateTrade() {
 
 				<Box borderBottomWidth="1px" />
 
-				<Charts		
+				<Charts
+					stop={Number(stop)}
+					target={target == '' ? undefined : Number(target)}
+					getEntry={getEntry}
+					getExits={getExits}
 					updateChart={updateChart}
 					removeChart={removeChart}
 					addChart={addChart}

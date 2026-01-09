@@ -1,5 +1,5 @@
 import useApi from "./useApi";
-import type { Candle } from '../../../shared/candles.types';
+import type { Candle, Timeframe } from '../../../shared/candles.types';
 
 const useCandles = () => {
 	const api = useApi();
@@ -14,9 +14,10 @@ const useCandles = () => {
 		}
 	}
 
-	const getCandlesForRange = async (symbol: string, start: number, end: number): Promise<Candle[]> => {
+	const getCandlesForRange = async (symbol: string, timeframe: Timeframe, start: number, end: number): Promise<Candle[]> => {
 		try {
-			const { candles } = await api.post(path +`/${symbol}`, { start, end });
+			const payload = { start, end, timeframe };
+			const { candles } = await api.post(path +`/${symbol}`, payload);
 			return candles;
 		} catch (_err) {
 			return [];

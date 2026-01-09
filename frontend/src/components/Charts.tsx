@@ -3,7 +3,7 @@ import ChartPreview from './ChartPreview';
 import type { SymbolWithId, Chart } from '../../../shared/trades.types';
 import type { TempChart } from '../hooks/useTradeCharts';
 import EditButton from './EditButton';
-import type { Timeframe } from '../../../shared/candles.types';
+import type { Entry, Exit, Timeframe } from '../../../shared/candles.types';
 
 type Props = {
 	charts: TempChart[];
@@ -12,6 +12,12 @@ type Props = {
 
 	disabled?: boolean;
 	disabledForEdits: boolean;
+	
+	target?: number;
+	stop: number;
+
+	getEntry: (tf: Timeframe) => Entry,
+	getExits: (tf: Timeframe) => Exit[],
 	
 	addChart: () => void;
 	handleEditClick?: () => void;
@@ -23,6 +29,12 @@ export default function Charts({
 	symbols,
 	charts,
 	symbolId,
+
+	target,
+	stop,
+
+	getEntry,
+	getExits,
 	
 	disabledForEdits,
 	disabled = false,
@@ -69,6 +81,10 @@ export default function Charts({
 		<VStack align="stretch" gap={4} mt={charts.length ? 2 : 0}>
 		{charts.map((c, i) =>
 			<ChartPreview
+				stop={stop}
+				target={target}
+				getEntry={getEntry}
+				getExits={getExits}
 				num={i+1}
 				timeframe={c.timeframe}
 				symbol={symbols.find(s => s.id == Number(symbolId))!.name}

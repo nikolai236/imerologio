@@ -1,13 +1,14 @@
 import type { FastifyPluginAsync } from "fastify";
 
+import type { Chart, ChartWithId, Order, TradeWithOrders } from "../../../shared/trades.types";
+import { Timeframe } from "../../../shared/candles.types";
+
 import useSymbols from "../database/symbols";
 import useTrades from "../database/trades";
-import useTradeService from "../services/trades";
-
-import type { Chart, ChartWithId, Order, TradeWithOrders } from "../../../shared/trades.types";
 import useLabels from "../database/labels";
+
+import useTradeService from "../services/trades";
 import useCandleService from "../services/candles";
-import { Timeframe } from "../../../shared/candles.types";
 
 const router: FastifyPluginAsync = async (server) => {
 	const {
