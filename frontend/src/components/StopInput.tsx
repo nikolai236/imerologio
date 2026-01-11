@@ -1,21 +1,19 @@
 import { Box, Text, Input, Flex } from "@chakra-ui/react"
 import EditButton from "./EditButton";
+import useTradeContext from "../hooks/useTradeContext";
 
 type Props = {
-	stop: string;
 	disabled?: boolean;
-
 	handleEditClick?: () => void;
-	setStop: React.Dispatch<React.SetStateAction<string>>
 }
 
 export default function StopInput({
-	stop,
 	disabled = false,
-
 	handleEditClick,
-	setStop,
 }: Props) {
+	const { stop, setStop } = useTradeContext();
+	console.log(handleEditClick)
+
 	return (
 		<Box minW="160px">
 			<Text fontSize="sm" color="fg.muted" mb={1}>
@@ -29,6 +27,7 @@ export default function StopInput({
 				/>
 				<Input
 					value={stop}
+					disabled={disabled}
 					onChange={(e) => setStop(e.target.value)}
 					placeholder="e.g. 19250.25"
 				/>

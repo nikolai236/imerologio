@@ -17,16 +17,15 @@ import { $getRoot } from "lexical";
 import { ImageNode } from "./ImageNode";
 import ImageDropPasteUploadPlugin from "./ImageDropPasteUploadPlugin";
 import EditButton from "./EditButton";
+import useTradeContext from "../hooks/useTradeContext";
 
 type Props = {
-	valueHtml: string;
 	disabled?: boolean;
 	placeholder?: string;
 	minHeightPx?: number;
-	uploadUrl?: string; // default: /uploads/image
+	uploadUrl?: string;
 
 	handleEditClick?: () => void;
-	onChangeHtml: (html: string) => void;
 };
 
 const theme = {
@@ -45,7 +44,7 @@ function SetEditablePlugin({ disabled }: { disabled: boolean }) {
 	}, [editor, disabled]);
 
 	return null;
-	}
+}
 
 function HydrateHtmlPlugin({
 	valueHtml,
@@ -77,15 +76,15 @@ function HydrateHtmlPlugin({
 	return null;
 }
 
-export default function LexicalDescriptionEditor({
-	valueHtml,
-	onChangeHtml,
+export default function DescriptionEditor({
 	handleEditClick,
 	disabled = false,
 	placeholder = "Write notes… (drag & drop or paste images)",
 	minHeightPx = 180,
 	uploadUrl = "/uploads/image",
 }: Props) {
+	const { description, setDescription } = useTradeContext();
+
 	const initialConfig = useMemo(
 		() => ({
 			namespace: "trade-description",
@@ -122,7 +121,7 @@ export default function LexicalDescriptionEditor({
 			<Box borderWidth="1px" borderRadius="md" overflow="hidden">
 				<LexicalComposer initialConfig={initialConfig}>
 					<SetEditablePlugin disabled={disabled} />
-					<HydrateHtmlPlugin valueHtml={valueHtml} />
+					<HydrateHtmlPlugin valueHtml={description} />
 
 					<Box px={3} py={2}>
 						<RichTextPlugin
@@ -148,7 +147,7 @@ export default function LexicalDescriptionEditor({
 							onChange={(editorState, editor) => {
 								editorState.read(() => {
 									const html = $generateHtmlFromNodes(editor, null);
-									onChangeHtml(html);
+									setDescription(html);
 								});
 							}}
 						/>

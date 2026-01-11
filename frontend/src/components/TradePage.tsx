@@ -5,12 +5,18 @@ import {
 	Text,
 	VStack,
 } from "@chakra-ui/react";
-import { useMemo, useState } from "react";
-import useSingleEditor from "../hooks/useSingleEditor";
-import type { LabelWithId } from "../../../shared/trades.types";
-import useEditTrade from "../hooks/useEditTrade";
+import {
+	Children,
+	cloneElement,
+	useState,
+	type ReactElement,
+} from "react";
+
+import useEditLock from "../hooks/useEditLock";
+import useTradeContext from "../hooks/useTradeContext";
 import useFetchSymbols from "../hooks/useFetchSymbols";
 import useFetchLabels from "../hooks/useFetchLabels";
+
 import SelectLabels from "./SelectLabels";
 import DescriptionEditor from "./DescriptionEditor";
 import SelectLabelButton from "./SelectLabelButton";
@@ -19,7 +25,6 @@ import SymbolSelect from "./SymbolSelect";
 import StopInput from "./StopInput";
 import TargetInput from "./TargetInput";
 import Orders from "./Orders";
-import { useParams } from "react-router-dom";
 
 const Sections = {
 	symbol: "symbol",
@@ -32,53 +37,32 @@ const Sections = {
 } as const;
 
 export default function TradePage() {
-	const { id: tradeId } = useParams();
 	const { labels, loadingLabels   } = useFetchLabels();
 	const { symbols, loadingSymbols } = useFetchSymbols();
 
-	const {
-		formError,
-		submitting,
-
-		symbolId,
-		isSupported,
-		stop,
-		target,
-		description,
-		charts,
-		orders,
-		orderSum,
-
-		getEntry,
-		getExits,
-
-		setStop,
-		setTarget,
-		setDescription,
-		setSymbolId,
-
-		addChart,
-		removeChart,
-		updateChart,
-
-		updateOrder,
-		addOrder,
-		removeOrder,
-
-		submitTradeEdit,
-	} = useEditTrade(Number(tradeId));
-
-	const { isActive, setActive, lockAll } = useSingleEditor();
+	const { formError, submitting, submitTradeEdit } = useTradeContext();
+	const { isActive, setActive, lockAll } = useEditLock();
 
 	const [labelsOpen, setLabelsOpen] = useState(false);
-	const [selectedLabelIds, setSelectedLabelIds] = useState<number[]>([]);
 
-	const selectedLabels = useMemo(
-		() => selectedLabelIds
-			.map((id) => labels.find((l) => l.id === id))
-			.filter(Boolean) as LabelWithId[],
-		[selectedLabelIds, labels]
-	);
+	type WrapperChildBase = {
+		disabled: boolean;
+		handleEditClick?: () => void
+	};
+
+	type WrapperProps<P extends WrapperChildBase> = {
+		section: typeof Sections[keyof typeof Sections];
+		children: ReactElement<P>;
+	};
+
+	function SectionWrapper<P extends WrapperChildBase>({ section, children }: WrapperProps<P>) {
+		const child = Children.only(children);
+
+		return cloneElement(child, {
+			disabled: !isActive(section),
+			handleEditClick: setActive(section),
+		} as P);
+	}
 
 	return (
 		<Box p={6} maxW="1000px" mx="auto">
@@ -94,76 +78,46 @@ export default function TradePage() {
 
 			<VStack align="stretch" gap={5}>
 				<Flex gap={4} wrap="wrap" align="flex-end">
-					<SymbolSelect
-						symbols={symbols}
-						loading={loadingSymbols}
-						symbolId={symbolId}
-						handleEditClick={setActive(Sections.symbol)}
-						disabled={!isActive(Sections.symbol)}
-						setSymbolId={setSymbolId} />
 
-					<StopInput
-						stop={stop}
-						setStop={setStop}
-						handleEditClick={setActive(Sections.stop)}
-						disabled={!isActive(Sections.stop)} />
+					<SectionWrapper section={Sections.symbol}>
+						<SymbolSelect symbols={symbols} loading={loadingSymbols} />
+					</SectionWrapper>
 
-					<TargetInput
-						target={target}
-						setTarget={setTarget} 
-						handleEditClick={setActive(Sections.target)}
-						disabled={!isActive(Sections.target)} />
+					<SectionWrapper section={Sections.stop}>
+						<StopInput />
+					</SectionWrapper>
+
+					<SectionWrapper section={Sections.target}>
+						<TargetInput />
+					</SectionWrapper>
 
 				</Flex>
 
-				<SelectLabelButton
-					selectedIds={selectedLabelIds}
-					selected={selectedLabels}
-					loading={loadingLabels}
-					handleEditClick={setActive(Sections.labels)}
-					disabled={!isActive(Sections.labels)}
-					setOpen={setLabelsOpen}
-					setLabelIds={setSelectedLabelIds} />
+				<SectionWrapper section={Sections.labels}>
+					<SelectLabelButton
+						loading={loadingLabels}
+						setOpen={setLabelsOpen}
+						labels={labels} />
+				</SectionWrapper>
 
 				<Box borderBottomWidth="1px" />
 
-				<Orders
-					removeOrder={removeOrder}
-					addOrder={addOrder}
-					orders={orders}
-					orderSum={orderSum}
-					handleEditClick={setActive(Sections.orders)}
-					disabled={!isActive(Sections.orders)}
-					updateOrder={updateOrder} />
+				<SectionWrapper section={Sections.orders}>
+					<Orders />
+				</SectionWrapper>
+				
 
 				<Box borderBottomWidth="1px" />
 
-				<DescriptionEditor
-					valueHtml={description}
-					onChangeHtml={setDescription}
-					placeholder="Write your trade notes…"
-					handleEditClick={setActive(Sections.description)}
-					disabled={!isActive(Sections.description)}
-					/>
+				<SectionWrapper section={Sections.description}>
+					<DescriptionEditor placeholder="Write your trade notes…" />
+				</SectionWrapper>
 
 				<Box borderBottomWidth="1px" />
 
-				<Charts
-					stop={Number(stop)}
-					target={target == '' ? undefined : Number(target)}
-					getEntry={getEntry}
-					getExits={getExits}
-					updateChart={updateChart}
-					removeChart={removeChart}
-					addChart={addChart}
-					
-					handleEditClick={setActive(Sections.charts)}
-					disabled={!isActive(Sections.charts)}
-
-					disabledForEdits={!isSupported}
-					charts={charts}
-					symbols={symbols}
-					symbolId={symbolId} />
+				<SectionWrapper section={Sections.charts}>
+					<Charts symbols={symbols} />
+				</SectionWrapper>
 
 				<Box borderBottomWidth="1px" />
 
@@ -171,7 +125,11 @@ export default function TradePage() {
 					<Button variant="outline" onClick={lockAll}>
 						Cancel
 					</Button>
-					<Button onClick={submitTradeEdit} loading={submitting} disabled={submitting}>
+					<Button
+						onClick={submitTradeEdit}
+						loading={submitting}
+						disabled={submitting}
+					>
 						Submit Change
 					</Button>
 				</Flex>
@@ -180,10 +138,7 @@ export default function TradePage() {
 			<SelectLabels
 				labels={labels}
 				open={labelsOpen}
-				selectedIds={selectedLabelIds}
-				setSelectedIds={setSelectedLabelIds}
 				setOpen={setLabelsOpen} />
-
 		</Box>
 	);
 }

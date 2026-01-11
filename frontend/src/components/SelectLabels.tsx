@@ -15,29 +15,25 @@ import {
 	DialogContent,
 	DialogCloseTrigger,
 } from '@chakra-ui/react';
-import { useState, type Dispatch, type SetStateAction, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import type { LabelWithId } from '../../../shared/trades.types';
+import useTradeContext from '../hooks/useTradeContext';
 
 type Props = {
 	labels: LabelWithId[];
 	open: boolean;
-	selectedIds: number[];
 	disabled?: boolean;
-
 	handleEditClick?: () => void;
-	setSelectedIds: Dispatch<SetStateAction<number[]>>;
 	setOpen: (val: boolean) => void;
 }
 
 export default function SelectLabels({
 	open,
-	selectedIds,
 	labels,
-
-	setSelectedIds,
 	setOpen,
 }: Props) {
 	const [query, setQuery] = useState('');
+	const { selectedLabelIds: selectedIds, setSelectedLabelIds: setSelectedIds } = useTradeContext();
 
 	const filtered = useMemo(() => {
 		const q = query.trim().toLowerCase();

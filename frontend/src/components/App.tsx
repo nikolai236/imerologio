@@ -3,8 +3,8 @@ import Trades from "./Trades";
 import Navbar from "./Navbar";
 import Symbols from "./Symbols";
 import Labels from "./Labels";
-import CreateTrade from "./CreateTrade";
-import TradePage from "./TradePage";
+import TradePageOuter from "./TradePageOuter";
+import CreateTradePageOuter from "./CreateTradePageOuter";
 
 function RootLayout() {
 	return (<>
@@ -20,8 +20,8 @@ export default function App() {
 				<Route path='/' element={<Navigate to='/trades' replace />} />
 				<Route path='trades'>
 					<Route index element={<Trades />} />
-					<Route path='create' element={<CreateTrade />} />
-					<Route path="/trades/:id" element={<TradePage />} />
+					<Route path='create' element={<CreateTradePageOuter />} />
+					<Route path="/trades/:id" element={<TradePageOuter />} />
 				</Route>
 				<Route path='symbols' element={<Symbols />} />
 				<Route path='labels' element={<Labels />} />

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
 	Box,
 	Flex,
@@ -8,24 +8,23 @@ import {
 	Text,
 } from "@chakra-ui/react";
 import useLabels from "../hooks/useLabels";
-import type { Label, LabelWithId, LabelWithTradeIds } from "../../../shared/trades.types";
-import useReload from "../hooks/useReload";
+import type { LabelWithId, LabelWithTradeIds } from "../../../shared/trades.types";
 import LabelRow from "./LabelRow";
 import useRowErrors from "../hooks/useRowErrors";
 import CreateLabel from "./CreateLabel";
+import useFetchLabels from "../hooks/useFetchLabels";
 
 export default function Labels() {
 	const {
-		getLabels,
 		deleteLabel,
 		updateLabel,
 		createLabel,
 	} = useLabels();
-	const [token, reload] = useReload();
+
 	const { rowErrorById, setRowError, clearRowError } = useRowErrors();
+	const { labels, reload } = useFetchLabels();
 
 	const [draftName, setDraftName] = useState('');
-	const [labels,    setLabels]    = useState<LabelWithId[]>([]);
 	const [editingId, setEditingId] = useState<number|null>(null);
 
 	const startEdit = (label: LabelWithId) => {
@@ -46,7 +45,9 @@ export default function Labels() {
 	};
 
 	const onDelete = (id: number) => {
-		deleteLabel(id).then(() => reload()).catch(console.error);
+		deleteLabel(id)
+			.then(() => reload())
+			.catch(console.error);
 	};
 
 	const saveNewLabel = async (label: LabelWithTradeIds) => {
@@ -55,7 +56,8 @@ export default function Labels() {
 		}
 
 		const hasDuplicate = labels
-			// .filter(l => l != label)
+			// @ts-ignore
+			.filter(l => l != label)
 			.some(s => s.name == label.name);
 
 		if (hasDuplicate) {
@@ -96,10 +98,6 @@ export default function Labels() {
 		setEditingId(null);
 	};
 
-	useEffect(() => {
-		getLabels().then(setLabels).catch(console.error);
-	}, [token]);
-
 	return (
 		<Box p={6}>
 			<Flex align="center" mb={4}>
@@ -109,21 +107,22 @@ export default function Labels() {
 			</Flex>
 
 			<Stack gap={3}>
-						{labels.map((l) => {
-										const isEditing = editingId === l.id
-					return (
+			{labels.map((l) => {
+				const isEditing = editingId === l.id
+				return (
 					<LabelRow
-							key={l.id}
-							label={l}
-							isEditing={isEditing}
-							draftName={isEditing ? draftName : l.name}
-							error={rowErrorById[l.id] ?? null}
-							onDelete={onDelete}
-							onStartEdit={startEdit}
-							onCancelEdit={cancelEdit}
-							onDraftNameChange={onDraftNameChange}
-							onSave={saveEdit}
-						/>) })}
+						key={l.id}
+						label={l}
+						isEditing={isEditing}
+						draftName={isEditing ? draftName : l.name}
+						error={rowErrorById[l.id] ?? null}
+						onDelete={onDelete}
+						onStartEdit={startEdit}
+						onCancelEdit={cancelEdit}
+						onDraftNameChange={onDraftNameChange}
+						onSave={saveEdit}
+					/>)
+			})}
 			</Stack>
 			<CreateLabel onCreate={saveNewLabel} />
 		</Box>

@@ -5,7 +5,7 @@ export type SymbolEnum = 'CFD' | 'Futures';
 
 export interface Order {
 	quantity: number;
-	date: Date;
+	date: number;
 	price: number;
 	type: OrderEnum;
 }

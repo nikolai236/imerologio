@@ -1,31 +1,42 @@
 import { Box, Flex, Text, Button, HStack, Tag, CloseButton } from "@chakra-ui/react"
 import EditButton from "./EditButton"
 import type { LabelWithId } from "../../../shared/trades.types";
+import useTradeContext from "../hooks/useTradeContext";
+import { useMemo } from "react";
 
 type Props = {
 	loading: boolean;
-	selected: LabelWithId[];
-	selectedIds: number[];
 	disabled?: boolean;
+	labels: LabelWithId[];
 
-	setLabelIds: React.Dispatch<React.SetStateAction<number[]>>
 	handleEditClick?: ()=>void;
 	setOpen: (val: boolean) => void;
 }
 
 export default function SelectLabelButton({
-	selectedIds,
 	loading,
 	disabled=false,
-	selected,
+	labels,
 
 	setOpen,
-	setLabelIds,
 	handleEditClick,
 }: Props) {
+	const {
+		selectedLabelIds: selectedIds,
+		setSelectedLabelIds: setLabelIds,
+	} = useTradeContext();
+
 	const removeLabel = (id: number) => setLabelIds(
 		(prev) => prev.filter((x) => x !== id)
 	);
+
+	const selected = useMemo(
+		() => selectedIds
+			.map((id) => labels.find((l) => l.id === id)!)
+			.filter(Boolean),
+		[selectedIds, labels]
+	);
+
 	return (
 		<Box>
 			<Flex align="center" justify="space-between" wrap="wrap" gap={3}>

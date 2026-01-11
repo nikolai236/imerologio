@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react"
 import type { SymbolWithId } from "../../../shared/trades.types"
 import useSymbols from "./useSymbols";
+import useReload from "./useReload";
 
 const useFetchSymbols = () => {
 	const { getSymbols } = useSymbols();
+	const [reloadToken, reload] = useReload();
+
 	const [loading, setLoading] = useState(false);
 	const [symbols, setSymbols] = useState<SymbolWithId[]>([]);
 
@@ -12,12 +15,13 @@ const useFetchSymbols = () => {
 		getSymbols()
 			.then(setSymbols)
 			.catch(console.error)
-			.then(() => setLoading(false));
-	}, []);
+			.finally(() => setLoading(false));
+	}, [reloadToken]);
 
 	return {
 		symbols,
 		loadingSymbols: loading,
+		reload,
 	};
 }
 

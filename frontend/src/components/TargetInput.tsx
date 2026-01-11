@@ -1,21 +1,18 @@
 import { Box, Text, Input, Flex } from "@chakra-ui/react"
 import EditButton from "./EditButton";
+import useTradeContext from "../hooks/useTradeContext";
 
 type Props = {
-	target: string;
 	disabled?: boolean;
-
 	handleEditClick?: () => void;
-	setTarget: React.Dispatch<React.SetStateAction<string>>
 }
 
 export default function TargetInput({
-	target,
 	disabled = false,
-
 	handleEditClick,
-	setTarget,
 }: Props) {
+	const { target, setTarget } = useTradeContext();
+
 	return (
 		<Box minW="160px">
 			<Text fontSize="sm" color="fg.muted" mb={1}>
@@ -29,10 +26,10 @@ export default function TargetInput({
 				/>
 				<Input
 					value={target}
+					disabled={disabled}
 					onChange={(e) => setTarget(e.target.value)}
 					placeholder="e.g. 19310.00"
 				/>
 			</Flex>
-
-		</Box>)
+		</Box>);
 }

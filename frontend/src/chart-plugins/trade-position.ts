@@ -30,7 +30,7 @@ export default class TradePosition extends PluginBase {
 		target?: number,
 	) {
 		if (entries.length == 0 || exits.length == 0) {
-			throw new Error("Invalid properties passed to LongPosition");
+			throw new Error("Invalid properties passed to TradePosition");
 		}
 		if (entries.length > 1) {
 			throw new Error("Not implemented");

@@ -10,17 +10,16 @@ import {
 import SymbolRow from "./SymbolRow";
 import { type SymbolEnum, type SymbolWithId, type Symbol } from "../../../shared/trades.types";
 import useSymbols from "../hooks/useSymbols";
-import CreateSymbol from "./CreateSymbol";
-import useReload from "../hooks/useReload";
+import CreateSymbolPage from "./CreateSymbol";
 import useRowErrors from "../hooks/useRowErrors";
+import useFetchSymbols from "../hooks/useFetchSymbols";
 
 export default function Symbols() {
-	const { updateSymbol, getSymbols, createSymbol } = useSymbols();
-	const [token, reload] = useReload();
+	const { updateSymbol, createSymbol } = useSymbols();
 	const { rowErrorById, setRowError, clearRowError } = useRowErrors();
+	const { symbols, reload } = useFetchSymbols();
 
 	const [draftName,    setDraftName] = useState('');
-	const [symbols,      setSymbols]   = useState<SymbolWithId[]>([]);
 	const [editingId,    setEditingId] = useState<number|null>(null);
 	const [draftType,    setDraftType] = useState<SymbolEnum>('Futures');
 
@@ -95,10 +94,6 @@ export default function Symbols() {
 		setEditingId(null);
 	};
 
-	useEffect(() => {
-		getSymbols().then(setSymbols);
-	}, [token]);
-
 	return (
 		<Box p={6}>
 			<Flex align="center" mb={4}>
@@ -124,7 +119,7 @@ export default function Symbols() {
 							onSave={saveEdit}
 						/>) })}
 			</Stack>
-			<CreateSymbol onCreate={saveNewSymbol} />
+			<CreateSymbolPage onCreate={saveNewSymbol} />
 		</Box>
 	);
 }

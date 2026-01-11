@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { Chart, ChartWithId, Order, TradeWithOrders } from "../../../shared/trades.types";
+import type { Chart, Order, TradeFullWithId, TradeWithOrders } from "../../../shared/trades.types";
 import useTradeOrders from "./useTradeOrders";
 import type { Timeframe } from "../../../shared/candles.types";
 import useTradeCharts from "./useTradeCharts";
@@ -59,30 +59,18 @@ const useEditTrade = (tradeId?: number) => {
 		setCharts([]);
 	};
 
-	useEffect(() => {
-		if (tradeId == null) {
-			setNull();
-			return;
-		}
+	const retrieveTradeValues = (t: TradeFullWithId<Chart<Timeframe>, Order>) => {
+		const ids = t.labels.map(({ id }) => id);
 
-		getTrade(tradeId)
-			.then(t => {
-				const ids = t.labels.map(({ id }) => id);
+		setSymbolId(t.symbolId.toString());
+		setStop(t.stop.toString());
+		setTarget(t.target?.toString() ?? '');
+		setDescription(t.description ?? '');
 
-				setSymbolId(t.symbolId.toString());
-				setStop(t.stop.toString());
-				setTarget(t.target?.toString() ?? '');
-				setDescription(t.description ?? '');
-
-				setSelectedLabelIds(ids);
-				setOrders(t.orders);
-				setCharts(t.charts);
-			})
-			.catch((err) => {
-				console.error(err);
-				setNull();
-			});
-	}, [reloadToken]);
+		setSelectedLabelIds(ids);
+		setOrders(t.orders);
+		setCharts(t.charts);
+	};
 
 	const validate = () => {
 		setFormError(null);
@@ -136,7 +124,7 @@ const useEditTrade = (tradeId?: number) => {
 			throw new Error("Quantities should be whole numbers >= 1")
 		}
 
-		const orderThrowCond = (o: Order) => [o.price, o.quantity, o.date.getTime()].some(r => isNaN(r))
+		const orderThrowCond = (o: Order) => [o.price, o.quantity, o.date].some(r => isNaN(r))
 		if (validatedOrders.some(orderThrowCond)) {
 			throw new Error("Trade value is not a number");
 		}
@@ -194,6 +182,20 @@ const useEditTrade = (tradeId?: number) => {
 		}
 	};
 
+	useEffect(() => {
+		if (tradeId == null) {
+			setNull();
+			return;
+		}
+
+		getTrade(tradeId)
+			.then(retrieveTradeValues)
+			.catch((err) => {
+				console.error(err);
+				setNull();
+			});
+	}, [reloadToken]);
+
 	return {
 		formError,
 		submitting,
@@ -206,6 +208,7 @@ const useEditTrade = (tradeId?: number) => {
 		orders,
 		orderSum,
 		isSupported,
+		selectedLabelIds,
 
 		getEntry,
 		getExits,
@@ -222,7 +225,8 @@ const useEditTrade = (tradeId?: number) => {
 		addOrder,
 		removeOrder,
 
-		submit: submitNewTrade,
+		setSelectedLabelIds,
+		submitNewTrade,
 		submitTradeEdit,
 		setSymbolId
 	};

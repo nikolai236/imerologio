@@ -31,12 +31,17 @@ export default function ImageDropPasteUploadPlugin({
 			try {
 				const urls = await Promise.all(images
 					.filter(i => i.size <= maxBytes)
-					.map(i => api.postFile(uploadUrl, i).then(({ url }) => url ))
+					.map(i =>
+						api.postFile(uploadUrl, i)
+							.then(({ url }) => url )
+					)
 				);
 
 				if (urls.length > 0) {
 					editor.update(() => {
-						$insertNodes(urls.map(url => $createImageNode({ src: url })));
+						$insertNodes(urls.map(url =>
+							$createImageNode({ src: url })
+						));
 
 						const p = $createParagraphNode();
 						$insertNodes([p]);

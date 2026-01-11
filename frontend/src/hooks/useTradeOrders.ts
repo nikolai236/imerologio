@@ -1,33 +1,26 @@
 import { useState, useMemo } from "react";
 import type { Order } from "../../../shared/trades.types";
 import type { Entry, Exit, Timeframe } from "../../../shared/candles.types";
-import useTimeframe from "./useTimeFrame";
+import useTimeframe from "./useTimeframe";
 import type { UTCTimestamp } from "lightweight-charts";
 
 export type TempOrder = Omit<Order, 'price'|'quantity'> & {
 	tempId: string;
 	quantity: string;
 	price: string;
-}
+};
 
-const useTradeOrders = (date: Date, inp?: Order[]) => {
-	let initial: TempOrder[] = [];
-	if (inp != null) {
-		initial = inp.map(o => ({
-			...o, tempId: _uid(), price: String(o.price), quantity: String(o.quantity)
-		}));
-	}
-
+const useTradeOrders = (date: Date) => {
 	const { normalizeEntries, normalizeEntry } = useTimeframe();
 
-	const [orders, setOrders] = useState<TempOrder[]>(initial);
+	const [orders, setOrders] = useState<TempOrder[]>([]);
 
 	const _uid = () =>
 		Math.random().toString(16).slice(2) +
 		Date.now().toString(16);
 
 	const _getDefaultOrder = (orders: TempOrder[]): TempOrder => orders.length == 0 ?
-		{ date, price: '0', type: 'BUY', quantity: '1', tempId: _uid(), } :
+		{ date: date.getTime(), price: '0', type: 'BUY', quantity: '1', tempId: _uid(), } :
 		{ ...orders.at(-1)!, tempId: _uid() };
 
 	const _calculateOrderSum = () => orders.reduce((prev, { type, quantity }) =>
@@ -35,7 +28,9 @@ const useTradeOrders = (date: Date, inp?: Order[]) => {
 	);
 
 	const updateOrder = (id: string, payload: Partial<TempOrder>) => setOrders(
-		orders => orders.map(o => o.tempId != id ? o : { ...o, ...payload, tempId: id })
+		orders => orders
+			.map(o => o.tempId != id ? o : { ...o, ...payload, tempId: id })
+			.sort((a, b) => a.date - b.date),
 	);
 
 	const addOrder = () => setOrders(
@@ -46,9 +41,16 @@ const useTradeOrders = (date: Date, inp?: Order[]) => {
 		orders => orders.filter(o => o.tempId != id)
 	);
 
-	const overwriteOrders = (orders: Order[]) => setOrders(orders.map(o => ({
-		...o, tempId: _uid(), price: String(o.price), quantity: String(o.quantity)
-	})));
+	const overwriteOrders = (orders: Order[]) => setOrders(
+		orders
+			.map(o => ({
+				...o,
+				tempId: _uid(),
+				price: String(o.price),
+				quantity: String(o.quantity),
+			}))
+			.sort((a, b) => a.date - b.date)
+	);
 
 	const getExits = (tf: Timeframe) => {
 		if (orders.length == 0 || orderSum != 0) {
@@ -60,7 +62,7 @@ const useTradeOrders = (date: Date, inp?: Order[]) => {
 			.filter(o => o.type != direction)
 			.map(({ price, date, quantity }) => ({ price, time: date, quantity }))
 			.map(o => ({ ...o, quantity: -o.quantity, price: Number(o.price) }))
-			.map(o => ({ ...o, time: Math.floor(o.time.getTime() / 1000) as UTCTimestamp }));
+			.map(o => ({ ...o, time: Math.floor(o.time / 1000) as UTCTimestamp }));
 
 		return normalizeEntries(ret, tf) as Exit[];
 	};
@@ -69,7 +71,7 @@ const useTradeOrders = (date: Date, inp?: Order[]) => {
 		const [order] = orders;
 		const ret = {
 			price: Number(order.price),
-			time: Math.floor(order.date.getTime() / 1000) as UTCTimestamp,
+			time: Math.floor(order.date / 1000) as UTCTimestamp,
 			quantity: Number(order.quantity)
 		};
 		return normalizeEntry(ret, tf) as Entry;

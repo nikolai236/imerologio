@@ -1,49 +1,32 @@
 import { Box, Flex, NativeSelect, VStack, Text, Input, Button } from '@chakra-ui/react'
-import type { Order, OrderEnum } from '../../../shared/trades.types';
-import type { TempOrder } from '../hooks/useTradeOrders';
+import type { OrderEnum } from '../../../shared/trades.types';
 import EditButton from './EditButton';
+import useTradeContext from '../hooks/useTradeContext';
+import useTimezones from '../hooks/useTimezones';
 
 type Props = {
-	orderSum: number;
-	orders: TempOrder[];
 	disabled?: boolean;
-
 	handleEditClick?: () => void,
-	addOrder: () => void,
-	removeOrder: (id: string) => void;
-	updateOrder: (id: string, payload: Partial<TempOrder>) => void;
-};
-
-const epochToDateStr = (epoch?: string) => {
-	if (epoch == null) return "";
-
-	const d = new Date(epoch);
-
-	const parts = new Intl.DateTimeFormat("en-US", {
-		timeZone: "America/New_York",
-		year: "numeric",
-		month: "2-digit",
-		day: "2-digit",
-		hour: "2-digit",
-		minute: "2-digit",
-		hour12: false,
-	}).formatToParts(d);
-
-	const get = (t: string) => parts.find(p => p.type === t)?.value ?? "";
-
-	return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`;
 };
 
 export default function Orders({
-	orders,
-	orderSum,
 	disabled = false,
-
-	updateOrder,
-	addOrder,
-	removeOrder,
 	handleEditClick,
 }: Props) {
+	const {
+		epochToDateStrInTZ,
+		dateStrToDateInTZ
+	} = useTimezones();
+
+	const {
+		orders,
+		orderSum,
+
+		updateOrder,
+		addOrder,
+		removeOrder
+	} = useTradeContext();
+
 	return (
 		<Box>
 			<Flex align="center" justify="space-between" wrap="wrap" gap={3} mb={3}>
@@ -118,8 +101,8 @@ export default function Orders({
 						<Input
 							disabled={disabled}
 							type="datetime-local"
-							value={epochToDateStr(o.date != undefined ? o.date.toString() : o.date)}
-							onChange={(e) => updateOrder(o.tempId, { date: new Date(e.target.value) })}
+							value={epochToDateStrInTZ(o.date != undefined ? Number(o.date) : o.date)}
+							onChange={(e) => updateOrder(o.tempId, { date: dateStrToDateInTZ(e.target.value) })}
 						/>
 						</Box>
 
@@ -127,7 +110,7 @@ export default function Orders({
 							colorScheme="red"
 							variant="outline"
 							onClick={() => removeOrder(o.tempId)}
-							disabled={disabled || orders.length <= 1}
+							disabled={disabled}
 							title={orders.length <= 1 ? "Must have at least one order" : ""}
 						> Remove </Button>
 

@@ -26,7 +26,7 @@ type Props = {
 	disabled?: boolean;
 };
 
-export default function CreateSymbol({
+export default function CreateSymbolPage({
 	onCreate,
 	defaultType="Futures",
 	disabled=false,

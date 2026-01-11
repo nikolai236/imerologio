@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
 import type { LabelWithId } from "../../../shared/trades.types";
 import useLabels from "./useLabels";
+import useReload from "./useReload";
 
 
 const useFetchLabels = () => {
 	const { getLabels } = useLabels();
+	const [reloadToken, reload] = useReload();
+
 	const [loading, setLoading] = useState(false);
 	const [labels, setLabels] = useState<LabelWithId[]>([]);
 
@@ -13,12 +16,13 @@ const useFetchLabels = () => {
 		getLabels()
 			.then(setLabels)
 			.catch(console.error)
-			.then(() => setLoading(false));
-	}, []);
+			.finally(() => setLoading(false));
+	}, [reloadToken]);
 
 	return {
 		labels,
 		loadingLabels: loading,
+		reload,
 	};
 }
 
