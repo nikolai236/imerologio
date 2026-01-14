@@ -1,4 +1,4 @@
-import type { LabelWithId, LabelWithTradeIds, UpdateLabel } from "../../../shared/trades.types";
+import type { DbLabel, Label, UpdateLabel } from "../../../shared/trades.types";
 import useApi from "./useApi";
 
 const useLabels = () => {
@@ -7,17 +7,17 @@ const useLabels = () => {
 
 	const getLabels = async () => {
 		const { labels } = await api.get(path);
-		return labels as LabelWithId[];
+		return labels as DbLabel[];
 	};
 
-	const createLabel = async (payload: LabelWithTradeIds) => {
+	const createLabel = async (payload: Label) => {
 		const { label } = await api.post(path, payload);
-		return label as LabelWithId;
+		return label as DbLabel;
 	};
 
 	const updateLabel = async (id:number, payload: UpdateLabel) => {
 		const { label } = await api.patch(path + `/${id}`, payload);
-		return label;
+		return label as DbLabel;
 	};
 
 	const deleteLabel = async (id: number) => {
@@ -25,7 +25,10 @@ const useLabels = () => {
 	};
 
 	return {
-		getLabels, createLabel, updateLabel, deleteLabel
+		getLabels,
+		createLabel,
+		updateLabel,
+		deleteLabel,
 	};
 };
 

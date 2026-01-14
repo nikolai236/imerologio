@@ -1,16 +1,31 @@
 import { Table } from "@chakra-ui/react";
-import type { TradeWithId, TradeWithOrders } from "../../../shared/trades.types";
+import type { DbTradeEntry } from "../../../shared/trades.types";
+import useTimezones from "../hooks/useTimezones";
+import { useNavigate } from "react-router-dom";
 
-export default function TradeRow(props: { trade: TradeWithId }) {
-  const { trade } = props;
-  const direction = trade.orders[0].type == 'BUY' ? 'Long' : 'Short';
+export default function TradeRow({ trade }: { trade: DbTradeEntry }) {
+	const { epochToDateStrInTZ } = useTimezones();
 
-  return (
-    <Table.Row>
-      <Table.Cell>{trade.symbolId}</Table.Cell>
-      <Table.Cell>{trade.orders[0].date.toISOString()}</Table.Cell>
-      <Table.Cell>{direction}</Table.Cell>
-      <Table.Cell textAlign="end">{trade.pnl}</Table.Cell>
-    </Table.Row>
-  );
+	const dateStr = trade.orders.length > 0 ?
+		epochToDateStrInTZ(new Date(trade.orders[0].date).getTime()) : null;
+
+	const direction = trade.orders[0].type == 'BUY' ? 'Long' : 'Short';
+
+	const navigate = useNavigate();
+	const goToTradePage = () => navigate(`/trades/${trade.id}`);
+
+	return (
+		<Table.Row onClick={goToTradePage}>
+			<Table.Cell> {trade.id} </Table.Cell>
+			<Table.Cell> {trade.symbolId} </Table.Cell>
+			<Table.Cell> {dateStr} </Table.Cell>
+			<Table.Cell> {direction} </Table.Cell>
+			<Table.Cell
+				textAlign="end"
+				color={!trade.pnl ? 'black' : trade.pnl > 0 ? 'green' : 'red'}
+			>
+				{trade.pnl}
+			</Table.Cell>
+		</Table.Row>
+	);
 }

@@ -1,10 +1,10 @@
-import { type TradeWithOrders, type Order } from "../../../shared/trades.types";
+import type { Order, } from "../../../shared/trades.types";
 
 
 const useTradeService = () => {
-	const _mult = (o: Order) => o.type == 'BUY' ? 1 : -1;
+	const _mult = (o: Order<any>) => o.type == 'BUY' ? 1 : -1;
 
-	const parseOrders = <T extends Order>(orders: T[]) => orders.map(o => ({
+	const parseOrders = (orders: (Order<number> & { id?: number; })[]) => orders.map(o => ({
 		...o,
 		id: ('id' in o) ? Number(o.id) : undefined,
 		quantity: Number(o.quantity),
@@ -12,12 +12,10 @@ const useTradeService = () => {
 		price:    Number(o.price),
 	}));
 
-	const calculatePnL = (trade: TradeWithOrders<any>) => {
-		const sum = trade.orders.reduce((prev, o) => {
+	const calculatePnL = (orders: Order<Date>[]) => {
+		return orders.reduce((prev, o) => {
 			return prev - _mult(o) * o.quantity * o.price;
 		}, 0);
-		trade.pnl = sum;
-		return sum;
 	};
 
 	const validateOrderQuantities = (orders: Order[]) => {

@@ -1,5 +1,5 @@
 import type { Prisma, PrismaClient } from '@prisma/client'
-import type { TradeWithOrders, TradeFullWithId, OrderWithId, Chart, Order, ChartWithId } from '../../../shared/trades.types';
+import type { Trade, DbTrade, DbOrder, Chart, Order, DbChart, ChartUnion, OrderUnion, TradeEntry, DbTradeEntry, ApiTrade } from '../../../shared/trades.types';
 
 const useTrades = (db: PrismaClient) => {
 	const include = {
@@ -9,35 +9,37 @@ const useTrades = (db: PrismaClient) => {
 		charts: true,
 	};
 
-	const _cleanOrder = (o: any): OrderWithId => ({
+	const _cleanOrder = (o: any): DbOrder<number> => ({
 		...o,
 		quantity: Number(o.quantity),
 		price: Number(o.price),
-		date: new Date(o.date),
+		date: new Date(o.date).getTime(),
 	});
 
-	const _produceIncludeObj = <T extends { id?: number }>(elements: T[]) => {
+	const _produceIncludeObj = <T extends {}>(elements: T[]) => {
 		const existingIds = elements
-			.map(c => c.id)
+			.map(c => 'id' in c ? c.id : null)
 			.filter((id): id is number => id != null);
 
 		const deleteMany = existingIds.length > 0 ?
 			{ id: { notIn: existingIds } } : {}
 
-		const upsert = elements.filter(c => c.id != null).map(c => ({
+		type DbObj = T & { id: number };
+		const upsert = elements.filter((c): c is DbObj => 'id' in c).map(c => ({
 			where: { id: c.id },
 			create: { ...c, id: undefined },
 			update: { ...c, id: undefined },
 		}));
 
 		const create = elements
-			.filter(c => c.id == null)
+			.filter(c => !('id' in c))
 			.map(c => ({ ...c }));
 
 		return { deleteMany, create, upsert };
 	};
 
-	const _cleanTrade = (t: any): TradeFullWithId => ({
+	type TradeReturnType = DbTrade<ChartUnion<number>, OrderUnion<Date>>;
+	const _cleanTrade = (t: any): TradeReturnType => ({
 		...t,
 		stop: Number(t.stop),
 		pnl: t.pnl && Number(t.pnl),
@@ -46,7 +48,7 @@ const useTrades = (db: PrismaClient) => {
 	});
 
 	const getAllTrades = async () => {
-		const trades = await db.$queryRaw<TradeWithOrders[]>`
+		const trades = await db.$queryRaw<Trade[]>`
 			SELECT
 				t.*,
 				MIN(o.date) AS "entryDate",
@@ -69,18 +71,21 @@ const useTrades = (db: PrismaClient) => {
 			GROUP BY t.id
 			ORDER BY "entryDate" ASC NULLS LAST, t.id ASC;
 		`;
-		return trades.map(_cleanTrade);
+		return trades.map(_cleanTrade) as DbTradeEntry[];
 	};
 
 	const getTradeById = async (id: number) => {
+		const orders = { orderBy: { date: 'asc' as Prisma.SortOrder } };
+
 		const trade = await db.trade.findUnique({
-			include: { ...include, orders: { orderBy: { date: 'asc' } } },
+			include: { ...include, orders },
 			where: { id },
 		});
-		return _cleanTrade(trade);
+
+		return _cleanTrade(trade) as DbTrade<DbChart<number>, DbOrder<Date>>;
 	};
 
-	const createTrade = async (trade: TradeWithOrders<any>) => {
+	const createTrade = async (trade: Trade<Chart<number>, Order<Date>>) => {
 		const data = {
 			...trade,
 			orders: { create: trade.orders, },
@@ -88,19 +93,15 @@ const useTrades = (db: PrismaClient) => {
 			labels: { connect: trade.labels },
 		};
 		const ret = await db.trade.create({ include, data });
-		return _cleanTrade(ret);
+		return _cleanTrade(ret) as DbTrade<DbChart<number>, DbOrder<Date>>;
 	};
 
-	type TradeType= Partial<
-		TradeWithOrders<
-			(Chart & { id?: number }),
-			(Order & { id?: number })
-		>
+	type TradeType = Partial<
+		Trade<ChartUnion<number>, OrderUnion<Date>>
 	>;
 
 	const updateTrade = async (
 		id: number,
-		trade: TradeWithOrders,
 		payload: TradeType,
 	) => {
 		const charts = payload.charts == null ?
@@ -114,24 +115,31 @@ const useTrades = (db: PrismaClient) => {
 		const labels = payload.labels &&
 			{ set: payload.labels.map(({ id }) => ({ id })) };
 
+		const symbol = payload.symbolId == null ?
+			undefined :
+			{ connect: { id: payload. symbolId} };
+
 		const data = {
 			...payload,
+			symbolId: undefined,
 			charts,
 			orders,
 			labels,
+			symbol,
 		};
 
 		const include = {
 			labels: true,
 			charts: true,
 			orders: true,
+			symbol: true,
 		};
 
 		const ret = await db.trade.update({
 			where: { id }, data, include,
 		});
 
-		return _cleanTrade(ret);
+		return _cleanTrade(ret) as DbTrade<DbChart<number>, DbOrder<Date>>;;
 	};
 
 	const deleteTrade = async (id: number) => {

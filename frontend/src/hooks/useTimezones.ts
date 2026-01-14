@@ -30,7 +30,7 @@ const useTimezones = (timeZone = "America/New_York") => {
 
 	const dateStrToDateInTZ = (value: string) => {
 		const [datePart, timePart] = value.split("T");
-		if (!datePart || !timePart) return NaN;
+		if (!datePart || !timePart) return null;
 
 		const [Y, M, D] = datePart.split("-").map(Number);
 		const [h, m] = timePart.split(":").map(Number);
@@ -45,31 +45,71 @@ const useTimezones = (timeZone = "America/New_York") => {
 		return b;
 	};
 
-	const epochToDateStrInTZ = (epochMs?: number) => {
+	const epochToDateStrInTZ = (epochMs?: number|null) => {
 		if (epochMs == null || !Number.isFinite(epochMs)) return "";
 
-		const get = (t: string) => format
-			.formatToParts(new Date(epochMs))
-			.find(p => p.type === t)?.value ?? "";
+		const parts = new Intl.DateTimeFormat("en-CA", {
+			timeZone,
+			year: "numeric",
+			month: "2-digit",
+			day: "2-digit",
+			hour: "2-digit",
+			minute: "2-digit",
+			hour12: false,
+		}).formatToParts(new Date(epochMs));
 
-		return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`;
+		const get = (t: string) => parts.find(p => p.type === t)?.value ?? "";
+
+		const Y = get("year");
+		const M = get("month");
+		const D = get("day");
+		const h = get("hour");
+		const m = get("minute");
+
+		return Y && M && D && h && m ? `${Y}-${M}-${D}T${h}:${m}` : "";
 	};
 
-	const dateStrToEpochMs = (date: string) => {
-		const [d, t] = date.split("T");
-		if (!d || !t) return NaN;
+	const dateStrToEpochMs = (value: string) => {
+		if (!value) return null;
 
-		const [Y, M, D] = d.split("-").map(Number);
-		const [h, m] = t.split(":").map(Number);
-		if (![Y, M, D, h, m].every(Number.isFinite)) return NaN;
+		const [datePart, timePart] = value.split("T");
+		if (!datePart || !timePart) return null;
 
-		const utcGuess = Date.UTC(Y, M - 1, D, h, m, 0);
+		const [Y, M, D] = datePart.split("-").map(Number);
+		const [h, m] = timePart.split(":").map(Number);
+		if (![Y, M, D, h, m].every(Number.isFinite)) return null;
 
-		let corrected = utcGuess - tzOffsetMinutes(new Date(utcGuess)) * 60_000;
-		corrected = utcGuess - tzOffsetMinutes(new Date(corrected)) * 60_000;
+		let guess = Date.UTC(Y, M - 1, D, h, m, 0);
 
-		return corrected;
-	}
+		for (let i = 0; i < 4; i++) {
+			const parts = new Intl.DateTimeFormat("en-CA", {
+				timeZone,
+				year: "numeric",
+				month: "2-digit",
+				day: "2-digit",
+				hour: "2-digit",
+				minute: "2-digit",
+				hour12: false,
+			}).formatToParts(new Date(guess));
+
+			const get = (t: string) => parts.find(p => p.type === t)?.value ?? "";
+
+			const diff =
+				Date.UTC(Y, M - 1, D, h, m) -
+				Date.UTC(
+					Number(get("year")),
+					Number(get("month")) - 1,
+					Number(get("day")),
+					Number(get("hour")),
+					Number(get("minute"))
+				);
+
+			if (diff === 0) return guess;
+			guess += diff;
+		}
+
+		return guess;
+	};
 
 	return {
 		epochToDateStrInTZ,

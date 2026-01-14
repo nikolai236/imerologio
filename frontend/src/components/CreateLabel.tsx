@@ -15,12 +15,12 @@ import {
 	DialogFooter,
 } from "@chakra-ui/react";
 import { useState } from "react";
-import type { LabelWithTradeIds } from "../../../shared/trades.types";
+import type { Label } from "../../../shared/trades.types";
 import PlusButton from "./PlusButton";
 
 
 type Props = {
-	onCreate: (label: LabelWithTradeIds) => Promise<void>;
+	onCreate: (label: Label) => Promise<void>;
 	disabled?: boolean;
 };
 

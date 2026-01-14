@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import type { SymbolWithId } from "../../../shared/trades.types"
+import type { DbSymbol } from "../../../shared/trades.types"
 import useSymbols from "./useSymbols";
 import useReload from "./useReload";
 
@@ -8,7 +8,7 @@ const useFetchSymbols = () => {
 	const [reloadToken, reload] = useReload();
 
 	const [loading, setLoading] = useState(false);
-	const [symbols, setSymbols] = useState<SymbolWithId[]>([]);
+	const [symbols, setSymbols] = useState<DbSymbol[]>([]);
 
 	useEffect(() => {
 		setLoading(true);

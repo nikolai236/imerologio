@@ -3,20 +3,26 @@ import { Timeframe } from "./candles.types";
 export type OrderEnum  = 'BUY' | 'SELL';
 export type SymbolEnum = 'CFD' | 'Futures';
 
-export interface Order {
+type OrderDate = Date | number;
+
+export interface Order<
+	DateType extends OrderDate = number
+> {
 	quantity: number;
-	date: number;
+	date: DateType;
 	price: number;
 	type: OrderEnum;
 }
 
-export interface OrderWithTradeId extends Order {
+export interface DbOrder<
+	DateType extends OrderDate = Date
+> extends Order<DateType> {
+	id: number;
 	tradeId: number;
 }
 
-export interface OrderWithId extends OrderWithTradeId {
-	id: number;
-}
+export type OrderUnion<DateType extends OrderDate> =
+	Order<DateType> | DbOrder<DateType>;
 
 export interface Symbol {
 	name: string;
@@ -25,11 +31,12 @@ export interface Symbol {
 
 export interface UpdateSymbol extends Partial<Symbol>{}
 
-export interface SymbolWithId extends Symbol {
+export interface DbSymbol extends Symbol {
 	id: number;
 }
 
-export interface Trade {
+export interface TradeEntry {
+	symbolId: number;
 	description: string,
 	pnl?: number;
 
@@ -37,40 +44,39 @@ export interface Trade {
 	stop: number;
 }
 
-export interface TradeWithOrders<
-	ChartType=ChartWithTradeId,
-	OrderType=Order
-> extends Trade {
-	symbolId: number;
+export interface DbTradeEntry<OrderType = DbOrder> extends TradeEntry {
+	id: number;
+	orders: OrderType[];
+}
 
+export interface Trade<
+	ChartType extends Chart<Timeframe> | Chart<number> = Chart,
+	OrderType extends Order<number> | Order<Date> = Order,
+> extends TradeEntry {
 	charts: ChartType[];
 	orders: OrderType[];
-
 	labels: { id: number; }[];
 }
 
-export interface TradeFull<C=ChartWithTradeId, O=Order> extends TradeWithOrders<C, O> {
-	symbol: Symbol;
-}
-
-export interface TradeWithId<C=ChartWithTradeId, O=Order> extends Omit<TradeWithOrders<C,O>, 'orders'|'charts'|'labels'> {
+export interface DbTrade<
+	ChartType extends Chart<Timeframe> | Chart<number>  = DbChart,
+	OrderType extends Order<number> | Order<Date> = DbOrder
+> extends TradeEntry {
 	id: number;
-	entryDate?: Date;
-	orders: OrderWithId[];
+
+	symbol: Symbol;
+	charts:  ChartType[];
+	orders: OrderType[];
+	labels: DbLabel[];
 }
 
-export interface TradeFullWithId<C=ChartWithId, O=Order> extends TradeWithId<C,O> {
-	symbol: SymbolWithId;
+export type ApiTrade = DbTrade<DbChart<Timeframe>, DbOrder<Date>>
 
-	labels: LabelWithId[];
-	charts: C[];
-}
-
-export interface Label {
+export interface LabelEntry {
 	name: string;
 }
 
-export interface LabelWithTradeIds extends Label {
+export interface Label extends LabelEntry {
 	tradeIds: number[];
 }
 
@@ -78,24 +84,31 @@ export interface UpdateLabel extends Partial<Label> {
 	tradeId?: number;
 }
 
-export interface LabelWithId extends Label {
+export interface DbLabel extends LabelEntry {
 	id: number;
 	tradesCount?: number;
 }
 
+export type LabelUnion = Label | DbLabel | LabelEntry;
 
-export interface Chart<T extends number|Timeframe = number> {
-	timeframe: T;
+type ChartTimeframe = number | Timeframe;
+
+export interface Chart<
+	TimeframeType extends ChartTimeframe = number
+> {
+	timeframe: TimeframeType;
 
 	start: number;
 	end:   number;
 }
 
-export interface ChartWithTradeId<T extends number|Timeframe = number> extends Chart<T> {
+export interface DbChart<
+	TimeframeType extends ChartTimeframe = number
+> extends Chart<TimeframeType> {
+	id: number;
 	tradeId: number;
+	trade?: TradeEntry;
 }
 
-export interface ChartWithId<T extends number|Timeframe = number> extends ChartWithTradeId<T> {
-	id: number;
-	trade?: Trade;
-}
+export type ChartUnion<TimeframeType extends ChartTimeframe> =
+	Chart<TimeframeType> | DbChart<TimeframeType>;

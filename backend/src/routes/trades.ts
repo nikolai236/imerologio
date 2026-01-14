@@ -1,6 +1,6 @@
 import type { FastifyPluginAsync } from "fastify";
 
-import type { Chart, ChartWithId, Order, TradeWithOrders } from "../../../shared/trades.types";
+import type { ApiTrade, Chart, ChartUnion, DbChart, DbTrade, Order, OrderUnion, Trade } from "../../../shared/trades.types";
 import { Timeframe } from "../../../shared/candles.types";
 
 import useSymbols from "../database/symbols";
@@ -32,7 +32,7 @@ const router: FastifyPluginAsync = async (server) => {
 		const trades = await getAllTrades();
 		trades
 			.filter(({ pnl }) => pnl == null)
-			.forEach(calculatePnL);
+			.forEach((t) => { t.pnl = calculatePnL(t.orders); });
 
 		return reply.code(200).send({ trades });
 	});
@@ -46,14 +46,15 @@ const router: FastifyPluginAsync = async (server) => {
 			return reply.code(404).send({ message: 'Trade not found!', });
 		}
 
-		trade.charts = trade.charts.map(c => ({
+		const convertCharts = (charts: DbChart<number>[]) => charts.map(c => ({
 			...c, timeframe: numberToTf(c.timeframe),
 		}));
 
-		return reply.code(200).send({ trade });
+		const ret: ApiTrade = { ...trade, charts: convertCharts(trade.charts), };
+		return reply.code(200).send({ trade: ret });
 	});
 
-	interface IPost { Body: TradeWithOrders<Chart<Timeframe>>; }
+	interface IPost { Body: Trade<Chart<Timeframe>, Order<number>>; }
 	server.post<IPost>('/', async (req, reply) => {
 		let { target, stop, pnl, symbolId, orders, charts } = req.body;
 
@@ -66,9 +67,9 @@ const router: FastifyPluginAsync = async (server) => {
 			return reply.code(400).send({ message: 'Symbol not found!' });
 		}
 
-		orders = parseOrders(orders);
+		const transformedOrders = parseOrders(orders);
 
-		const transformedCharts: Chart[] = charts.map(c => ({
+		const transformedCharts = charts.map(c => ({
 			start: Number(c.start),
 			end: Number(c.end),
 			timeframe: tfToNumber(c.timeframe),
@@ -77,24 +78,32 @@ const router: FastifyPluginAsync = async (server) => {
 		const badCharts = transformedCharts.some(
 			c => [c.start, c.end, c.timeframe].some(isNaN)
 		);
+
 		if (badCharts) {
 			const message = "Bad charts provided";
 			return reply.code(400).send({ message });
 		}
 
-		const trade: TradeWithOrders<Chart> = {
+		const trade: Trade<Chart<number>, Order<Date>> = {
 			...req.body,
 			target: target && Number(target),
 			pnl: pnl && Number(pnl),
 			stop: Number(stop),
-			orders,
+			orders: transformedOrders,
 			charts: transformedCharts,
 		};
 
-		if (pnl == null) calculatePnL(trade);
+		trade.pnl = trade.pnl ?? calculatePnL(trade.orders);
+
+		const convertCharts = (charts: DbChart<number>[]) => charts.map(c => ({
+			...c, timeframe: numberToTf(c.timeframe),
+		}));
 
 		try {
-			const ret = await createTrade(trade);
+
+			const res = await createTrade(trade);
+			const ret: ApiTrade = { ...res, charts: convertCharts(res.charts) };
+
 			return reply.code(200).send({ trade: ret });
 		} catch(err) {
 			server.log.error(err);
@@ -104,10 +113,9 @@ const router: FastifyPluginAsync = async (server) => {
 
 	interface IPatch {
 		Params: { tradeId: number };
-		Body: Partial<TradeWithOrders<
-			ChartWithId<Timeframe>,
-			Order & { id?: number }
-		>>;
+		Body: Partial<
+			Trade<ChartUnion<Timeframe>, OrderUnion<number>>
+		>;
 	};
 	server.patch<IPatch>('/:tradeId', async (req, reply) => {
 		const id = Number(req.params.tradeId);
@@ -124,13 +132,14 @@ const router: FastifyPluginAsync = async (server) => {
 			return reply.code(400).send({ message: 'Invalid order quantities provided.' });
 		}
 
-		if (orders != null) orders = parseOrders(orders);
+		const transformedOrders = orders != null ?
+			parseOrders(orders) : undefined;
 
 		const transformedCharts = charts != null ? charts.map(c => ({
 			start: Number(c.start),
 			end: Number(c.end),
 			timeframe: tfToNumber(c.timeframe),
-			id: c.id != null ? Number(c.id) : undefined,
+			id: 'id' in c ? Number(c.id) : undefined,
 		})) : undefined;
 
 		const badCharts = transformedCharts && transformedCharts.some(
@@ -141,20 +150,26 @@ const router: FastifyPluginAsync = async (server) => {
 			return reply.code(400).send({ message });
 		}
 
-		const payload: Partial<TradeWithOrders<(Chart & {id?: number}), (Order & {id?: number})>> = {
+		const payload: Partial<Trade<ChartUnion<number>, OrderUnion<Date>>> = {
 			...req.body,
 			target: target != null ? Number(target) : target,
 			stop: stop != null ? Number(stop) : stop,
-			orders,
+			orders: transformedOrders,
 			charts: transformedCharts,
 		};
 
-		payload.pnl = calculatePnL({
-			...trade, ...payload
-		});
+		payload.pnl = orders != null ?
+			calculatePnL(payload.orders ?? trade.orders) :
+			trade.pnl;
+
+		const convertCharts = (charts: DbChart<number>[]) => charts.map(c => ({
+			...c, timeframe: numberToTf(c.timeframe),
+		}));
 
 		try {
-			const ret = await updateTrade(id, trade, payload);
+			const res = await updateTrade(id, payload);
+			const ret: ApiTrade = { ...res, charts: convertCharts(res.charts) };
+
 			return reply.code(200).send({ trade: ret });
 		} catch(err) {
 			server.log.error(err);

@@ -39,9 +39,8 @@ const useCandleService = () => {
 
 	const numberToTf = (inp: number) => {
 		const tfs = Object.values(Timeframe);
-		const tfNumbers = tfs.map(tfToNumber);
+		const ret = tfs.find(tf => tfToNumber(tf) == inp);
 
-		const ret = tfNumbers.find(n => n == inp);
 		if (ret == null) {
 			const msg = "Number is not a suppported timeframe";
 			throw new Error(msg);
@@ -49,7 +48,7 @@ const useCandleService = () => {
 		return ret;
 	};
 
-	const validateCandleLength = (diff: number, timeframe: Timeframe) => {
+	const isCandleLengthValid = (diff: number, timeframe: Timeframe) => {
 		const frame = tfToNumber(timeframe);
 		const count = diff / frame;
 		return count < 25_000;
@@ -103,7 +102,7 @@ const useCandleService = () => {
 		setTimeFrame,
 		tfToNumber,
 		numberToTf,
-		validateCandleLength,
+		isCandleLengthValid,
 	};
 };
 

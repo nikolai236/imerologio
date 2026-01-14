@@ -1,17 +1,19 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Table, Box } from "@chakra-ui/react";
-import type { TradeWithId } from "../../../shared/trades.types";
+import type { DbTradeEntry } from "../../../shared/trades.types";
 import TradeRow from "./TradeRow";
 import useTrades from "../hooks/useTrades";
 import PlusButton from "./PlusButton";
 
-export default function Trades() {
+export default function TradesPage() {
 	const { getTrades } = useTrades();
-	const [trades, setTrades] = useState<TradeWithId[]>([]);
+	const [trades, setTrades] = useState<DbTradeEntry[]>([]);
 
 	useEffect(() => {
-		getTrades().then(setTrades).catch(console.error);
+		getTrades()
+			.then(setTrades)
+			.catch(console.error);
 	}, []);
 
 	return (
@@ -19,9 +21,10 @@ export default function Trades() {
 			<Table.Root>
 				<Table.Header>
 					<Table.Row>
-						<Table.ColumnHeader>SymbolId</Table.ColumnHeader>
+						<Table.ColumnHeader>Id</Table.ColumnHeader>
+						<Table.ColumnHeader>Symbol</Table.ColumnHeader>
 						<Table.ColumnHeader>Date</Table.ColumnHeader>
-						<Table.ColumnHeader>Side</Table.ColumnHeader>
+						<Table.ColumnHeader>Direction</Table.ColumnHeader>
 						<Table.ColumnHeader textAlign="end">PNL</Table.ColumnHeader>
 					</Table.Row>
 				</Table.Header>

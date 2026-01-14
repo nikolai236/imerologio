@@ -43,12 +43,10 @@ class TextLabelPaneView implements IPanePrimitivePaneView {
 	public update() {
 		const { series, chart, _p } = this._source;
 		const timeScale = chart.timeScale();
-		console.log(_p)
 
 		const x = timeScale.timeToCoordinate(_p.time);
 		const y = series.priceToCoordinate(_p.price);
 
-		console.log(x, y);
 		this._p = { x, y };
 	}
 

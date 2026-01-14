@@ -1,18 +1,13 @@
 import { useState } from "react";
 import { Timeframe } from "../../../shared/candles.types";
-import type { Chart, ChartWithId } from "../../../shared/trades.types";
+import type { Chart, DbChart } from "../../../shared/trades.types";
 
 export type TempChart = Chart<Timeframe> & {
 	tempId: string;
 };
 
-const useTradeCharts = (inp?: ChartWithId<Timeframe>[]) => {
-	let initial: TempChart[] = [];
-	if (inp != null) {
-		initial = inp.map(o => ({ ...o, tempId: _uid() }));
-	}
-
-	const [charts, setCharts] = useState<TempChart[]>(initial);
+const useTradeCharts = () => {
+	const [charts, setCharts] = useState<TempChart[]>([]);
 
 	const _uid = () =>
 		Math.random().toString(16).slice(2) +
@@ -44,7 +39,7 @@ const useTradeCharts = (inp?: ChartWithId<Timeframe>[]) => {
 		cs => cs.filter(c => c.tempId != id)
 	);
 
-	const overwriteCharts = (charts: Chart<Timeframe>[]) =>
+	const overwriteCharts = (charts: DbChart<Timeframe>[]) =>
 		setCharts(charts.map(c => ({ ...c, tempId: _uid(), })));
 
 	return {

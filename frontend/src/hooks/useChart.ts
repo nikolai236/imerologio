@@ -21,7 +21,7 @@ const timeFormatter = (unixEpoch: number) => {
 
 const useChart = (candles: Candle[], timeframe: Timeframe) => {
 	const { getEntry, getExits, stop, target } = useTradeContext();
-	const { ohlc, changeOhlcOnMouseMove, destroyOhlc } = useOhlc();
+	const { ohlc, changeOhlcOnMouseMove, } = useOhlc();
 
 	const containerRef = useRef<HTMLDivElement|null>(null);
 	const chartRef = useRef<IChartApi|null>(null);
@@ -51,7 +51,7 @@ const useChart = (candles: Candle[], timeframe: Timeframe) => {
 	});
 
 	const transformCandle = (candle: Candle) => ({
-		time: Math.floor(candle.time) as UTCTimestamp,
+		time: Math.floor(candle.time) / 1000 as UTCTimestamp,
 
 		open: candle.open,
 		high: candle.high,
@@ -123,8 +123,7 @@ const useChart = (candles: Candle[], timeframe: Timeframe) => {
 	}, [candles]);
 
 	return {
-		ohlc,
-		containerRef,
+		ohlc, containerRef,
 	};
 };
 

@@ -1,13 +1,13 @@
 import { Box, Input, Flex, NativeSelect, Text, HStack, Button } from "@chakra-ui/react";
-import { type LabelWithId, type SymbolEnum, type SymbolWithId } from "../../../shared/trades.types";
+import { type DbLabel, type SymbolEnum, type DbSymbol } from "../../../shared/trades.types";
 
 type Props = {
-	label: LabelWithId;
+	label: DbLabel;
 	isEditing: boolean;
 	draftName: string;
 	error?: string | null;
 
-	onStartEdit: (label: LabelWithId) => void;
+	onStartEdit: (label: DbLabel) => void;
 	onDelete: (id: number) => void;
 	onCancelEdit: () => void;
 	onDraftNameChange: (id: number, value: string) => void;

@@ -8,7 +8,8 @@ const router: FastifyPluginAsync = async (server) => {
 		getAllSymbols,
 		getSymbolById,
 		createSymbol,
-		updateSymbol
+		updateSymbol,
+		deleteSymbol,
 	} = useSymbols(server.prisma);
 
 	server.get('/', async (_req, reply) => {
@@ -52,6 +53,19 @@ const router: FastifyPluginAsync = async (server) => {
 			server.log.error(err);
 			return reply.code(400).send({ message: err });
 		}
+	});
+
+	interface IDelete { Params: { id: number; } }
+	server.delete<IDelete>('/:id', async (req, reply) => {
+		const id = Number(req.params.id);
+
+		const symbol = await getSymbolById(id);
+		if (symbol == null) {
+			return reply.code(404).send({ message: 'Symbol not found!', });
+		}
+
+		await deleteSymbol(id);
+		return reply.code(201).send({ message: 'Deleted' });
 	});
 };
 

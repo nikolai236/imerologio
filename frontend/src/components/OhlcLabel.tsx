@@ -21,7 +21,7 @@ export default function OhlcLabel({ ohlc }: { ohlc?: Ohlc|null }) {
 		>
 			O {ohlc.open.toFixed(6)}{" "}
 			H {ohlc.high.toFixed(6)}{" "}
-			L {ohlc.low.toFixed(6)}{" "}
+			L {ohlc.low.toFixed(6)} {" "}
 			C {ohlc.close.toFixed(6)}
 		</Box>
 	);

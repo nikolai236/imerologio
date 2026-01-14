@@ -1,5 +1,5 @@
 import { Navigate, Routes, Route, Outlet } from "react-router-dom";
-import Trades from "./Trades";
+import TradesPage from "./TradesPage";
 import Navbar from "./Navbar";
 import Symbols from "./Symbols";
 import Labels from "./Labels";
@@ -19,7 +19,7 @@ export default function App() {
 			<Route element={<RootLayout />}>
 				<Route path='/' element={<Navigate to='/trades' replace />} />
 				<Route path='trades'>
-					<Route index element={<Trades />} />
+					<Route index element={<TradesPage />} />
 					<Route path='create' element={<CreateTradePageOuter />} />
 					<Route path="/trades/:id" element={<TradePageOuter />} />
 				</Route>

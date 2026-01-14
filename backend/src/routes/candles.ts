@@ -12,7 +12,7 @@ const router: FastifyPluginAsync = async (server) => {
 	} = useCandles(server.duckdb);
 
 	const {
-		validateCandleLength,
+		isCandleLengthValid,
 		setTimeFrame,
 		fillBlanks,
 		tfToNumber,
@@ -45,12 +45,10 @@ const router: FastifyPluginAsync = async (server) => {
 		const tfs = Object.values(Timeframe);
 		let { timeframe } = req.body;
 
-		if (timeframe != undefined && !tfs.includes(timeframe as Timeframe)) {
+		if (timeframe == undefined || !tfs.includes(timeframe as Timeframe)) {
 			const message = "Bad timeframe input!";
 			return reply.code(400).send({ message });
 		}
-
-		timeframe ??= Timeframe.tf15s;
 
 		const { symbol } = req.params;
 		const isSuppoted = await isSymbolSupported(symbol);
@@ -62,17 +60,31 @@ const router: FastifyPluginAsync = async (server) => {
 
 		const start = Number(req.body.start);
 		const end = Number(req.body.end);
+
+		const notFoundMsg = 'No candles found for range.';
 		if (start >= end) {
-			return reply.code(200).send({ candles: [] });
+			return reply.code(404).send({ message: notFoundMsg });
 		}
 
-		validateCandleLength(end - start, timeframe as Timeframe);
+		if (new Date(start).getFullYear() < 2010) {
+			const message = 'Dates before 2010 are not supported';
+			return reply.code(404).send({ message });
+		}
+
+		if (!isCandleLengthValid(end - start, timeframe as Timeframe)) {
+			const message = 'More than 25 000 candles requested';
+			return reply.code(400).send({ message });
+		}
 		
 		let candles = await getCandlesInRange(start, end, symbol);
 		candles = setTimeFrame(candles, timeframe as Timeframe);
 
 		const tf = tfToNumber(timeframe as Timeframe);
 		candles = fillBlanks(candles, tf);
+
+		if (candles.length == 0) {
+			return reply.code(404).send({ message: notFoundMsg });
+		}
 
 		return reply.code(200).send({ candles });
 	});

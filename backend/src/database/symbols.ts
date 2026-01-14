@@ -1,24 +1,28 @@
 import type { Prisma, PrismaClient } from '@prisma/client'
-import { Symbol, UpdateSymbol } from '../../../shared/trades.types';
+import { DbSymbol, Symbol, UpdateSymbol } from '../../../shared/trades.types';
 
 const useSymbols = (db: PrismaClient) => {
 	const getAllSymbols = async () => {
-		return await db.symbol.findMany();
+		const symbols = await db.symbol.findMany();
+		return symbols as DbSymbol[];
 	};
 
 	const getSymbolById = async (id: number) => {
-		return await db.symbol.findUnique({ where: { id }});
+		const symbol = await db.symbol.findUnique({ where: { id }});
+		return symbol as DbSymbol;
 	};
 
 	const createSymbol = async (symbol: Symbol) => {
-		return await db.symbol.create({ data: symbol });
+		const ret = await db.symbol.create({ data: symbol });
+		return ret as DbSymbol;
 	};
 
 	const updateSymbol = async (id: number, symbol: UpdateSymbol) => {
-		return await db.symbol.update({
+		const ret = await db.symbol.update({
 			where: { id },
 			data: symbol as Prisma.SymbolUpdateInput
 		});
+		return ret as DbSymbol;
 	}
 
 	const deleteSymbol = async (id: number) => {

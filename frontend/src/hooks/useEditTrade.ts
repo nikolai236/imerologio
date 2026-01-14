@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { Chart, Order, TradeFullWithId, TradeWithOrders } from "../../../shared/trades.types";
+import type { Chart, Order, DbTrade, Trade, DbOrder, DbChart, ApiTrade } from "../../../shared/trades.types";
 import useTradeOrders from "./useTradeOrders";
 import type { Timeframe } from "../../../shared/candles.types";
 import useTradeCharts from "./useTradeCharts";
@@ -55,11 +55,12 @@ const useEditTrade = (tradeId?: number) => {
 		setDescription('');
 
 		setSelectedLabelIds([]);
+
 		setOrders([]);
 		setCharts([]);
 	};
 
-	const retrieveTradeValues = (t: TradeFullWithId<Chart<Timeframe>, Order>) => {
+	const retrieveTradeValues = (t: ApiTrade) => {
 		const ids = t.labels.map(({ id }) => id);
 
 		setSymbolId(t.symbolId.toString());
@@ -68,6 +69,7 @@ const useEditTrade = (tradeId?: number) => {
 		setDescription(t.description ?? '');
 
 		setSelectedLabelIds(ids);
+
 		setOrders(t.orders);
 		setCharts(t.charts);
 	};
@@ -102,7 +104,7 @@ const useEditTrade = (tradeId?: number) => {
 			tempId: undefined,
 		}));
 
-		const ret: TradeWithOrders<Chart<Timeframe>> = {
+		const ret: Trade<Chart<Timeframe>> = {
 			stop: Number(stop.trim()),
 			target: target.trim() != '' ? Number(target.trim()) : undefined,
 			description,
@@ -133,7 +135,7 @@ const useEditTrade = (tradeId?: number) => {
 	};
 
 	const submitNewTrade = async () => {
-		let trade: TradeWithOrders<Chart<Timeframe>>;
+		let trade: Trade<Chart<Timeframe>>;
 		try {
 			trade = validate();
 		} catch (err: any) {
@@ -160,7 +162,7 @@ const useEditTrade = (tradeId?: number) => {
 	const submitTradeEdit = async () => {
 		if (!tradeId) throw new Error('Trade id is null!.');
 
-		let trade: TradeWithOrders<Chart<Timeframe>>;
+		let trade: Trade<Chart<Timeframe>>;
 		try {
 			trade = validate();
 		} catch (err: any) {

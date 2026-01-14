@@ -3,7 +3,7 @@ import db from '../helpers/prisma';
 import useSymbols from '../../src/database/symbols';
 import useTrades from '../../src/database/trades';
 import useTradeService from '../../src/services/trades';
-import { type TradeWithOrders } from '../../../shared/trades.types';
+import { type Trade } from '../../../shared/trades.types';
 
 const { createSymbol, getAllSymbols, getSymbolById, deleteSymbol } = useSymbols(db);
 const { createTrade, getAllTrades, getTradeById, deleteTrade, getOrderById } = useTrades(db);
@@ -86,7 +86,7 @@ describe("test trades service", () => {
 
 		const symbol = { name: "ES", type: "Futures" as $Enums.SymbolType };
 		const { id } = await createSymbol(symbol);
-		const t = await createTrade({ ...trade, symbolId:id }) as TradeWithOrders;
+		const t = await createTrade({ ...trade, symbolId:id }) as Trade;
 
 		expect(calculatePnL(t).pnl).toBe(700);
 
@@ -95,7 +95,7 @@ describe("test trades service", () => {
 			{ quantity: 3, type: 'SELL'  as $Enums.OrderType, date: date2, price: 900 },
 			{ quantity: 2, type: 'SELL'  as $Enums.OrderType, date: date3, price: 800 },
 		];
-		const t2 = await createTrade({  stop: 1100, orders: orders2, symbolId:id, description: '', charts: [], labels: [] }) as TradeWithOrders;
+		const t2 = await createTrade({  stop: 1100, orders: orders2, symbolId:id, description: '', charts: [], labels: [] }) as Trade;
 
 		expect(calculatePnL(t2).pnl).toBe(300);
 	});

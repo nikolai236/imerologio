@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { LabelWithId } from "../../../shared/trades.types";
+import type { DbLabel } from "../../../shared/trades.types";
 import useLabels from "./useLabels";
 import useReload from "./useReload";
 
@@ -9,7 +9,7 @@ const useFetchLabels = () => {
 	const [reloadToken, reload] = useReload();
 
 	const [loading, setLoading] = useState(false);
-	const [labels, setLabels] = useState<LabelWithId[]>([]);
+	const [labels, setLabels] = useState<DbLabel[]>([]);
 
 	useEffect(() => {
 		setLoading(true);

@@ -2,7 +2,7 @@ import { Box, Flex, NativeSelect, VStack, Text, Input, Button } from '@chakra-ui
 import type { OrderEnum } from '../../../shared/trades.types';
 import EditButton from './EditButton';
 import useTradeContext from '../hooks/useTradeContext';
-import useTimezones from '../hooks/useTimezones';
+import DatePicker from './DatePicker';
 
 type Props = {
 	disabled?: boolean;
@@ -13,11 +13,6 @@ export default function Orders({
 	disabled = false,
 	handleEditClick,
 }: Props) {
-	const {
-		epochToDateStrInTZ,
-		dateStrToDateInTZ
-	} = useTimezones();
-
 	const {
 		orders,
 		orderSum,
@@ -60,9 +55,9 @@ export default function Orders({
 							<NativeSelect.Root disabled={disabled}>
 								<NativeSelect.Field
 									value={o.type}
-									onChange={(e) =>
-										updateOrder(o.tempId, { type: e.target.value as OrderEnum })
-									}
+									onChange={(e) => updateOrder(o.tempId, {
+										type: e.target.value as OrderEnum
+									})}
 								>
 									<option value="BUY">BUY</option>
 									<option value="SELL">SELL</option>
@@ -95,15 +90,11 @@ export default function Orders({
 						</Box>
 
 						<Box minW="240px" flex="1">
-						<Text fontSize="sm" color="fg.muted" mb={1}>
-							Date/Time
-						</Text>
-						<Input
-							disabled={disabled}
-							type="datetime-local"
-							value={epochToDateStrInTZ(o.date != undefined ? Number(o.date) : o.date)}
-							onChange={(e) => updateOrder(o.tempId, { date: dateStrToDateInTZ(e.target.value) })}
-						/>
+							<DatePicker
+								disabled={disabled}
+								epoch={o.date}
+								onChangeEpoch={(date) => date && updateOrder(o.tempId, { date })}
+							/>
 						</Box>
 
 						<Button

@@ -8,7 +8,7 @@ import {
 	Text,
 } from "@chakra-ui/react";
 import useLabels from "../hooks/useLabels";
-import type { LabelWithId, LabelWithTradeIds } from "../../../shared/trades.types";
+import type { DbLabel, Label } from "../../../shared/trades.types";
 import LabelRow from "./LabelRow";
 import useRowErrors from "../hooks/useRowErrors";
 import CreateLabel from "./CreateLabel";
@@ -27,7 +27,7 @@ export default function Labels() {
 	const [draftName, setDraftName] = useState('');
 	const [editingId, setEditingId] = useState<number|null>(null);
 
-	const startEdit = (label: LabelWithId) => {
+	const startEdit = (label: DbLabel) => {
 		setEditingId(label.id);
 		setDraftName(label.name);
 		clearRowError(label.id);
@@ -50,7 +50,7 @@ export default function Labels() {
 			.catch(console.error);
 	};
 
-	const saveNewLabel = async (label: LabelWithTradeIds) => {
+	const saveNewLabel = async (label: Label) => {
 		if (label.name == '') {
 			throw new Error("Name cannot be empty.");
 		}

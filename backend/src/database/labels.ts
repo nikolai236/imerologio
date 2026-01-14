@@ -1,26 +1,36 @@
 import { type PrismaClient } from "@prisma/client";
-import type { LabelWithTradeIds, UpdateLabel } from "../../../shared/trades.types";
+import type { DbLabel, Label, LabelEntry, UpdateLabel } from "../../../shared/trades.types";
 
 const useLabels = (db: PrismaClient) => {
 	const getAllLabels = async () => {
 		const _count = { select: { trades: true, } };
 
-		return await db.label.findMany({
+		const res = await db.label.findMany({
 			select: { id: true, name: true, _count },
 		});
+
+		const labels: DbLabel[] = res.map(l => ({
+			...l,
+			_count: undefined,
+			tradesCount: l._count.trades ?? 0,
+		}));
+
+		return labels;
 	};
 
 	const getLabelById = async (id: number) => {
-		return await db.label.findUnique({ where: { id } });
+		const label = await db.label.findUnique({ where: { id } });
+		return label as LabelEntry | null;
 	};
 
-	const createLabel = async (label: LabelWithTradeIds) => {
+	const createLabel = async (label: Label) => {
 		const trades = { connect: label.tradeIds.map(id => ({ id })) };
 
-		return await db.label.create({
+		const ret = await db.label.create({
 			data: { name: label.name, trades },
 			include: { trades: { select: { id: true } } },
 		});
+		return ret as DbLabel;
 	};
 
 	const updateLabel = async (id: number, label: UpdateLabel) => {
@@ -31,11 +41,12 @@ const useLabels = (db: PrismaClient) => {
 			},
 		};
 
-		return await db.label.update({
+		const ret = await db.label.update({
 			include: { trades: { select: { id: true } } },
 			where: { id },
 			data,
 		});
+		return ret as DbLabel;
 	};
 
 	const deleteTradeFromLabel = async (labelId: number, tradeId: number) => {

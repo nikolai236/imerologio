@@ -12,7 +12,6 @@ export default function StopInput({
 	handleEditClick,
 }: Props) {
 	const { stop, setStop } = useTradeContext();
-	console.log(handleEditClick)
 
 	return (
 		<Box minW="160px">
@@ -32,6 +31,6 @@ export default function StopInput({
 					placeholder="e.g. 19250.25"
 				/>
 			</Flex>
-
-		</Box>)
+		</Box>
+	);
 }

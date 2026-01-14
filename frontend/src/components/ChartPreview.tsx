@@ -5,12 +5,12 @@ import {
 	Input,
 	IconButton,
 } from '@chakra-ui/react';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
+import DatePicker from './DatePicker';
 import type { Candle, Timeframe } from '../../../shared/candles.types';
 import useCandles from '../hooks/useCandles';
 import useTradeCharts from '../hooks/useTradeCharts';
 import useTradeContext from '../hooks/useTradeContext';
-import useTimezones from '../hooks/useTimezones';
 import useChart from '../hooks/useChart';
 import OhlcLabel from './OhlcLabel';
 
@@ -23,20 +23,6 @@ type Props = {
 
 	timeframe: Timeframe;
 	disabled?: boolean;
-};
-
-const SECOND = 1000;
-
-const formatTime = (unixEpoch: number) => {
-	return new Date(unixEpoch * SECOND)
-		.toLocaleString('en-US', {
-			timeZone: "America/New_York",
-			day: "numeric",
-			month: "short",
-			year: "2-digit",
-			hour: "numeric",
-			minute: "2-digit"
-		});
 };
 
 export default function ChartPreview({
@@ -53,7 +39,6 @@ export default function ChartPreview({
 		updateChart,
 	} = useTradeContext();
 
-	const { epochToDateStrInTZ,  dateStrToDateInTZ } = useTimezones();
 	const { isTimeframeValid } = useTradeCharts();
 	const { getCandlesForRange } = useCandles();
 
@@ -72,8 +57,11 @@ export default function ChartPreview({
 		setError(null);
 
 		getCandlesForRange(symbol, timeframe, Number(start), Number(end))
-			.then((rows) => !cancelled && setCandles(rows))
-			.catch((e: any) => !cancelled && setError(e?.message ?? "Failed to load OHLCV"))
+			.then(setCandles)
+			.catch((e) => {
+				setError(e?.message ?? "Failed to load candles");
+				setCandles([]);
+			})
 			.finally(() => setLoading(false));
 
 		return () => {
@@ -87,24 +75,6 @@ export default function ChartPreview({
 		if(!isTimeframeValid(value)) {
 			return setError("Invalid timeframe value");
 		}
-		return setError(null);
-	};
-
-	const handleStartChange = (value: string) => {
-		if (!value) return setError("Invalid start value");
-
-		const start = dateStrToDateInTZ(value);
-		updateChart(id, { start });
-
-		return setError(null);
-	};
-
-	const handleEndChange = (value: string) => {
-		if (!value) return setError("Invalid end value");
-
-		const end = dateStrToDateInTZ(value);
-		updateChart(id, { end });
-
 		return setError(null);
 	};
 
@@ -169,26 +139,20 @@ export default function ChartPreview({
 
 			<Flex gap={3} wrap="wrap" mb={3}>
 				<Box minW="200px">
-					<Text fontSize="xs" color="fg.muted" mb={1}>
-						Start
-					</Text>
-					<Input
+					<DatePicker
 						disabled={disabled}
-						type="datetime-local"
-						value={epochToDateStrInTZ(start != undefined ? Number(start) : start)}
-						onChange={(e) => handleStartChange(e.target.value)}
+						label="Start"
+						epoch={start}
+						onChangeEpoch={(start) => start && updateChart(id, { start })}
 					/>
 				</Box>
 
 				<Box minW="200px">
-					<Text fontSize="xs" color="fg.muted" mb={1}>
-						End
-					</Text>
-					<Input
+					<DatePicker
 						disabled={disabled}
-						type="datetime-local"
-						value={epochToDateStrInTZ(end != undefined ? Number(end) : end)}
-						onChange={(e: any) => handleEndChange(e.target.value)}
+						label="End"
+						epoch={end}
+						onChangeEpoch={(end) => end && updateChart(id, { end })}
 					/>
 				</Box>
 			</Flex>
@@ -204,7 +168,6 @@ export default function ChartPreview({
 			>
 				<OhlcLabel ohlc={ohlc}></OhlcLabel>
 				{!loading && !error && candles.length === 0 && (
-				<>
 					<Flex
 						h="100%"
 						align="center"
@@ -213,7 +176,6 @@ export default function ChartPreview({
 						color="fg.muted"
 					> Select start &amp; end to preview the chart.
 					</Flex>
-				</>
 				)}
 			</Box>
 		</Box>

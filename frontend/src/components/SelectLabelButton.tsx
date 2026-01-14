@@ -1,13 +1,13 @@
 import { Box, Flex, Text, Button, HStack, Tag, CloseButton } from "@chakra-ui/react"
 import EditButton from "./EditButton"
-import type { LabelWithId } from "../../../shared/trades.types";
+import type { DbLabel } from "../../../shared/trades.types";
 import useTradeContext from "../hooks/useTradeContext";
 import { useMemo } from "react";
 
 type Props = {
 	loading: boolean;
 	disabled?: boolean;
-	labels: LabelWithId[];
+	labels: DbLabel[];
 
 	handleEditClick?: ()=>void;
 	setOpen: (val: boolean) => void;

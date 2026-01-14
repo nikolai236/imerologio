@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import type { Order } from "../../../shared/trades.types";
+import type { DbOrder, Order } from "../../../shared/trades.types";
 import type { Entry, Exit, Timeframe } from "../../../shared/candles.types";
 import useTimeframe from "./useTimeframe";
 import type { UTCTimestamp } from "lightweight-charts";
@@ -41,10 +41,11 @@ const useTradeOrders = (date: Date) => {
 		orders => orders.filter(o => o.tempId != id)
 	);
 
-	const overwriteOrders = (orders: Order[]) => setOrders(
+	const overwriteOrders = (orders: DbOrder<Date>[]) => setOrders(
 		orders
 			.map(o => ({
 				...o,
+				date: new Date(o.date).getTime(),
 				tempId: _uid(),
 				price: String(o.price),
 				quantity: String(o.quantity),

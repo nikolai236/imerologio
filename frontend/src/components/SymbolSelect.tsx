@@ -1,5 +1,5 @@
 import { Box, Flex, NativeSelect, Text } from "@chakra-ui/react"
-import type { SymbolWithId } from "../../../shared/trades.types";
+import type { DbSymbol } from "../../../shared/trades.types";
 import EditButton from "./EditButton";
 import useTradeContext from "../hooks/useTradeContext";
 
@@ -7,7 +7,7 @@ type Props = {
 	loading: boolean;
 	disabled?: boolean;
 
-	symbols: SymbolWithId[];
+	symbols: DbSymbol[];
 
 	handleEditClick?: () => void;
 }

@@ -8,7 +8,7 @@ import {
 	Text,
 } from "@chakra-ui/react";
 import SymbolRow from "./SymbolRow";
-import { type SymbolEnum, type SymbolWithId, type Symbol } from "../../../shared/trades.types";
+import { type SymbolEnum, type DbSymbol, type Symbol } from "../../../shared/trades.types";
 import useSymbols from "../hooks/useSymbols";
 import CreateSymbolPage from "./CreateSymbol";
 import useRowErrors from "../hooks/useRowErrors";
@@ -23,7 +23,7 @@ export default function Symbols() {
 	const [editingId,    setEditingId] = useState<number|null>(null);
 	const [draftType,    setDraftType] = useState<SymbolEnum>('Futures');
 
-	const startEdit = (symbol: SymbolWithId) => {
+	const startEdit = (symbol: DbSymbol) => {
 		setEditingId(symbol.id);
 		setDraftName(symbol.name);
 		setDraftType(symbol.type);

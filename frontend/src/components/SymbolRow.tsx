@@ -1,14 +1,14 @@
 import { Box, Input, Flex, NativeSelect, Text, HStack, Button } from "@chakra-ui/react";
-import { type SymbolEnum, type SymbolWithId } from "../../../shared/trades.types";
+import { type SymbolEnum, type DbSymbol } from "../../../shared/trades.types";
 
 type Props = {
-	symbol: SymbolWithId;
+	symbol: DbSymbol;
 	isEditing: boolean;
 	draftName: string;
 	draftType: SymbolEnum;
 	error?: string | null;
 
-	onStartEdit: (symbol: SymbolWithId) => void;
+	onStartEdit: (symbol: DbSymbol) => void;
 	onCancelEdit: () => void;
 	onDraftNameChange: (id: number, value: string) => void;
 	onDraftTypeChange: (id: number, value: SymbolEnum) => void;

@@ -1,11 +1,11 @@
 import { Box, Text, Button, Flex, VStack } from '@chakra-ui/react';
 import ChartPreview from './ChartPreview';
-import type { SymbolWithId, } from '../../../shared/trades.types';
+import type { DbSymbol, } from '../../../shared/trades.types';
 import EditButton from './EditButton';
 import useTradeContext from '../hooks/useTradeContext';
 
 type Props = {
-	symbols: SymbolWithId[];
+	symbols: DbSymbol[];
 	disabled?: boolean;
 	handleEditClick?: () => void;
 };

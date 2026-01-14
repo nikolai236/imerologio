@@ -14,7 +14,7 @@ const useCandles = (db: FastifyInstance["duckdb"]) => {
 		if (!/^[A-Za-z0-9_]+$/.test(symbol)) {
 			throw new Error("Invalid table name");
 		}
-		return 'candles_' + symbol.toUpperCase();
+		return 'candles_' + symbol;
 	};
 
 	const isSymbolSupported = async (symbol: string) => {

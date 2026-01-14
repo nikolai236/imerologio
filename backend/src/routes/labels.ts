@@ -1,5 +1,5 @@
 import type { FastifyPluginAsync } from "fastify";
-import { LabelWithId, LabelWithTradeIds, UpdateLabel } from "../../../shared/trades.types";
+import { DbLabel, Label, UpdateLabel } from "../../../shared/trades.types";
 import useLabels from "../database/labels";
 
 const router: FastifyPluginAsync = async (server) => {
@@ -12,17 +12,11 @@ const router: FastifyPluginAsync = async (server) => {
 	} = useLabels(server.prisma);
 
 	server.get('/', async (_req, reply) => {
-		const res = await getAllLabels();
-		const labels: LabelWithId[] = res.map(l => ({
-			...l,
-			_count: undefined,
-			tradesCount: l._count.trades ?? 0
-		}));
-
+		const labels = await getAllLabels();
 		return reply.code(200).send({ labels });
 	});
 
-	interface IPost { Body: LabelWithTradeIds }
+	interface IPost { Body: Label }
 	server.post<IPost>('/', async (req, reply) => {
 		try {
 			const label = await createLabel(req.body);

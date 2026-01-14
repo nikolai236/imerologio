@@ -1,4 +1,4 @@
-import type { IPanePrimitivePaneView, IPrimitivePaneRenderer, IPrimitivePaneView, } from "lightweight-charts";
+import type { IPanePrimitivePaneView, IPrimitivePaneRenderer } from "lightweight-charts";
 import type { CanvasRenderingTarget2D } from "fancy-canvas";
 import { PluginBase, type ViewPoint, type Point, positionPoint } from "./plugin-base";
 
@@ -67,7 +67,6 @@ class LinePaneView implements IPanePrimitivePaneView {
 		const y1 = series.priceToCoordinate(_p1.price);
 		const y2 = series.priceToCoordinate(_p2.price);
 
-		console.log(_p2, x2, y2)
 		this._p1 = { x: x1, y: y1 };
 		this._p2 = { x: x2, y: y2 };
 	}
