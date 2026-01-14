@@ -1,6 +1,7 @@
 import { Field, Input } from "@chakra-ui/react";
-import { useEffect, useRef, useState } from "react";
+import { useMemo, useRef, } from "react";
 import useTimezones from "../hooks/useTimezones";
+import useDraft from "../hooks/useDraft";
 
 type Props = {
 	label?: string;
@@ -24,13 +25,13 @@ export default function DatePicker({
 	const { epochToDateStrInTZ, dateStrToEpochMs } = useTimezones();
 
 	const inputRef = useRef<HTMLInputElement>(null);
-	const [draft, setDraft] = useState(() =>
-		epochToDateStrInTZ(epoch)
+
+	const parsedEpoch = useMemo(
+		() => epochToDateStrInTZ(epoch), [epoch]
 	);
 
-	useEffect(() => {
-		setDraft(epochToDateStrInTZ(epoch));
-	}, [epoch]);
+	const [draft, setDraft] = useDraft(parsedEpoch);
+
 
 	const commit = (v: string) => {
 		const newEpoch = dateStrToEpochMs(v);

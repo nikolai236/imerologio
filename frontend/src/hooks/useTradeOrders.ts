@@ -4,10 +4,8 @@ import type { Entry, Exit, Timeframe } from "../../../shared/candles.types";
 import useTimeframe from "./useTimeframe";
 import type { UTCTimestamp } from "lightweight-charts";
 
-export type TempOrder = Omit<Order, 'price'|'quantity'> & {
+export type TempOrder = Order & {
 	tempId: string;
-	quantity: string;
-	price: string;
 };
 
 const useTradeOrders = (date: Date) => {
@@ -20,7 +18,7 @@ const useTradeOrders = (date: Date) => {
 		Date.now().toString(16);
 
 	const _getDefaultOrder = (orders: TempOrder[]): TempOrder => orders.length == 0 ?
-		{ date: date.getTime(), price: '0', type: 'BUY', quantity: '1', tempId: _uid(), } :
+		{ date: date.getTime(), price: 0, type: 'BUY', quantity: 1, tempId: _uid(), } :
 		{ ...orders.at(-1)!, tempId: _uid() };
 
 	const _calculateOrderSum = () => orders.reduce((prev, { type, quantity }) =>
@@ -47,8 +45,6 @@ const useTradeOrders = (date: Date) => {
 				...o,
 				date: new Date(o.date).getTime(),
 				tempId: _uid(),
-				price: String(o.price),
-				quantity: String(o.quantity),
 			}))
 			.sort((a, b) => a.date - b.date)
 	);

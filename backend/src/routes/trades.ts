@@ -70,6 +70,7 @@ const router: FastifyPluginAsync = async (server) => {
 		const transformedOrders = parseOrders(orders);
 
 		const transformedCharts = charts.map(c => ({
+			id: 'id' in c ? c.id : undefined,
 			start: Number(c.start),
 			end: Number(c.end),
 			timeframe: tfToNumber(c.timeframe),
@@ -126,6 +127,7 @@ const router: FastifyPluginAsync = async (server) => {
 			return reply.code(404).send({ message });
 		}
 
+		
 		let { target, stop, orders, charts } = req.body;
 
 		if (orders != null && !validateOrderQuantities(orders)) {

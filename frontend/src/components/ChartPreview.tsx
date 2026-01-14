@@ -13,6 +13,7 @@ import useTradeCharts from '../hooks/useTradeCharts';
 import useTradeContext from '../hooks/useTradeContext';
 import useChart from '../hooks/useChart';
 import OhlcLabel from './OhlcLabel';
+import useDraft from '../hooks/useDraft';
 
 type Props = {
 	num: number;
@@ -45,13 +46,12 @@ export default function ChartPreview({
 	const [candles, setCandles] = useState<Candle[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string|null>(null);
+	const [draftTimeframe, setDraftTimeframe] = useDraft(timeframe);
 
 	const { containerRef, ohlc } = useChart(candles, timeframe);
 
 	useEffect(() => {
 		if (!symbol) return;
-
-		let cancelled = false;
 
 		setLoading(true);
 		setError(null);
@@ -64,15 +64,12 @@ export default function ChartPreview({
 			})
 			.finally(() => setLoading(false));
 
-		return () => {
-			cancelled = true;
-		};
 	}, [symbol, id, start, end, timeframe]);
 
-	const handleTimeframeChange = (value: string) => {
-		updateChart(id, { timeframe: value as Timeframe });
+	const commitTimeFrame = () => {
+		updateChart(id, { timeframe: draftTimeframe as Timeframe });
 
-		if(!isTimeframeValid(value)) {
+		if(!isTimeframeValid(draftTimeframe)) {
 			return setError("Invalid timeframe value");
 		}
 		return setError(null);
@@ -112,8 +109,9 @@ export default function ChartPreview({
 				</Text>
 				<Input
 					disabled={disabled}
-					value={timeframe}
-					onChange={e => handleTimeframeChange(e.target.value)}
+					value={draftTimeframe}
+					onChange={e => setDraftTimeframe(e.target.value)}
+					onBlur={commitTimeFrame}
 					placeholder="e.g. 5m or 15000"
 				/>
 			</Box>
@@ -142,7 +140,7 @@ export default function ChartPreview({
 					<DatePicker
 						disabled={disabled}
 						label="Start"
-						epoch={start}
+						epoch={start ? Number(start) : undefined}
 						onChangeEpoch={(start) => start && updateChart(id, { start })}
 					/>
 				</Box>
@@ -151,7 +149,7 @@ export default function ChartPreview({
 					<DatePicker
 						disabled={disabled}
 						label="End"
-						epoch={end}
+						epoch={end ? Number(end) : undefined}
 						onChangeEpoch={(end) => end && updateChart(id, { end })}
 					/>
 				</Box>

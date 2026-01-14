@@ -1,6 +1,7 @@
 import { Box, Text, Input, Flex } from "@chakra-ui/react"
 import EditButton from "./EditButton";
 import useTradeContext from "../hooks/useTradeContext";
+import useDraft from "../hooks/useDraft";
 
 type Props = {
 	disabled?: boolean;
@@ -12,6 +13,7 @@ export default function StopInput({
 	handleEditClick,
 }: Props) {
 	const { stop, setStop } = useTradeContext();
+	const [draft, setDraft] = useDraft(stop);
 
 	return (
 		<Box minW="160px">
@@ -25,9 +27,10 @@ export default function StopInput({
 					onClick={handleEditClick ?? (()=>{})}
 				/>
 				<Input
-					value={stop}
+					value={draft}
 					disabled={disabled}
-					onChange={(e) => setStop(e.target.value)}
+					onBlur={() => setStop(Number(draft.trim()))}
+					onChange={e => setDraft(e.target.value)}
 					placeholder="e.g. 19250.25"
 				/>
 			</Flex>

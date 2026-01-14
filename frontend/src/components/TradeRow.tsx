@@ -6,10 +6,11 @@ import { useNavigate } from "react-router-dom";
 export default function TradeRow({ trade }: { trade: DbTradeEntry }) {
 	const { epochToDateStrInTZ } = useTimezones();
 
-	const dateStr = trade.orders.length > 0 ?
-		epochToDateStrInTZ(new Date(trade.orders[0].date).getTime()) : null;
+	const dateStr = trade.orders?.length > 0 ?
+		epochToDateStrInTZ(new Date(trade.orders[0].date ?? Date.now()).getTime()) : null;
 
-	const direction = trade.orders[0].type == 'BUY' ? 'Long' : 'Short';
+	const direction = trade.orders?.length > 0 && trade.orders[0].type == 'BUY' ?
+		'Long' : 'Short';
 
 	const navigate = useNavigate();
 	const goToTradePage = () => navigate(`/trades/${trade.id}`);

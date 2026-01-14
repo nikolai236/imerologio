@@ -1,19 +1,11 @@
 import { useEffect, useState } from "react";
-import type { Chart, Order, DbTrade, Trade, DbOrder, DbChart, ApiTrade } from "../../../shared/trades.types";
+import type { Chart, Order, Trade, ApiTrade } from "../../../shared/trades.types";
 import useTradeOrders from "./useTradeOrders";
 import type { Timeframe } from "../../../shared/candles.types";
 import useTradeCharts from "./useTradeCharts";
 import useTrades from "./useTrades";
 import useReload from "./useReload";
 import useSymbolId from "./useSymbolId";
-
-const parseDecimalString = (s: string) => {
-	if (!s) return null;
-	const n = Number(s);
-
-	if (!Number.isFinite(n)) return null;
-	return s;
-};
 
 const useEditTrade = (tradeId?: number) => {
 	const {
@@ -42,16 +34,16 @@ const useEditTrade = (tradeId?: number) => {
 	const [submitting, setSubmitting] = useState(false);
 	const [reloadToken, reload] = useReload();
 
-	const [stop, setStop] = useState('');
-	const [target, setTarget] = useState('');
+	const [stop, setStop] = useState<number|null>(null);
+	const [target, setTarget] = useState<number|null>(null);
 
 	const [selectedLabelIds, setSelectedLabelIds] = useState<number[]>([]);
 	const [description, setDescription] = useState('');
 
 	const setNull = () => {
 		setSymbolId('');
-		setStop('');
-		setTarget('');
+		setStop(null);
+		setTarget(null);
 		setDescription('');
 
 		setSelectedLabelIds([]);
@@ -64,8 +56,8 @@ const useEditTrade = (tradeId?: number) => {
 		const ids = t.labels.map(({ id }) => id);
 
 		setSymbolId(t.symbolId.toString());
-		setStop(t.stop.toString());
-		setTarget(t.target?.toString() ?? '');
+		setStop(t.stop);
+		setTarget(t.target ?? null);
 		setDescription(t.description ?? '');
 
 		setSelectedLabelIds(ids);
@@ -80,11 +72,11 @@ const useEditTrade = (tradeId?: number) => {
 		const sId = Number(symbolId);
 		if (!Number.isInteger(sId) || sId <= 0) throw new Error("Please select a valid symbol.");
 
-		const stopStr = parseDecimalString(stop);
-		if (!stopStr) throw new Error("Stop must be a valid number.");
+		// const stopStr = parseDecimalString(stop);
+		// if (!stopStr) throw new Error("Stop must be a valid number.");
 
-		const targetStr = parseDecimalString(target);
-		if (target.trim() && !targetStr) throw new Error("Target must be a valid number.");
+		// const targetStr = parseDecimalString(target);
+		// if (target.trim() && !targetStr) throw new Error("Target must be a valid number.");
 
 		if (orders.length === 0) throw new Error("Please add at least one order.");
 
@@ -105,8 +97,8 @@ const useEditTrade = (tradeId?: number) => {
 		}));
 
 		const ret: Trade<Chart<Timeframe>> = {
-			stop: Number(stop.trim()),
-			target: target.trim() != '' ? Number(target.trim()) : undefined,
+			stop: stop as number,
+			target: target as number,
 			description,
 			pnl: undefined,
 			labels: selectedLabelIds.map(id => ({ id })),

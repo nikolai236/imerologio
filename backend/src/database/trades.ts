@@ -25,14 +25,16 @@ const useTrades = (db: PrismaClient) => {
 			{ id: { notIn: existingIds } } : {}
 
 		type DbObj = T & { id: number };
-		const upsert = elements.filter((c): c is DbObj => 'id' in c).map(c => ({
-			where: { id: c.id },
-			create: { ...c, id: undefined },
-			update: { ...c, id: undefined },
-		}));
+		const upsert = elements
+			.filter((c): c is DbObj => 'id' in c && c.id != null)
+			.map(({ id, ...payload }) => ({
+				where: { id },
+				create: payload,
+				update: payload,
+			}));
 
 		const create = elements
-			.filter(c => !('id' in c))
+			.filter(c => !('id' in c) || c.id == null)
 			.map(c => ({ ...c }));
 
 		return { deleteMany, create, upsert };

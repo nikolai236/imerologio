@@ -1,8 +1,7 @@
 import { Box, Flex, NativeSelect, VStack, Text, Input, Button } from '@chakra-ui/react'
-import type { OrderEnum } from '../../../shared/trades.types';
 import EditButton from './EditButton';
 import useTradeContext from '../hooks/useTradeContext';
-import DatePicker from './DatePicker';
+import OrderRow from './OrderRow';
 
 type Props = {
 	disabled?: boolean;
@@ -46,71 +45,18 @@ export default function Orders({
 
 			<VStack align="stretch" gap={3}>
 			{orders.map((o, idx) => (
-				<Box key={o.tempId} borderWidth="1px" borderRadius="md" p={3}>
-					<Flex gap={3} wrap="wrap" align="flex-end">
-						<Box minW="120px">
-							<Text fontSize="sm" color="fg.muted" mb={1}>
-								Type
-							</Text>
-							<NativeSelect.Root disabled={disabled}>
-								<NativeSelect.Field
-									value={o.type}
-									onChange={(e) => updateOrder(o.tempId, {
-										type: e.target.value as OrderEnum
-									})}
-								>
-									<option value="BUY">BUY</option>
-									<option value="SELL">SELL</option>
-								</NativeSelect.Field>
-							</NativeSelect.Root>
-						</Box>
-
-						<Box minW="140px">
-							<Text fontSize="sm" color="fg.muted" mb={1}>
-								Quantity
-							</Text>
-						<Input
-							disabled={disabled}
-							value={o.quantity}
-							onChange={(e) => updateOrder(o.tempId, { quantity: e.target.value })}
-							placeholder="int > 0"
-						/>
-						</Box>
-
-						<Box minW="170px">
-							<Text fontSize="sm" color="fg.muted" mb={1}>
-								Price
-							</Text>
-						<Input
-							disabled={disabled}
-							value={o.price}
-							onChange={(e) => updateOrder(o.tempId, { price: e.target.value })}
-							placeholder="e.g. 19280.50"
-						/>
-						</Box>
-
-						<Box minW="240px" flex="1">
-							<DatePicker
-								disabled={disabled}
-								epoch={o.date}
-								onChangeEpoch={(date) => date && updateOrder(o.tempId, { date })}
-							/>
-						</Box>
-
-						<Button
-							colorScheme="red"
-							variant="outline"
-							onClick={() => removeOrder(o.tempId)}
-							disabled={disabled}
-							title={orders.length <= 1 ? "Must have at least one order" : ""}
-						> Remove </Button>
-
-						<Text fontSize="xs" color="fg.muted" ml="auto">
-							Order #{idx + 1}
-						</Text>
-					</Flex>
-				</Box>
-				))}
+				<OrderRow
+					key={o.tempId}
+					isAlone={orders.length <= 1}
+					idx={idx}
+					type={o.type}
+					quantity={o.quantity}
+					price={o.price}
+					date={o.date}
+					destroy={() => removeOrder(o.tempId)}
+					onUpdate={(p) => updateOrder(o.tempId, p)}
+				/>
+			))}
 			</VStack>
 		</Box>);
 }
