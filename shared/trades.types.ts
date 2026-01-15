@@ -1,7 +1,13 @@
 import { Timeframe } from "./candles.types";
 
 export type OrderEnum  = 'BUY' | 'SELL';
-export type SymbolEnum = 'CFD' | 'Futures';
+export type SymbolEnum = 	'Forex' |
+							'Futures' |
+							'ETF' |
+							'Crypto' |
+							'Stock' |
+							'Security' |
+							'Commodity';
 
 type OrderDate = Date | number;
 
@@ -27,6 +33,7 @@ export type OrderUnion<DateType extends OrderDate> =
 export interface Symbol {
 	name: string;
 	type: SymbolEnum;
+	description: string;
 }
 
 export interface UpdateSymbol extends Partial<Symbol>{}

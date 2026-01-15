@@ -1,4 +1,4 @@
-import { Box, Flex, NativeSelect, VStack, Text, Input, Button } from '@chakra-ui/react'
+import { Box, Flex, VStack, Text, Button } from '@chakra-ui/react'
 import EditButton from './EditButton';
 import useTradeContext from '../hooks/useTradeContext';
 import OrderRow from './OrderRow';

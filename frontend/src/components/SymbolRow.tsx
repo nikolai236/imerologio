@@ -1,35 +1,45 @@
-import { Box, Input, Flex, NativeSelect, Text, HStack, Button } from "@chakra-ui/react";
-import { type SymbolEnum, type DbSymbol } from "../../../shared/trades.types";
+import { Box, Input, Flex, NativeSelect, Text, HStack, Button, Textarea } from "@chakra-ui/react";
+import type { SymbolEnum, DbSymbol, Symbol } from "../../../shared/trades.types";
 
 type Props = {
 	symbol: DbSymbol;
 	isEditing: boolean;
-	draftName: string;
-	draftType: SymbolEnum;
+	name: string;
+	description: string,
+	type: SymbolEnum;
 	error?: string | null;
 
 	onStartEdit: (symbol: DbSymbol) => void;
 	onCancelEdit: () => void;
-	onDraftNameChange: (id: number, value: string) => void;
-	onDraftTypeChange: (id: number, value: SymbolEnum) => void;
+	updateDraft: (id: number, payload: Partial<Symbol>) => void;
 	onSave: (id: number) => void;
 };
 
-const TYPE_OPTIONS: SymbolEnum[] = ["Futures", "CFD"];
+const TYPE_OPTIONS: SymbolEnum[] = [
+	"Futures",
+	"Forex",
+	"ETF",
+	"Crypto",
+	"Stock",
+	"Security",
+	"Commodity"
+];
 
 export default function SymbolRow({
 	symbol,
 	isEditing,
-	draftName,
-	draftType,
+	name,
+	type,
+	description,
 	error,
 
 	onStartEdit,
 	onCancelEdit,
-	onDraftNameChange,
-	onDraftTypeChange,
+	updateDraft,
 	onSave,
 }: Props) {
+	const { id } = symbol;
+
 	return (
 		<Box borderWidth="1px" borderRadius="md" p={4}>
 			{error ? (
@@ -43,7 +53,7 @@ export default function SymbolRow({
 					<Text fontSize="sm" color="fg.muted">
 						ID
 					</Text>
-					<Text fontWeight="semibold">{symbol.id}</Text>
+					<Text fontWeight="semibold">{id}</Text>
 				</Box>
 
 				<Box minW="220px" flex="1">
@@ -52,8 +62,8 @@ export default function SymbolRow({
 					</Text>
 					{isEditing ? (
 						<Input
-							value={draftName}
-							onChange={(e) => onDraftNameChange(symbol.id, e.target.value)}
+							value={name}
+							onChange={(e) => updateDraft(id, { name: e.target.value })}
 							placeholder="Symbol name"
 							maxW="360px"
 						/>
@@ -66,38 +76,60 @@ export default function SymbolRow({
 					<Text fontSize="sm" color="fg.muted">
 						Type
 					</Text>
-						{isEditing ? (
-							<NativeSelect.Root maxW="220px">
-								<NativeSelect.Field
-									value={draftType}
-									onChange={(e) =>
-										onDraftTypeChange(symbol.id, e.currentTarget.value as SymbolEnum)
-									}
-								>
-									{TYPE_OPTIONS.map((t) => (<option key={t} value={t}>{t}</option>))}
-								</NativeSelect.Field>
-								<NativeSelect.Indicator />
-							</NativeSelect.Root>
-						) : (
-							<Text fontWeight="semibold">{symbol.type}</Text>
-						)}
+					{isEditing ? (
+					<NativeSelect.Root maxW="220px">
+
+						<NativeSelect.Field
+							value={type}
+							onChange={(e) => updateDraft(id, {
+								type: e.currentTarget.value as SymbolEnum
+							})}
+						> {TYPE_OPTIONS.map((t) => (<option key={t} value={t}>{t}</option>))}
+						</NativeSelect.Field>
+
+						<NativeSelect.Indicator />
+					</NativeSelect.Root>
+					) : (
+					<Text fontWeight="semibold">{symbol.type}</Text>
+					)}
 				</Box>
 
 				<HStack>
-					{isEditing ? (
-						<>
-							<Button onClick={() => onSave(symbol.id)}>Save</Button>
-							<Button variant="outline" onClick={onCancelEdit}>
-								Cancel
-							</Button>
-						</>
-					) : (
-						<Button variant="outline" onClick={() => onStartEdit(symbol)}>
-							Edit
-						</Button>
-					)}
+				{isEditing ? (
+				<>
+					<Button onClick={() => onSave(symbol.id)}>Save</Button>
+					<Button variant="outline" onClick={onCancelEdit}>
+						Cancel
+					</Button>
+				</>
+				) : (
+				<Button variant="outline" onClick={() => onStartEdit(symbol)}>
+					Edit
+				</Button>
+				)}
 				</HStack>
 			</Flex>
+
+			{(symbol.description?.trim() || isEditing) &&
+			<Box mt={4}>
+				<Text fontSize="sm" color="fg.muted" mb={1}>
+				Description
+				</Text>
+
+				{isEditing ? (
+				<Textarea
+					value={description}
+					onChange={(e) => updateDraft(id, {
+						description: e.target.value
+					})}
+					placeholder="Short description (plain text)"
+					resize="vertical"
+					rows={2} />
+				) : (
+				<Text whiteSpace="pre-wrap"> {symbol.description} </Text>
+				)}
+			</Box>
+			}
 		</Box>
 	);
 }

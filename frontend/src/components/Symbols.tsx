@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import {
 	Box,
 	Flex,
@@ -17,14 +17,26 @@ import useFetchSymbols from "../hooks/useFetchSymbols";
 export default function Symbols() {
 	const { updateSymbol, createSymbol } = useSymbols();
 	const { rowErrorById, setRowError, clearRowError } = useRowErrors();
-	const { symbols, reload } = useFetchSymbols();
+	const { symbols: unsorted, reload } = useFetchSymbols();
 
-	const [draftName,    setDraftName] = useState('');
-	const [editingId,    setEditingId] = useState<number|null>(null);
-	const [draftType,    setDraftType] = useState<SymbolEnum>('Futures');
+	const symbols = useMemo(() => {
+		const cmp = (a: Symbol, b: Symbol) => a.name.localeCompare(
+			b.name,
+			undefined,
+			{ sensitivity: 'base' }
+		);
+		return [...unsorted].sort(cmp);
+	}, [unsorted]);
+
+	const [editingId, setEditingId] = useState<number|null>(null);
+
+	const [draftName, setDraftName] = useState('');
+	const [draftType, setDraftType] = useState<SymbolEnum>('Futures');
+	const [draftDescription, setDraftDescription] = useState('');
 
 	const startEdit = (symbol: DbSymbol) => {
 		setEditingId(symbol.id);
+		setDraftDescription(symbol.description);
 		setDraftName(symbol.name);
 		setDraftType(symbol.type);
 		clearRowError(symbol.id);
@@ -35,15 +47,13 @@ export default function Symbols() {
 		setEditingId(null);
 	};
 
-	const onDraftNameChange = (id: number, value: string) => {
+	const updateDraft = (id: number, payload: Partial<Symbol>) => {
 		if (editingId !== id) return;
-		setDraftName(value);
-		clearRowError(id);
-	};
 
-	const onDraftTypeChange = (id: number, value: SymbolEnum) => {
-		if (editingId !== id) return;
-		setDraftType(value);
+		if (payload.name) setDraftName(payload.name);
+		if (payload.description) setDraftDescription(payload.description);
+		if (payload.type) setDraftType(payload.type);
+
 		clearRowError(id);
 	};
 
@@ -52,7 +62,7 @@ export default function Symbols() {
 			throw new Error("Name cannot be empty.");
 		}
 
-		const hasDuplicate = symbols
+		const hasDuplicate = unsorted
 			.filter(s => s != symbol)
 			.some(s => s.name == symbol.name);
 
@@ -72,7 +82,7 @@ export default function Symbols() {
 			return setRowError(id, "Name cannot be empty.");
 		}
 
-		const hasDuplicate = symbols
+		const hasDuplicate = unsorted
 			.filter(s => s.id != id)
 			.some(s => s.name == name);
 
@@ -81,8 +91,10 @@ export default function Symbols() {
 			return;
 		}
 
+		const description = draftDescription.trim();
+
 		try {
-			await updateSymbol(id, { name, type: draftType });
+			await updateSymbol(id, { name, type: draftType, description });
 		} catch (_err) {
 			setRowError(id, "Couldn't save change.");
 			return;
@@ -104,20 +116,21 @@ export default function Symbols() {
 
 			<Stack gap={3}>
 			{symbols.map((s) => {
-					const isEditing = editingId === s.id
-					return (<SymbolRow
-							key={s.id}
-							symbol={s}
-							isEditing={isEditing}
-							draftName={isEditing ? draftName : s.name}
-							draftType={isEditing ? draftType : s.type}
-							error={rowErrorById[s.id] ?? null}
-							onStartEdit={startEdit}
-							onCancelEdit={cancelEdit}
-							onDraftNameChange={onDraftNameChange}
-							onDraftTypeChange={onDraftTypeChange}
-							onSave={saveEdit}
-						/>) })}
+				const isEditing = editingId === s.id
+				return (
+					<SymbolRow
+						key={s.id}
+						symbol={s}
+						isEditing={isEditing}
+						name={isEditing ? draftName : s.name}
+						description={draftDescription}
+						type={isEditing ? draftType : s.type}
+						error={rowErrorById[s.id] ?? null}
+						onStartEdit={startEdit}
+						onCancelEdit={cancelEdit}
+						updateDraft={updateDraft}
+						onSave={saveEdit}
+					/>) })}
 			</Stack>
 			<CreateSymbolPage onCreate={saveNewSymbol} />
 		</Box>

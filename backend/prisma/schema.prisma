@@ -13,8 +13,13 @@ datasource db {
 }
 
 enum SymbolType {
+	Stock
+	ETF
 	Futures
-	CFD
+	Forex
+	Commodity
+	Crypto
+	Security
 }
 
 enum OrderType {
@@ -27,6 +32,8 @@ model Symbol {
 
 	name String @unique
 	type SymbolType
+
+	description String @default("") @db.Text
 
 	trades Trade[]
 }
@@ -74,8 +81,8 @@ model Chart {
 
 	timeframe Int
 
-	start Decimal
-	end   Decimal
+	start BigInt
+	end   BigInt
 
 	tradeId Int
 	trade   Trade @relation(fields: [tradeId], references: [id], onDelete: Cascade)
