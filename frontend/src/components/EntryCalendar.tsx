@@ -7,21 +7,22 @@ function EventSection({
 	title,
 	events
 }: { title: string; events: NewsEventWithId<Date | DateString>[] }) {
-	if (!events?.length) return null;
+	if (events.length == 0) return null;
+
 	return (
 		<Box>
 			<Text fontSize="sm" color="fg.muted" mb={2}>
 				{title}
 			</Text>
 			<VStack align="stretch" gap={2}>
-				{events.map((e, idx) => (
+				{events.map((event) => (
 					<Box
-						key={e.id ?? `${title}-${idx}`}
+						key={event.id}
 						p={2}
 						borderWidth="1px"
 						borderRadius="md"
 					>
-						<CalendarRow newsEvent={e} />
+						<CalendarRow newsEvent={event} />
 					</Box>
 				))}
 			</VStack>
@@ -48,14 +49,14 @@ export default function EntryCalendar() {
 			<Box>
 				<Flex align="center" justify="space-between" mb={2}>
 					<Text fontSize="sm" color="fg.muted">
-						Caloendar for entry
+						Calendar for entry
 					</Text>
 					{loading ? <Spinner size="sm" /> : null}
 				</Flex>
 
 				{error ? (
 					<Box p={3} borderWidth="1px" borderRadius="md">
-						<Text fontSize="sm">{error}</Text>
+						<Text fontSize="sm" color="red">Error: {error}</Text>
 					</Box>
 				) : null}
 

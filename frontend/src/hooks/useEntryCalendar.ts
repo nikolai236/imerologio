@@ -22,7 +22,10 @@ const useEntryCalendar = (orders: TempOrder[]) => {
 		setLoading(true);
 
 		getEntryCalendarForDate(date)
-			.then(setCalendar)
+			.then((c) => {
+				setCalendar(c);
+				setError(null);
+			})
 			.catch((e) => {
 				console.error(e);
 				setError(e.message);
