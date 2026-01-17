@@ -26,34 +26,34 @@ const buildApp = async () => {
 			colorize: true,
 		}
 	};
-	const server = Fastify({ logger: { transport } });
+	const app = Fastify({ logger: { transport } });
 
-	await server.register(cors, {
+	await app.register(cors, {
 		origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
 		methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
 		allowedHeaders: ["Content-Type", "Authorization"],
 	});
 
-	await server.register(compress, {
+	await app.register(compress, {
 		global: true,
 		encodings: ['gzip', 'deflate', 'br'],
 	});
-	await server.register(prismaPlugin);
-	await server.register(duckdbPlugin);
-	await server.register(uploadsPlugin);
+	await app.register(prismaPlugin);
+	await app.register(duckdbPlugin);
+	await app.register(uploadsPlugin);
 
 	// server.addHook("onRequest", async (req) => {
 	// 	console.log("RAW BODY:", req.body);
 	// 	console.log("HEADERS:", req.headers["content-type"]);
 	// });
 
-	await server.register(tradesRouter,  { prefix: '/trades'  });
-	await server.register(symbolsRouter, { prefix: '/symbols' });
-	await server.register(labelsRouter,  { prefix: '/labels'  });
-	await server.register(candlesRouter, { prefix: '/candles' });
-	await server.register(newsRouter,    { prefix: '/news'    });
+	await app.register(tradesRouter,  { prefix: '/trades'  });
+	await app.register(symbolsRouter, { prefix: '/symbols' });
+	await app.register(labelsRouter,  { prefix: '/labels'  });
+	await app.register(candlesRouter, { prefix: '/candles' });
+	await app.register(newsRouter,    { prefix: '/news'    });
 
-	server.addSchema({
+	app.addSchema({
 		$id: "ErrorMessage",
 		type: "object",
 		additionalProperties: false,
@@ -63,21 +63,21 @@ const buildApp = async () => {
 		},
 	});
 
-	server.setErrorHandler((err: any, _req, reply) => {
+	app.setErrorHandler((err: any, _req, reply) => {
 		if (err.statusCode == 400 && err.validation) {
 			const message = err.instancePath + ": " + err.message;
 			return reply.status(400).send({ message })
 		}
 
-		console.error(err);
+		app.log.error(err);
 
 		const message = "Internal server error";
 		return reply.status(500).send({ message });
 	});
 
-	server.get('/ping', async () => ({ message: 'pong', }));
+	app.get('/ping', async () => ({ message: 'pong', }));
 
-	return server;
+	return app;
 };
 
 const startServer = async () => {

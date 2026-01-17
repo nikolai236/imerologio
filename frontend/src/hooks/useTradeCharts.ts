@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Timeframe } from "../../../shared/candles.types";
+import { type Timeframe, Timeframes } from "../../../shared/candles.types";
 import type { Chart, DbChart } from "../../../shared/trades.types";
 
 export type TempChart = Chart<Timeframe> & {
@@ -14,13 +14,13 @@ const useTradeCharts = () => {
 		Date.now().toString(16);
 
 	const isTimeframeValid = (tf: string) =>
-		Object.values(Timeframe).includes(tf as Timeframe);
+		Object.values(Timeframes).includes(tf as Timeframe);
 
 	const _defaultChart = (charts: TempChart[]) => charts.length == 0 ?
 		{
 			start: 1765141931000,
 			end: 1765151982716,
-			timeframe: Timeframe.tf1m,
+			timeframe: Timeframes.tf1m,
 			tempId: _uid(),
 		} :
 		{ ...charts.at(-1)!, tempId: _uid() };

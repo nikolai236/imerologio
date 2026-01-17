@@ -1,4 +1,4 @@
-import { Candle, Timeframe } from "../../../shared/candles.types";
+import { Candle, Timeframe, Timeframes } from "../../../shared/candles.types";
 
 const useCandleService = () => {
 	const _reduce = (timeframe: Timeframe) => {
@@ -38,7 +38,7 @@ const useCandleService = () => {
 	};
 
 	const numberToTf = (inp: number) => {
-		const tfs = Object.values(Timeframe);
+		const tfs = Object.values(Timeframes);
 		const ret = tfs.find(tf => tfToNumber(tf) == inp);
 
 		if (ret == null) {

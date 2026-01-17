@@ -1,6 +1,13 @@
 import type { FastifyPluginAsync } from "fastify";
 import type { Symbol, UpdateSymbol } from "../../../shared/trades.types";
 import useSymbols from "../database/symbols";
+import {
+	getSymbolSchema,
+	getSymbolsSchema,
+	patchSymbolSchema,
+	postSymbolSchema,
+	deleteSymbolSchema,
+} from "../schemas/symbols";
 
 
 const router: FastifyPluginAsync = async (server) => {
@@ -12,13 +19,13 @@ const router: FastifyPluginAsync = async (server) => {
 		deleteSymbol,
 	} = useSymbols(server.prisma);
 
-	server.get('/', async (_req, reply) => {
+	server.get('/', getSymbolsSchema, async (_req, reply) => {
 		const symbols = await getAllSymbols();
 		return reply.code(200).send({ symbols });
 	});
 
 	interface IGet { Params: { id: number }; }
-	server.get<IGet>('/:id', async (req, reply) => {
+	server.get<IGet>('/:id', getSymbolSchema, async (req, reply) => {
 		const id = Number(req.params.id);
 
 		const symbol = await getSymbolById(id);
@@ -29,10 +36,10 @@ const router: FastifyPluginAsync = async (server) => {
 	});
 
 	interface IPost { Body: Symbol }
-	server.post<IPost>('/', async (req, reply) => {
+	server.post<IPost>('/', postSymbolSchema, async (req, reply) => {
 		try {
 			const symbol = await createSymbol(req.body);
-			return reply.code(200).send({ symbol });
+			return reply.code(201).send({ symbol });
 		} catch (err) {
 			server.log.error(err);
 			return reply.code(400).send({ message: err });
@@ -40,7 +47,7 @@ const router: FastifyPluginAsync = async (server) => {
 	});
 
 	interface IPatch { Params: { id: number; }; Body: UpdateSymbol; }
-	server.patch<IPatch>('/:id', async (req, reply) => {
+	server.patch<IPatch>('/:id', patchSymbolSchema, async (req, reply) => {
 		try {
 			const id = Number(req.params.id);
 
@@ -56,7 +63,7 @@ const router: FastifyPluginAsync = async (server) => {
 	});
 
 	interface IDelete { Params: { id: number; } }
-	server.delete<IDelete>('/:id', async (req, reply) => {
+	server.delete<IDelete>('/:id', deleteSymbolSchema, async (req, reply) => {
 		const id = Number(req.params.id);
 
 		const symbol = await getSymbolById(id);
@@ -65,7 +72,7 @@ const router: FastifyPluginAsync = async (server) => {
 		}
 
 		await deleteSymbol(id);
-		return reply.code(201).send({ message: 'Deleted' });
+		return reply.code(200).send({ message: 'Deleted' });
 	});
 };
 

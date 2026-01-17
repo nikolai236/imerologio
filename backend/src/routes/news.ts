@@ -3,7 +3,7 @@ import type { NewsEvent, DateString } from "../../../shared/news.types";
 import useNews from "../database/news";
 import {
 	getEntryCalendarSchema,
-	getNewsSchema,
+	getNewsEventsSchema,
 	postBulkNewsSchema,
 	postNewsSchema
 } from "../schemas/news";
@@ -21,7 +21,7 @@ const router: FastifyPluginAsync = async (server) => {
 	} = useNewsService(server.prisma);
 
 	interface IGet { Querystring: { date?: DateString; types?: string[]; }; }
-	server.get<IGet>('/', getNewsSchema, async (req, reply) => {
+	server.get<IGet>('/', getNewsEventsSchema, async (req, reply) => {
 
 		const types = req.query.types;
 		const date = req.query.date ?
@@ -40,22 +40,30 @@ const router: FastifyPluginAsync = async (server) => {
 			const { date } = req.query;
 			const calendar = await getEntryCalendar(date);
 
-			return reply.status(201).send(calendar);
+			return reply.status(200).send(calendar);
 		},
 	);
 
 	interface IPost { Body: NewsEvent<DateString>; }
 	server.post<IPost>('/', postNewsSchema, async (req, reply) => {
-
-		const newsEvent = await createNewsEvent(req.body);
-		return reply.code(201).send({ newsEvent });
+		try {
+			const newsEvent = await createNewsEvent(req.body);
+			return reply.code(201).send({ newsEvent });
+		} catch (err) {
+			server.log.error(err);
+			return reply.code(400).send({ message: err });
+		}
 	});
 
 	interface IPostBulk { Body: NewsEvent<DateString>[]; }
 	server.post<IPostBulk>('/bulk', postBulkNewsSchema, async (req, reply) => {
-
-		const updated = await createManyNewsEvents(req.body);
-		return reply.code(201).send({ updated });
+		try {
+			const updated = await createManyNewsEvents(req.body);
+			return reply.code(201).send({ updated });
+		} catch (err) {
+			server.log.error(err);
+			return reply.code(400).send({ message: err });
+		}
 	});
 };
 

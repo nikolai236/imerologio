@@ -1,4 +1,4 @@
-import type { Candle, Timeframe } from '../../../shared/candles.types';
+import type { Candle } from '../../../shared/candles.types';
 import { FastifyInstance } from "fastify";
 
 const useCandles = (db: FastifyInstance["duckdb"]) => {

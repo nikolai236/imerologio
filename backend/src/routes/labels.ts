@@ -1,6 +1,7 @@
 import type { FastifyPluginAsync } from "fastify";
-import { DbLabel, Label, UpdateLabel } from "../../../shared/trades.types";
+import { Label, UpdateLabel } from "../../../shared/trades.types";
 import useLabels from "../database/labels";
+import { deleteLabelSchema, getLabelsSchema, patchLabelSchema, postLabelSchema } from "../schemas/labels";
 
 const router: FastifyPluginAsync = async (server) => {
 	const {
@@ -11,16 +12,16 @@ const router: FastifyPluginAsync = async (server) => {
 		deleteLabel
 	} = useLabels(server.prisma);
 
-	server.get('/', async (_req, reply) => {
+	server.get('/', getLabelsSchema, async (_req, reply) => {
 		const labels = await getAllLabels();
 		return reply.code(200).send({ labels });
 	});
 
 	interface IPost { Body: Label }
-	server.post<IPost>('/', async (req, reply) => {
+	server.post<IPost>('/', postLabelSchema, async (req, reply) => {
 		try {
 			const label = await createLabel(req.body);
-			return reply.code(200).send({ label });
+			return reply.code(201).send({ label });
 		} catch (err) {
 			server.log.error(err);
 			return reply.code(400).send({ message: err });
@@ -28,7 +29,7 @@ const router: FastifyPluginAsync = async (server) => {
 	});
 
 	interface IPatch { Params: { id: number; }; Body: UpdateLabel; }
-	server.patch<IPatch>('/:id', async (req, reply) => {
+	server.patch<IPatch>('/:id', patchLabelSchema, async (req, reply) => {
 		try {
 			const id = Number(req.params.id);
 
@@ -44,7 +45,7 @@ const router: FastifyPluginAsync = async (server) => {
 	});
 
 	interface IDelete { Params: { id: number; }; };
-	server.delete<IDelete>('/:id', async (req, reply) => {
+	server.delete<IDelete>('/:id', deleteLabelSchema, async (req, reply) => {
 		const id = Number(req.params.id);
 
 		const label = await getLabelById(id);
@@ -53,7 +54,7 @@ const router: FastifyPluginAsync = async (server) => {
 		}
 
 		await deleteLabel(id);
-		return reply.code(201).send({ message: 'Deleted' });
+		return reply.code(200).send({ message: 'Deleted' });
 	});
 };
 

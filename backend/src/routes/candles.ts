@@ -5,6 +5,11 @@ import useCandles from "../database/candles";
 import useSymbols from "../database/symbols";
 import useCandleService from "../services/candles";
 
+import {
+	getSupportedSchema,
+	postCandleSymbolSchema
+} from "../schemas/candles";
+
 const router: FastifyPluginAsync = async (server) => {
 	const {
 		isSymbolSupported,
@@ -21,7 +26,7 @@ const router: FastifyPluginAsync = async (server) => {
 	const { getSymbolById } = useSymbols(server.prisma);
 
 	interface IGet { Params: { symbolId: string }; };
-	server.get<IGet>('/supported/:symbolId', async (req, reply) => {
+	server.get<IGet>('/supported/:symbolId', getSupportedSchema, async (req, reply) => {
 		const { symbolId } = req.params;
 
 		const symbol = await getSymbolById(Number(symbolId));
@@ -41,14 +46,8 @@ const router: FastifyPluginAsync = async (server) => {
 		Params: { symbol: string };
 		Body: { start: string, end: string; timeframe: string }
 	};
-	server.post<IPost>('/:symbol', async (req, reply) => {
-		const tfs = Object.values(Timeframe);
-		let { timeframe } = req.body;
-
-		if (timeframe == undefined || !tfs.includes(timeframe as Timeframe)) {
-			const message = "Bad timeframe input!";
-			return reply.code(400).send({ message });
-		}
+	server.post<IPost>('/:symbol', postCandleSymbolSchema, async (req, reply) => {
+		const { timeframe } = req.body;
 
 		const { symbol } = req.params;
 		const isSuppoted = await isSymbolSupported(symbol);
