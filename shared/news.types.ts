@@ -1,13 +1,30 @@
 export type FolderColor = 'Grey'|'Yellow'|'Orange'| 'Red';
 
-export interface NewsEvent {
+export type DateString = string;
+
+export interface NewsEvent<
+	DateType extends Date | DateString = Date,
+> {
 	name: string;
-	eventTs: Date;
+
+	date: DateType;
+	allDay: boolean;
+
 	folderColor: FolderColor;
 	currencies: string[];
+
 	source: string;
+	metadata: Record<string, any>
 }
 
-export interface NewsEventWithId extends NewsEvent {
+export interface NewsEventWithId<
+	DateType extends Date | DateString = Date
+> extends NewsEvent<DateType> {
 	id: number;
+}
+
+export interface EntryCalendar {
+	prev: NewsEventWithId[],
+	current: NewsEventWithId[],
+	next: NewsEventWithId[],
 }

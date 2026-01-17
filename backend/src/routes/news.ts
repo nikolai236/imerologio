@@ -1,69 +1,61 @@
 import type { FastifyPluginAsync } from "fastify";
-import { NewsEvent } from "../../../shared/news.types";
+import type { NewsEvent, DateString } from "../../../shared/news.types";
 import useNews from "../database/news";
-
-type DateString = string;
-
-const isValidDate = (date: DateString) => {
-	if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-		return false;
-	}
-
-	const [y, m, d] = date.split("-").map(Number);
-	const dt = new Date(Date.UTC(y, m - 1, d));
-
-	return (
-		dt.getUTCFullYear() === y &&
-		dt.getUTCMonth() === m - 1 &&
-		dt.getUTCDate() === d
-	);
-};
+import {
+	getEntryCalendarSchema,
+	getNewsSchema,
+	postBulkNewsSchema,
+	postNewsSchema
+} from "../schemas/news";
+import useNewsService from "../services/news";
 
 const router: FastifyPluginAsync = async (server) => {
 	const {
-		getAllNewsEvents,
-		getNewsEventsFor,
-		createNewsEvent
+		createNewsEvent,
+		createManyNewsEvents,
 	} = useNews(server.prisma);
 
-	server.get('/', async (_req, reply) => {
-		const newsEvents = await getAllNewsEvents();
+	const {
+		getEntryCalendar,
+		getNewsEventsForDate
+	} = useNewsService(server.prisma);
+
+	interface IGet { Querystring: { date?: DateString; types?: string[]; }; }
+	server.get<IGet>('/', getNewsSchema, async (req, reply) => {
+
+		const types = req.query.types;
+		const date = req.query.date ?
+			new Date(req.query.date) : undefined;
+
+		const newsEvents = await getNewsEventsForDate(date, types);
 		return reply.code(200).send({ newsEvents });
 	});
 
-	interface IGet { Params: { dateStr: DateString; }; }
-	server.get<IGet>('/:dateStr', async (req, reply) => {
+	interface IGetEntryCalendar { Querystring: { date: DateString; }, }
+	server.get<IGetEntryCalendar>(
+		'/entry-calendar',
+		getEntryCalendarSchema,
+		async (req, reply) => {
 
-		if (!isValidDate(req.params.dateStr)) {
-			const message = "Bad date provided";
-			return reply.code(400).send({ message });
-		}
+			const { date } = req.query;
+			const calendar = await getEntryCalendar(date);
 
-		const date = new Date(req.params.dateStr);
-		const newsEvents = getNewsEventsFor(date);
+			return reply.status(201).send(calendar);
+		},
+	);
 
-		return reply.code(200).send({ newsEvents });
-	});
+	interface IPost { Body: NewsEvent<DateString>; }
+	server.post<IPost>('/', postNewsSchema, async (req, reply) => {
 
-	interface IPost { Body: NewsEvent; }
-	server.post<IPost>('/', async (req, reply) => {
-		let { eventTs, currencies, folderColor, name } = req.body;
-
-		const dateValid = isValidDate(eventTs.toString());
-		const colorValid = [
-			'Grey', 'Yellow', 'Red', 'Orange'
-		].includes(folderColor);
-
-		if (!name || !dateValid || !colorValid) {
-			const message = "Bad news event body provided";
-			return reply.code(400).send({ message }); 
-		}
-
-		currencies = currencies.map(s => s.toUpperCase());
-		const payload = { ...req.body, currencies };
-
-		const newsEvent = await createNewsEvent(payload);
+		const newsEvent = await createNewsEvent(req.body);
 		return reply.code(201).send({ newsEvent });
+	});
+
+	interface IPostBulk { Body: NewsEvent<DateString>[]; }
+	server.post<IPostBulk>('/bulk', postBulkNewsSchema, async (req, reply) => {
+
+		const updated = await createManyNewsEvents(req.body);
+		return reply.code(201).send({ updated });
 	});
 };
 

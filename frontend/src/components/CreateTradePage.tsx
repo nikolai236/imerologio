@@ -19,6 +19,7 @@ import Charts from "./Charts";
 import SymbolSelect from "./SymbolSelect";
 import StopInput from "./StopInput";
 import TargetInput from "./TargetInput";
+import EntryCalendar from "./EntryCalendar";
 
 export default function CreateTradePage() {
 	const { labels, loadingLabels   } = useFetchLabels();
@@ -64,6 +65,8 @@ export default function CreateTradePage() {
 				<Orders />
 
 				<Box borderBottomWidth="1px" />
+
+				<EntryCalendar />
 
 				<Box>
 					<Text fontSize="sm" color="fg.muted" mb={2}>

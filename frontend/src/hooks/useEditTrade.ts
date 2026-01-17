@@ -6,6 +6,7 @@ import useTradeCharts from "./useTradeCharts";
 import useTrades from "./useTrades";
 import useReload from "./useReload";
 import useSymbolId from "./useSymbolId";
+import useEntryCalendar from "./useEntryCalendar";
 
 const useEditTrade = (tradeId?: number) => {
 	const {
@@ -26,6 +27,12 @@ const useEditTrade = (tradeId?: number) => {
 		removeChart,
 		updateChart,
 	} = useTradeCharts();
+
+	const {
+		calendar,
+		loading: calendarLoading,
+		error: calendarError,
+	} = useEntryCalendar(orders);
 
 	const { symbolId, isSupported, setSymbolId } = useSymbolId();
 	const { createTrade, editTrade, getTrade } = useTrades();
@@ -71,12 +78,6 @@ const useEditTrade = (tradeId?: number) => {
 
 		const sId = Number(symbolId);
 		if (!Number.isInteger(sId) || sId <= 0) throw new Error("Please select a valid symbol.");
-
-		// const stopStr = parseDecimalString(stop);
-		// if (!stopStr) throw new Error("Stop must be a valid number.");
-
-		// const targetStr = parseDecimalString(target);
-		// if (target.trim() && !targetStr) throw new Error("Target must be a valid number.");
 
 		if (orders.length === 0) throw new Error("Please add at least one order.");
 
@@ -191,6 +192,10 @@ const useEditTrade = (tradeId?: number) => {
 	}, [reloadToken]);
 
 	return {
+		calendar,
+		calendarError,
+		calendarLoading,
+
 		formError,
 		submitting,
 

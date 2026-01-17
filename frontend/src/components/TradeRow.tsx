@@ -1,11 +1,9 @@
 import { Table } from "@chakra-ui/react";
 import type { DbTradeEntry } from "../../../shared/trades.types";
-import useTimezones from "../hooks/useTimezones";
 import { useNavigate } from "react-router-dom";
+import { epochToDateStrInTZ } from "../lib/timezones";
 
 export default function TradeRow({ trade }: { trade: DbTradeEntry }) {
-	const { epochToDateStrInTZ } = useTimezones();
-
 	const dateStr = trade.orders?.length > 0 ?
 		epochToDateStrInTZ(new Date(trade.orders[0].date ?? Date.now()).getTime()) : null;
 

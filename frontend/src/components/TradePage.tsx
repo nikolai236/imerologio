@@ -25,6 +25,7 @@ import SymbolSelect from "./SymbolSelect";
 import StopInput from "./StopInput";
 import TargetInput from "./TargetInput";
 import Orders from "./Orders";
+import EntryCalendar from "./EntryCalendar";
 
 const Sections = {
 	symbol: "symbol",
@@ -105,9 +106,10 @@ export default function TradePage() {
 				<SectionWrapper section={Sections.orders}>
 					<Orders />
 				</SectionWrapper>
-				
 
 				<Box borderBottomWidth="1px" />
+
+				<EntryCalendar />
 
 				<SectionWrapper section={Sections.description}>
 					<DescriptionEditor placeholder="Write your trade notes…" />

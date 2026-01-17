@@ -5,8 +5,15 @@ const useApi = () => {
 		"Content-Type": "application/json",
 	};
 
-	const makeReq = async (path: string, method: string, body?: any) => {
-		const resp = await fetch(API_BASE + path, {
+	const makeReq = async (path: string, method: string, params?: Record<string, any>, body?: any) => {
+		let url = API_BASE + path;
+
+		if (params != null && Object.keys(params).length > 0) {
+			const query = new URLSearchParams(params);
+			url += `?${query.toString()}`;
+		}
+	
+		const resp = await fetch(url, {
 			headers: body && headers,
 			method,
 			body: body && JSON.stringify(body)
@@ -29,11 +36,11 @@ const useApi = () => {
 	};
 
 	return {
-		get:    (path: string) => makeReq(path, 'GET'),
+		get:    (path: string, params?: Record<string, any>) => makeReq(path, 'GET', params),
 		delete: (path: string) => makeReq(path, 'DELETE'),
 
-		post:  (path: string, body: any) => makeReq(path, 'POST', body),
-		patch: (path: string, body: any) => makeReq(path, 'PATCH', body),
+		post:  (path: string, body: any) => makeReq(path, 'POST', undefined, body),
+		patch: (path: string, body: any) => makeReq(path, 'PATCH', undefined, body),
 
 		postFile: (path: string, file: File) => makeUploadReq(path, 'POST', file),
 	};

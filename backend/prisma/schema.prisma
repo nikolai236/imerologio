@@ -99,14 +99,16 @@ enum FolderColor {
 
 model NewsEvent {
 	id Int @id @default(autoincrement())
+	name String
 
-	name   	String
-	eventTs DateTime @db.Timestamptz(6)
+	date DateTime @db.Timestamptz(3)
+	allDay Boolean @default(false)
 
 	folderColor FolderColor
 	currencies  String[] @default([])
 
 	source String?
+	metadata Json?
 
-	@@index([eventTs])
+	@@index([date])
 }

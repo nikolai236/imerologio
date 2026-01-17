@@ -1,45 +1,81 @@
-import { PrismaClient } from "@prisma/client";
-import type { NewsEvent, NewsEventWithId } from "../../../shared/news.types";
+import { Prisma, PrismaClient } from "@prisma/client";
+import type { DateString, FolderColor, NewsEvent, NewsEventWithId } from "../../../shared/news.types";
 
 const useNews = (db: PrismaClient) => {
 	const _cleanNewsEvent = <T extends NewsEvent|NewsEventWithId>(ev: T): T => ({
 		...ev,
-		eventTs: new Date(ev.eventTs),
+		date: new Date(ev.date).toISOString(),
 	});
 
-	const getAllNewsEvents = async () => {
-		const evs = await db.newsEvent.findMany() as NewsEventWithId[];
-		return evs.map(_cleanNewsEvent);
+	const _getDateClause = (start: Date, end: Date) => {
+		return { date: { gte: start, lt: end } };
 	};
 
-	const getNewsEventsFor = async (date: Date) => {
-		const start = new Date(Date.UTC(
-			date.getUTCFullYear(),
-			date.getUTCMonth(),
-			date.getUTCDay(),
-			0, 0, 0, 0,
-		));
+	const _getOrClause = (values: string[], key: keyof NewsEvent<DateString>) => {
+		if (values.length == 0) return undefined;
+		if (values.length == 1) return { [key]: values[0], };
 
-		const end = new Date(start);
-		end.setUTCDate(end.getUTCDate() + 1);
-
-		const evs = await db.newsEvent.findMany({
-			where: { eventTs: { gte: start, lte: end }, },
-			orderBy: { eventTs: 'asc', },
-		}) as NewsEventWithId[];
-
-		return evs.map(_cleanNewsEvent);
+		return {
+			OR: values.map(value => ({ [key]: value })),
+		};
 	};
 
-	const createNewsEvent = async (payload: NewsEvent) => {
-		const res = await db.newsEvent.create({ data: payload });
-		return _cleanNewsEvent(res as NewsEventWithId);
+	const _sanitizeCurrencies = (ev: NewsEvent<any>) => {
+		ev.currencies = ev.currencies.map(
+			c => c.toLowerCase()
+		);
+	}
+
+	const getNewsEvents = async (
+		range?: { from: Date, upTo: Date },
+		types?: string[],
+		folderColors?: FolderColor[]
+	) => {
+		let where: Prisma.NewsEventWhereInput|undefined = undefined;
+
+		const addClause = (obj: Prisma.NewsEventWhereInput|undefined) => {
+			where = { ...where, ...obj };
+		};
+
+		if (range != null) {
+			addClause(_getDateClause(range.from, range.upTo));
+		}
+
+		if (types != null) {
+			addClause(_getOrClause(types, 'name'));
+		}
+
+		if (folderColors != null) {
+			addClause(_getOrClause(folderColors, 'folderColor'));
+		}
+
+		const events = await db.newsEvent.findMany({
+			where, orderBy: { date: 'asc', },
+		}) as NewsEventWithId<Date>[];
+
+		return events.map(_cleanNewsEvent);
+	};
+
+	const createNewsEvent = async (data: NewsEvent<any>) => {
+		_sanitizeCurrencies(data);
+
+		const res = await db.newsEvent.create({ data });
+		return _cleanNewsEvent(res as NewsEventWithId<Date>);
+	};
+
+	const createManyNewsEvents = async (data: NewsEvent<any>[]) => {
+		data.forEach(_sanitizeCurrencies);
+
+		const { count } = await db.$transaction(async (tx) => {
+			return tx.newsEvent.createMany({ data });
+		});
+		return count;
 	};
 
 	return {
-		getAllNewsEvents,
-		getNewsEventsFor,
-		createNewsEvent
+		getNewsEvents,
+		createNewsEvent,
+		createManyNewsEvents,
 	};
 };
 

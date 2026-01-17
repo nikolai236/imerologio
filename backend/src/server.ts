@@ -53,6 +53,28 @@ const buildApp = async () => {
 	await server.register(candlesRouter, { prefix: '/candles' });
 	await server.register(newsRouter,    { prefix: '/news'    });
 
+	server.addSchema({
+		$id: "ErrorMessage",
+		type: "object",
+		additionalProperties: false,
+		required: ["message"],
+		properties: {
+			message: { type: "string" },
+		},
+	});
+
+	server.setErrorHandler((err: any, _req, reply) => {
+		if (err.statusCode == 400 && err.validation) {
+			const message = err.instancePath + ": " + err.message;
+			return reply.status(400).send({ message })
+		}
+
+		console.error(err);
+
+		const message = "Internal server error";
+		return reply.status(500).send({ message });
+	});
+
 	server.get('/ping', async () => ({ message: 'pong', }));
 
 	return server;
