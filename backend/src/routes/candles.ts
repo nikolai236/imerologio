@@ -3,25 +3,18 @@ import { Timeframe } from "../../../shared/candles.types";
 
 import useCandles from "../database/candles";
 import useSymbols from "../database/symbols";
-import useCandleService from "../services/candles";
 
 import {
 	getSupportedSchema,
 	postCandleSymbolSchema
 } from "../schemas/candles";
+import { fillBlanks, isCandleLengthValid, setTimeFrame, tfToNumber } from "../services/candles";
 
 const router: FastifyPluginAsync = async (server) => {
 	const {
 		isSymbolSupported,
 		getCandlesInRange,
 	} = useCandles(server.duckdb);
-
-	const {
-		isCandleLengthValid,
-		setTimeFrame,
-		fillBlanks,
-		tfToNumber,
-	} = useCandleService();
 
 	const { getSymbolById } = useSymbols(server.prisma);
 

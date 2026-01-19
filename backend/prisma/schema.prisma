@@ -47,7 +47,7 @@ model Trade {
 
 	description String @default("") @db.Text
 
-	labels Label[]
+	labels TradeLabel[]
 	orders Order[]
 	charts Chart[]
 
@@ -73,7 +73,7 @@ model Label {
 	id Int @id @default(autoincrement())
 
 	name   String @unique
-	trades Trade[]
+	trades TradeLabel[]
 }
 
 model Chart {
@@ -111,4 +111,15 @@ model NewsEvent {
 	metadata Json?
 
 	@@index([date])
+}
+
+model TradeLabel {
+	tradeId Int
+	labelId Int
+
+	trade Trade @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+	label Label @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+	@@id([tradeId, labelId])
+	@@map("trade_labels")
 }

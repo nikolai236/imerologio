@@ -20,11 +20,33 @@ const useNews = (db: PrismaClient) => {
 		};
 	};
 
-	const _sanitizeCurrencies = (ev: NewsEvent<any>) => {
-		ev.currencies = ev.currencies.map(
+	const _sanitizeNewsEvent = <T extends  Date | DateString>(
+		event: NewsEvent<any>
+	): NewsEvent<T> => {
+		event.currencies = event.currencies.map(
 			c => c.toLowerCase()
 		);
-	}
+
+		const {
+			currencies,
+			source,
+			date,
+			allDay,
+			folderColor,
+			metadata,
+			name,
+		} = event;
+
+		return {
+			currencies,
+			source,
+			date,
+			allDay,
+			folderColor,
+			metadata,
+			name,
+		};
+	};
 
 	const getNewsEvents = async (
 		range?: { from: Date, upTo: Date },
@@ -57,14 +79,14 @@ const useNews = (db: PrismaClient) => {
 	};
 
 	const createNewsEvent = async (data: NewsEvent<any>) => {
-		_sanitizeCurrencies(data);
+		_sanitizeNewsEvent(data);
 
 		const res = await db.newsEvent.create({ data });
 		return _cleanNewsEvent(res as NewsEventWithId<Date>);
 	};
 
 	const createManyNewsEvents = async (data: NewsEvent<any>[]) => {
-		data.forEach(_sanitizeCurrencies);
+		data.forEach(_sanitizeNewsEvent);
 
 		const { count } = await db.$transaction(async (tx) => {
 			return tx.newsEvent.createMany({ data });

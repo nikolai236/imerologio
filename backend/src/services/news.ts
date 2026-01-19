@@ -1,5 +1,5 @@
-import { FolderColor, PrismaClient } from "@prisma/client";
-import type { DateString, EntryCalendar } from "../../../shared/news.types";
+import type { PrismaClient } from "@prisma/client";
+import type { DateString, EntryCalendar, FolderColor } from "../../../shared/news.types";
 import useNews from "../database/news";
 
 const BANK_HOLIDAY = "Bank Holiday";

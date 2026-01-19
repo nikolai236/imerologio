@@ -13,14 +13,24 @@ const useSymbols = (db: PrismaClient) => {
 	};
 
 	const createSymbol = async (symbol: Symbol) => {
-		const ret = await db.symbol.create({ data: symbol });
+		const { name, description, type } = symbol;
+		const data = { name, description, type };
+
+		const ret = await db.symbol.create({ data });
 		return ret as DbSymbol;
 	};
 
-	const updateSymbol = async (id: number, symbol: UpdateSymbol) => {
+	const updateSymbol = async (id: number, payload: UpdateSymbol) => {
+		const { type, description, name } = payload;
+
+		const data = {
+			...(type != null ? { type } : undefined),
+			...(description != null ? { description } : undefined),
+			...(name != null ? { name } : undefined)
+		};
+
 		const ret = await db.symbol.update({
-			where: { id },
-			data: symbol as Prisma.SymbolUpdateInput
+			where: { id }, data,
 		});
 		return ret as DbSymbol;
 	}

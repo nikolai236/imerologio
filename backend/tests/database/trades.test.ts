@@ -2,12 +2,11 @@ import { $Enums } from '@prisma/client';
 import db from '../helpers/prisma';
 import useSymbols from '../../src/database/symbols';
 import useTrades from '../../src/database/trades';
-import useTradeService from '../../src/services/trades';
 import { type Trade } from '../../../shared/trades.types';
+import { calculatePnL } from '../../src/services/trades';
 
 const { createSymbol, getAllSymbols, getSymbolById, deleteSymbol } = useSymbols(db);
 const { createTrade, getAllTrades, getTradeById, deleteTrade, getOrderById } = useTrades(db);
-const { calculatePnL } = useTradeService();
 
 afterAll(async () => {
 	await db.$disconnect();

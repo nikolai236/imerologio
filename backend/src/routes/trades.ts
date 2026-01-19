@@ -15,8 +15,11 @@ import useSymbols from "../database/symbols";
 import useTrades from "../database/trades";
 import useLabels from "../database/labels";
 
-import useTradeService from "../services/trades";
-import useCandleService from "../services/candles";
+import {
+	calculatePnL,
+	parseOrders,
+	validateOrderQuantities
+} from "../services/trades";
 
 import {
 	getTradesSchema,
@@ -25,6 +28,7 @@ import {
 	patchTradeSchema,
 	deleteLabelFromTradeSchema,
 } from "../schemas/trades";
+import { numberToTf, tfToNumber } from "../services/candles";
 
 const router: FastifyPluginAsync = async (server) => {
 	const {
@@ -36,13 +40,6 @@ const router: FastifyPluginAsync = async (server) => {
 
 	const { deleteTradeFromLabel } = useLabels(server.prisma);
 	const { getSymbolById } = useSymbols(server.prisma);
-
-	const { tfToNumber, numberToTf } = useCandleService();
-	const {
-		calculatePnL,
-		validateOrderQuantities,
-		parseOrders
-	} = useTradeService();
 
 	const convertCharts = (charts: DbChart<number>[]) => charts.map(c => ({
 		...c, timeframe: numberToTf(c.timeframe),
@@ -129,12 +126,12 @@ const router: FastifyPluginAsync = async (server) => {
 			const message = "Trade not found.";
 			return reply.code(404).send({ message });
 		}
-
 		
 		let { target, stop, orders, charts } = req.body;
 
 		if (orders != null && !validateOrderQuantities(orders)) {
-			return reply.code(400).send({ message: 'Invalid order quantities provided.' });
+			const message = 'Invalid order quantities provided.';
+			return reply.code(400).send({ message });
 		}
 
 		const transformedOrders = orders != null ?
