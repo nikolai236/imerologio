@@ -1,13 +1,21 @@
 import { Timeframe } from "./candles.types";
 
-export type OrderEnum  = 'BUY' | 'SELL';
-export type SymbolEnum = 	'Forex' |
-							'Futures' |
-							'ETF' |
-							'Crypto' |
-							'Stock' |
-							'Security' |
-							'Commodity';
+export const SymbolTypeValues = [
+	"Forex",
+	"Futures",
+	"ETF",
+	"Crypto",
+	"Stock",
+	"Security",
+	"Commodity",
+] as const;
+
+export const OrderTypeValues = [
+	"BUY", "SELL"
+] as const;
+
+export type OrderEnum  = typeof OrderTypeValues[number];
+export type SymbolEnum = typeof SymbolTypeValues[number];
 
 type OrderDate = Date | number;
 

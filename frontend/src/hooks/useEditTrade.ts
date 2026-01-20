@@ -101,7 +101,6 @@ const useEditTrade = (tradeId?: number) => {
 			stop: stop as number,
 			target: target as number,
 			description,
-			pnl: undefined,
 			labels: selectedLabelIds.map(id => ({ id })),
 			charts: validatedCharts,
 			orders: validatedOrders,

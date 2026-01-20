@@ -1,5 +1,7 @@
 import { Type } from "@sinclair/typebox";
 import { Timeframes } from "../../../shared/candles.types";
+import { OrderTypeValues, SymbolTypeValues } from "../../../shared/trades.types";
+import { FolderColorsValue } from "../../../shared/news.types";
 
 export const ErrorMessage = Type.Unsafe({
 	$ref: "ErrorMessage#",
@@ -18,7 +20,7 @@ export const Label = Type.Object({
 	name: Type.String(),
 
 	tradeId: Type.Optional(Type.Integer()),
-	tradeIds:Type.Optional(Type.Array(Type.Integer())),
+	tradeIds: Type.Optional(Type.Array(Type.Integer())),
 
 	tradesCount: Type.Optional(Type.Integer()),
 
@@ -27,8 +29,7 @@ export const Label = Type.Object({
 export const Labels = Type.Array(Label);
 
 export const SymbolEnum = Type.Union(
-	["Forex", "Futures", "ETF", "Crypto", "Stock", "Security", "Commodity"]
-		.map(v => Type.Literal(v))
+	SymbolTypeValues.map(v => Type.Literal(v))
 );
 
 export const Symbol = Type.Object({
@@ -40,9 +41,9 @@ export const Symbol = Type.Object({
 
 export const Symbols = Type.Array(Symbol);
 
-export const OrderEnum = Type.Union([
-	Type.Literal("BUY"), Type.Literal("SELL")
-]);
+export const OrderEnum = Type.Union(
+	OrderTypeValues.map(v => Type.Literal(v))
+);
 
 export const TimeframeEnum = Type.Union(
 	Object.values(Timeframes).map(v => Type.Literal(v))
@@ -90,8 +91,7 @@ export const Trade = Type.Object({
 }, { additionalProperties: false });
 
 export const FolderColorEnum = Type.Union(
-	["Red", "Orange", "Yellow", "Grey"]
-		.map(v => Type.Literal(v))
+	FolderColorsValue.map(v => Type.Literal(v))
 );
 
 export const NewsEvent = Type.Object({

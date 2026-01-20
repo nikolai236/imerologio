@@ -28,9 +28,9 @@ const _produceIncludeObj = <T extends {}>(elements: T[]) => {
 	const deleteMany = existingIds.length > 0 ?
 		{ id: { notIn: existingIds } } : {}
 
-	type DbObj = T & { id: number };
+	type ObjectWithId = T & { id: number };
 	const upsert = elements
-		.filter((c): c is DbObj => 'id' in c && c.id != null)
+		.filter((c): c is ObjectWithId => 'id' in c && c.id != null)
 		.map(({ id, ...payload }) => ({
 			where: { id },
 			create: payload,
@@ -123,7 +123,6 @@ const useTrades = (db: PrismaClient) => {
 		});
 		if (trade == null) return null;
 
-		console.log(trade);
 		trade.labels = trade.labels.map((o: any) => o.label);
 		return _cleanTrade(trade) as DbTrade<
 			DbChart<number>, DbOrder<Date>

@@ -1,4 +1,11 @@
-export type FolderColor = 'Grey'|'Yellow'|'Orange'| 'Red';
+export const FolderColorsValue = [
+  "Grey",
+  "Yellow",
+  "Orange",
+  "Red",
+] as const;
+
+export type FolderColor = typeof FolderColorsValue[number];
 
 export type DateString = string;
 

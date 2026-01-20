@@ -6,7 +6,7 @@ const impactColorMap: Record<FolderColor, string> = {
 	Grey: "gray",
 	Red: "red",
 	Orange: "orange",
-	Yellow: "Yellow",
+	Yellow: "yellow",
 } as const;
 
 function ImpactBadge({ impact }: { impact: FolderColor }) {
@@ -23,18 +23,20 @@ function ImpactBadge({ impact }: { impact: FolderColor }) {
 export default function CalendarRow({
 	newsEvent
 }: { newsEvent: NewsEventWithId<Date | DateString> }) {
-	const { allDay, date: d } = newsEvent;
+	const { allDay, date: d, metadata } = newsEvent;
 	const date = new Date(d);
+
+	const dateStr = allDay ?
+		`${getUTCDateString(date)}, All day` :
+		metadata.time != null ?
+			`${getUTCDateString(date)}, ${metadata.time}` :
+			getDateForET(date);
 
 	return (
 		<Flex justify="space-between" gap={3} align="center" w="100%">
 			<HStack gap={2} flex="1" minW={0}>
 
-				<Text
-					fontSize="sm"
-					whiteSpace="nowrap"
-				> {allDay ? `${getUTCDateString(date)}, All day` : getDateForET(date)}
-				</Text>
+				<Text fontSize="sm" whiteSpace="nowrap"> {dateStr} </Text>
 
 				{newsEvent.currencies.length > 0 ?
 					<Badge variant="outline">{newsEvent.currencies[0]}</Badge> : null

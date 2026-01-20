@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import buildApp from "../src/app";
 import db from "./helpers/prisma";
-import { DbSymbol, Label, LabelEntry, Order, Symbol, TradeEntry } from "../../shared/trades.types";
+import { DbSymbol, LabelEntry, Order, Symbol, TradeEntry } from "../../shared/trades.types";
 
 let app: FastifyInstance;
 
@@ -43,6 +43,25 @@ const orders: Order[] = [
 		type: "SELL",
 		quantity: 3,
 		date: Date.now() + 5,
+	}
+];
+
+const orders2: Order[] = [
+	{
+		price: 101,
+		type: "SELL",
+		quantity: 3,
+		date: Date.now(),
+	}, {
+		price: 103,
+		type: "BUY",
+		quantity: 2,
+		date: Date.now() + 5,
+	}, {
+		price: 106,
+		type: "BUY",
+		quantity: 1,
+		date: Date.now() + 8,
 	}
 ];
 
@@ -322,5 +341,96 @@ it("Trades - Labels relation", async () => {
 	expect(res.statusCode).toBe(200);
 
 	expect(trade.labels.map(({ name }: any) => name)).toContain(l.name);
-	expect(trade.labels.map(({ name }: any) => name)).toContain(l.name + "1")
+	expect(trade.labels.map(({ name }: any) => name)).toContain(l.name + "1");
+});
+
+it("PATCH trades/ ", async () => {
+	const s: Symbol = { name: "name", type: "Crypto", description: "" };
+	const s2: Symbol = { name: "name1", type: "Crypto", description: "" };
+
+	let res = await app.inject({
+		method: "POST", url: "/symbols", payload: s,
+	});
+	let { symbol } = await res.json();
+
+	const t: TradeEntry = {
+		stop: 100,
+		description: "",
+		symbolId: symbol.id,
+	};
+
+	res = await app.inject({
+		method: "POST",
+		url: "/trades",
+		payload: {
+			...t,
+			orders,
+			charts: [],
+			labels: [],
+		},
+	});
+	let { trade } = await res.json();
+
+	res = await app.inject({
+		method: "POST", url: "/symbols", payload: s2,
+	});
+	({ symbol } = await res.json());
+
+	const l: LabelEntry = { name: "label" };
+
+	res = await app.inject({
+		method: "POST",
+		url: "/labels",
+		payload: l,
+	});
+
+	let { label } = await res.json();
+
+	res = await app.inject({
+		method: "PATCH",
+		url: "/trades/" + trade.id,
+		payload: {
+			symbolId: symbol.id,
+			labels: [{ id: label.id }],
+		},
+	});
+
+	({ trade } = await res.json());
+
+	expect(res.statusCode).toBe(200);
+	expect(trade.labels[0]).toEqual(label);
+	expect(trade.symbol).toEqual(symbol);
+
+	res = await app.inject({
+		method: "PATCH",
+		url: "/trades/" + trade.id,
+		payload: {
+			orders: [],
+		},
+	});
+
+	expect(res.statusCode).toBe(400);
+
+	const newOrders = orders.map(o => ({ ...o }));
+	newOrders[1].quantity = 5;
+
+	res = await app.inject({
+		method: "PATCH",
+		url: "/trades/" + trade.id,
+		payload: {
+			orders: newOrders,
+		},
+	});
+
+	expect(res.statusCode).toBe(400);
+
+	res = await app.inject({
+		method: "PATCH",
+		url: "/trades/" + trade.id,
+		payload: {
+			orders: orders2,
+		},
+	});
+
+	expect(res.statusCode).toBe(200);
 });

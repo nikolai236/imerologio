@@ -49,7 +49,6 @@ const useLabels = (db: PrismaClient) => {
 		}
 
 		const ret = await db.label.create({ data, include });
-		console.log(ret);
 		return ret as DbLabel;
 	};
 

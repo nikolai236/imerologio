@@ -1,5 +1,19 @@
-import { Box, Input, Flex, NativeSelect, Text, HStack, Button, Textarea } from "@chakra-ui/react";
-import type { SymbolEnum, DbSymbol, Symbol } from "../../../shared/trades.types";
+import {
+	Box,
+	Input,
+	Flex,
+	NativeSelect,
+	Text,
+	HStack,
+	Button,
+	Textarea
+} from "@chakra-ui/react";
+import {
+	type SymbolEnum,
+	type DbSymbol,
+	type Symbol,
+	SymbolTypeValues
+} from "../../../shared/trades.types";
 
 type Props = {
 	symbol: DbSymbol;
@@ -14,16 +28,6 @@ type Props = {
 	updateDraft: (id: number, payload: Partial<Symbol>) => void;
 	onSave: (id: number) => void;
 };
-
-const TYPE_OPTIONS: SymbolEnum[] = [
-	"Futures",
-	"Forex",
-	"ETF",
-	"Crypto",
-	"Stock",
-	"Security",
-	"Commodity"
-];
 
 export default function SymbolRow({
 	symbol,
@@ -84,7 +88,7 @@ export default function SymbolRow({
 							onChange={(e) => updateDraft(id, {
 								type: e.currentTarget.value as SymbolEnum
 							})}
-						> {TYPE_OPTIONS.map((t) => (<option key={t} value={t}>{t}</option>))}
+						> {SymbolTypeValues.map((t) => (<option key={t} value={t}>{t}</option>))}
 						</NativeSelect.Field>
 
 						<NativeSelect.Indicator />
