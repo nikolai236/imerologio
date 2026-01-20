@@ -16,9 +16,12 @@ export const IdParams = Type.Object({
 export const Label = Type.Object({
 	id: Type.Optional(Type.Integer()),
 	name: Type.String(),
+
 	tradeId: Type.Optional(Type.Integer()),
 	tradeIds:Type.Optional(Type.Array(Type.Integer())),
+
 	tradesCount: Type.Optional(Type.Integer()),
+
 }, { additionalProperties: false });
 
 export const Labels = Type.Array(Label);
@@ -32,7 +35,6 @@ export const Symbol = Type.Object({
 	id: Type.Optional(Type.Integer()),
 	name: Type.String(),
 	type: SymbolEnum,
-	date: Type.Integer(),
 	description: Type.String(),
 }, { additionalProperties: false });
 
@@ -57,16 +59,19 @@ export const Chart = Type.Object({
 
 export const Order = Type.Object({
 	id: Type.Optional(Type.Integer()),
+
 	price: Type.Number(),
 	quantity: Type.Integer(),
+
+	date: Type.Integer(),
 	type: OrderEnum,
-	tradeId: Type.Optional(Type.Integer())
+	tradeId: Type.Optional(Type.Integer()),
+
 }, { additionalProperties: false });
 
 export const Trade = Type.Object({
 	id: Type.Optional(Type.Integer()),
 	symbolId: Type.Integer(),
-
 	
 	target: Type.Optional(Type.Number()),
 	stop: Type.Number(),
@@ -75,14 +80,14 @@ export const Trade = Type.Object({
 	description: Type.String(),
 
 	symbol: Type.Optional(Symbol),
-	labels: Type.Optional(Labels),
+	labels: Labels,
 
-	orders: Type.Optional(Type.Array(Order)),
-	charts: Type.Optional(Type.Array(Chart)),
+	orders: Type.Array(Order, {
+		minItems: 2,
+	}),
+	charts: Type.Array(Chart),
 
 }, { additionalProperties: false });
-
-export const Trades = Type.Array(Trade);
 
 export const FolderColorEnum = Type.Union(
 	["Red", "Orange", "Yellow", "Grey"]

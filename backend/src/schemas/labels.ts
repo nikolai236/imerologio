@@ -14,7 +14,7 @@ export const getLabelsSchema = {
 export const postLabelSchema = {
 	schema: {
 		body: Type.Omit(
-			Label, ["id", "tradeIds", "tradeId"]
+			Label, ["id", "tradeId"]
 		),
 		response: {
 			201: Type.Object({

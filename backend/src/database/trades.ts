@@ -52,7 +52,7 @@ const _cleanTrade = (t: any): TradeReturnType => ({
 	stop: Number(t.stop),
 	pnl: t.pnl != null ? Number(t.pnl) : null,
 	target: t.target != null ? Number(t.target) : null,
-	orders: t.orders && t.orders.map(_cleanOrder),  
+	orders: t.orders && t.orders.map(_cleanOrder),
 });
 
 const useTrades = (db: PrismaClient) => {
@@ -123,6 +123,8 @@ const useTrades = (db: PrismaClient) => {
 		});
 		if (trade == null) return null;
 
+		console.log(trade);
+		trade.labels = trade.labels.map((o: any) => o.label);
 		return _cleanTrade(trade) as DbTrade<
 			DbChart<number>, DbOrder<Date>
 		>;
@@ -140,6 +142,7 @@ const useTrades = (db: PrismaClient) => {
 			},
 		};
 		const ret = await db.trade.create({ include, data });
+		ret.labels = ret.labels.map((o: any) => o.label);
 		return _cleanTrade(ret) as DbTrade<DbChart<number>, DbOrder<Date>>;
 	};
 
@@ -190,6 +193,7 @@ const useTrades = (db: PrismaClient) => {
 		const ret = await db.trade.update({
 			where: { id }, data, include,
 		});
+		ret.labels = ret.labels.map((o: any) => o.label);
 
 		return _cleanTrade(ret) as DbTrade<
 			DbChart<number>, DbOrder<Date>

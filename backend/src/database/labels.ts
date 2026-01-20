@@ -35,17 +35,21 @@ const useLabels = (db: PrismaClient) => {
 	};
 
 	const createLabel = async (label: Label) => {
-		const { name } = label;
-		const trades = {
-			create: label.tradeIds.map((id) => ({
-				trade: { connect: { id } },
-			})),
-		};
+		const { name, tradeIds } = label;
 
-		const ret = await db.label.create({
-			data: { trades, name },
-			include,
-		});
+		const data = {
+			name,
+			...(tradeIds != null ? {
+				trades: {
+					create: tradeIds.map((id) => ({
+						trade: { connect: { id } },
+					})),
+				}
+			} : undefined),
+		}
+
+		const ret = await db.label.create({ data, include });
+		console.log(ret);
 		return ret as DbLabel;
 	};
 
@@ -55,8 +59,10 @@ const useLabels = (db: PrismaClient) => {
 			...(name != null ? { name } : undefined),
 			...(tradeId != null ?
 				{ trades: {
-					create: [{ trade: { connect: { id: tradeId } }}]
-				}} : undefined
+						create: [{ trade: { connect: { id: tradeId } }}]
+					}
+				} :
+				undefined
 			),
 		};
 

@@ -1,11 +1,13 @@
-import { Type } from "@sinclair/typebox";
-import { ErrorMessage, IdParams, Trade, Trades } from "./common";
+import { Type, Static } from "@sinclair/typebox";
+import { ErrorMessage, IdParams, Trade } from "./common";
 
 export const getTradesSchema = {
 	schema: {
 		response: {
 			200: Type.Object({
-				trades: Trades
+				trades: Type.Array(Type.Omit(
+					Trade, ["charts", "labels"]
+				))
 			}, { additionalProperties: false }),
 			400: ErrorMessage,
 			500: ErrorMessage,
@@ -27,9 +29,18 @@ export const getTradeSchema = {
 	}
 } as const;
 
+const TradeInput = Type.Composite([
+	Type.Omit(Trade, ["id", "symbol", "labels"]),
+	Type.Object({
+		labels: Type.Array(Type.Object({
+			id: Type.Integer(),
+		})),
+	}),
+]);
+
 export const postTradeSchema = {
 	schema: {
-		body: Type.Omit(Trade, ["id", "symbol"]),
+		body: TradeInput,
 		response: {
 			201: Type.Object({
 				trade: Trade
@@ -42,9 +53,7 @@ export const postTradeSchema = {
 
 export const patchTradeSchema = {
 	schema: {
-		body: Type.Partial(
-			Type.Omit(Trade, ["id", "symbol"])
-		),
+		body: Type.Partial(TradeInput),
 		response: {
 			200: Type.Object({
 				trade: Trade

@@ -32,9 +32,10 @@ const router: FastifyPluginAsync = async (server) => {
 	server.patch<IPatch>('/:id', patchLabelSchema, async (req, reply) => {
 		try {
 			const id = Number(req.params.id);
-
 			const curr = await getLabelById(id);
-			if (curr == null) return reply.code(404).send({ message: 'Label not found!', });
+
+			const message = "Label not found!";
+			if (curr == null) return reply.code(404).send({ message, });
 
 			const label = await updateLabel(id, req.body);
 			return reply.code(200).send({ label });
