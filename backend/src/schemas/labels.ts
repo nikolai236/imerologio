@@ -4,7 +4,9 @@ import { IdParams, ErrorMessage, Labels, Label } from "./common";
 export const getLabelsSchema = {
 	schema: {
 		response: {
-			200: Labels,
+			200: Type.Object({
+				labels: Labels
+			}, { additionalProperties: false }),
 			400: ErrorMessage,
 			500: ErrorMessage,
 		},

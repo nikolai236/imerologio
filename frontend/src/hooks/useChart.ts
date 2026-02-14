@@ -3,7 +3,8 @@ import { useEffect,  useRef } from "react";
 import type { Candle, Timeframe } from "../../../shared/candles.types";
 import TradePosition from "../chart-plugins/trade-position";
 import useTradeContext from "./useTradeContext";
-import useOhlc from "./useOhlc";
+import useOhlcLabel from "./useOhlcLabel";
+import useCopyMenu from "./useCopyMenu";
 
 const SECOND = 1000;
 
@@ -21,7 +22,8 @@ const timeFormatter = (unixEpoch: number) => {
 
 const useChart = (candles: Candle[], timeframe: Timeframe) => {
 	const { getEntry, getExits, stop, target } = useTradeContext();
-	const { ohlc, changeOhlcOnMouseMove, } = useOhlc();
+	const { ohlc, changeOhlcOnMouseMove, } = useOhlcLabel();
+	const { position, onClick, destroyPosition } = useCopyMenu();
 
 	const containerRef = useRef<HTMLDivElement|null>(null);
 	const chartRef = useRef<IChartApi|null>(null);
@@ -70,7 +72,16 @@ const useChart = (candles: Candle[], timeframe: Timeframe) => {
 		}
 
 		const chart = createChart(containerRef.current, getConfig());
-		const series = chart.addSeries(CandlestickSeries, {});
+		const series = chart.addSeries(CandlestickSeries, {
+			upColor: "#ffffff",
+			downColor: "#000000",
+
+			borderUpColor: "#000000",
+			borderDownColor: "#000000",
+
+			wickUpColor: "#000000",
+			wickDownColor: "#000000",
+		});
 
 		series.setData(candles.map(transformCandle));
 		series.applyOptions({ priceFormat: {
@@ -79,11 +90,22 @@ const useChart = (candles: Candle[], timeframe: Timeframe) => {
 			minMove: 0.000001,
 		}});
 
-		const getPrice = (param: MouseEventParams<Time>) =>
-			param.seriesData.get(series) as BarData<Time>;
+		const getPriceOhlc = (params: MouseEventParams<Time>) =>
+			params.seriesData.get(series) as BarData<Time>;
 
-		const handler = changeOhlcOnMouseMove(getPrice);
-		chart.subscribeCrosshairMove(handler);
+		const getPrice = (params: MouseEventParams) =>
+			series.coordinateToPrice(params.point!.y) ?? 0;
+
+		const ohlcHandler = changeOhlcOnMouseMove(getPriceOhlc);
+		chart.subscribeCrosshairMove(ohlcHandler);
+
+		const copyMenuHandler = onClick(getPrice);
+		chart.subscribeClick(copyMenuHandler);
+
+		const preventContext = (e: Event) => e.preventDefault();
+		containerRef.current.addEventListener(
+			"contextmenu", preventContext, { capture: true }
+		);
 
 		try {
 
@@ -111,11 +133,19 @@ const useChart = (candles: Candle[], timeframe: Timeframe) => {
 				width: containerRef.current.clientWidth || undefined,
 			});
 		};
+
 		window.addEventListener("resize", handleResize);
 
 		return () => {
 			window.removeEventListener("resize", handleResize);
-			chart.unsubscribeCrosshairMove(handler);
+
+			chart.unsubscribeClick(copyMenuHandler);
+			chart.unsubscribeCrosshairMove(ohlcHandler);
+
+			containerRef.current?.removeEventListener(
+				"contextmenu", preventContext, { capture: true }
+			);
+
 			chart.remove();
 			chartRef.current = null;
 		};
@@ -123,7 +153,7 @@ const useChart = (candles: Candle[], timeframe: Timeframe) => {
 	}, [candles]);
 
 	return {
-		ohlc, containerRef,
+		menu: position, ohlc, containerRef, closeMenu: destroyPosition
 	};
 };
 

@@ -1,7 +1,7 @@
 import { Box, Text, NativeSelect, Flex, Input, Button } from "@chakra-ui/react";
 import DatePicker from "./DatePicker";
 import type { Order, OrderEnum } from "../../../shared/trades.types";
-import useDraft from "../hooks/useDraft";
+import useDraft, { usePriceDraft } from "../hooks/useDraft";
 
 type Props = {
 	isAlone: boolean;
@@ -31,7 +31,7 @@ export default function OrderRow({
 	destroy
 }: Props) {
 	const [draftQuantity, setDraftQuantity] = useDraft(quantity);
-	const [draftPrice, setDraftPrice] = useDraft(price);
+	const [draftPrice, setDraftPrice] = usePriceDraft(price);
 
 	const commitPrice    = () => onUpdate({ price: Number(draftPrice) });
 	const commitQunatity = () => onUpdate({ quantity: Number(draftQuantity) });

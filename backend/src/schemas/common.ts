@@ -102,7 +102,7 @@ export const NewsEvent = Type.Object({
 	currencies: Type.Array(Type.String()),
 	folderColor: FolderColorEnum,
 
-	metdata: Type.Optional(
+	metadata: Type.Optional(
 		Type.Record(Type.String(), Type.Any())
 	),
 	allDay: Type.Optional(Type.Boolean()),

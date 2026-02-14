@@ -1,7 +1,7 @@
 import { Box, Text, Input, Flex } from "@chakra-ui/react"
 import EditButton from "./EditButton";
 import useTradeContext from "../hooks/useTradeContext";
-import useDraft from "../hooks/useDraft";
+import { usePriceDraft } from "../hooks/useDraft";
 
 type Props = {
 	disabled?: boolean;
@@ -13,7 +13,7 @@ export default function StopInput({
 	handleEditClick,
 }: Props) {
 	const { stop, setStop } = useTradeContext();
-	const [draft, setDraft] = useDraft(stop);
+	const [draft, setDraft] = usePriceDraft(stop);
 
 	return (
 		<Box minW="160px">

@@ -1,5 +1,5 @@
 import { Box } from '@chakra-ui/react';
-import type { Ohlc } from "../hooks/useOhlc";
+import type { Ohlc } from "../hooks/useOhlcLabel";
 
 export default function OhlcLabel({ ohlc }: { ohlc?: Ohlc|null }) {
 	if (!ohlc) return null;

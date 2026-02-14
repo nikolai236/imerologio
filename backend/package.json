@@ -37,6 +37,7 @@
     "prisma": "^7.2.0",
     "prisma-merge": "^0.2.0",
     "ts-jest": "^29.4.6",
+    "ts-json-schema-generator": "^2.4.0",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.3"
   }

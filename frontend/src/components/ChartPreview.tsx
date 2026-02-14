@@ -14,6 +14,7 @@ import useTradeContext from '../hooks/useTradeContext';
 import useChart from '../hooks/useChart';
 import OhlcLabel from './OhlcLabel';
 import useDraft from '../hooks/useDraft';
+import CopyMenu from './CopyMenu';
 
 type Props = {
 	num: number;
@@ -48,7 +49,7 @@ export default function ChartPreview({
 	const [error, setError] = useState<string|null>(null);
 	const [draftTimeframe, setDraftTimeframe] = useDraft(timeframe);
 
-	const { containerRef, ohlc } = useChart(candles, timeframe);
+	const { containerRef, ohlc, menu, closeMenu } = useChart(candles, timeframe);
 
 	useEffect(() => {
 		if (!symbol) return;
@@ -165,6 +166,10 @@ export default function ChartPreview({
 				bg="bg.subtle"
 			>
 				<OhlcLabel ohlc={ohlc}></OhlcLabel>
+				<CopyMenu
+					menu={menu ?? undefined}
+					onClose={closeMenu}
+				/>
 				{!loading && !error && candles.length === 0 && (
 					<Flex
 						h="100%"

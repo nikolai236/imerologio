@@ -1,7 +1,7 @@
 import { Box, Text, Input, Flex } from "@chakra-ui/react"
 import EditButton from "./EditButton";
 import useTradeContext from "../hooks/useTradeContext";
-import useDraft from "../hooks/useDraft";
+import { usePriceDraft } from "../hooks/useDraft";
 
 type Props = {
 	disabled?: boolean;
@@ -13,7 +13,7 @@ export default function TargetInput({
 	handleEditClick,
 }: Props) {
 	const { target, setTarget } = useTradeContext();
-	const [draft, setDraft] = useDraft(target);
+	const [draft, setDraft] = usePriceDraft(target);
 
 	const saveTarget = () => {
 		const d = draft.trim();

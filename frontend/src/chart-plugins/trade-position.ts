@@ -60,27 +60,33 @@ export default class TradePosition extends PluginBase {
 
 	private createStopRectangle = () => {
 		const p1 = {
-			price: this._entry.price, time: this._entry.time as UTCTimestamp,
+			price: this._entry.price,
+			time: this._entry.time as UTCTimestamp,
 		};
 
 		const p2 = {
-			price: this._stop, time: this._exitTime
+			price: this._stop,
+			time: this._exitTime,
 		};
 
 		this._stopRect = new Rectangle(p1, p2, {
-			fillColor: 'rgba(216, 44, 67, 0.50)',
+			fillColor: 'rgba(210, 210, 210, 0.3)',
 		});
 	}
 
 	private createProfitRectangle = () => {
 		const p1 = {
-			price: this._entry.price, time: this._entry.time as UTCTimestamp,
+			price: this._entry.price,
+			time: this._entry.time as UTCTimestamp,
 		};
 
-		const p2 = { price: this.getEndPrice(), time: this._exitTime };
+		const p2 = {
+			price: this.getEndPrice(),
+			time: this._exitTime,
+		};
 
 		this._profitRect = new Rectangle(p1, p2, {
-			fillColor: 'rgba(107, 202, 104, 0.50)',
+			fillColor: 'rgba(53, 183, 190, 0.2)',
 		});
 	}
 
