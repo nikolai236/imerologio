@@ -18,6 +18,7 @@ import { ImageNode } from "./ImageNode";
 import ImageDropPasteUploadPlugin from "./ImageDropPasteUploadPlugin";
 import EditButton from "./EditButton";
 import useTradeContext from "../hooks/useTradeContext";
+import useDraft from "../hooks/useDraft";
 
 type Props = {
 	disabled?: boolean;
@@ -46,32 +47,26 @@ function SetEditablePlugin({ disabled }: { disabled: boolean }) {
 	return null;
 }
 
-function HydrateHtmlPlugin({
-	valueHtml,
-	onlyOnce = true,
-}: {
-	valueHtml: string;
-	onlyOnce?: boolean;
-}) {
+function HydrateHtmlPlugin({ value }: { value: string;}) {
 	const [editor] = useLexicalComposerContext();
 	const hydrated = useRef(false);
 
 	useEffect(() => {
-		if (!valueHtml) return;
+		if (!value) return;
 
-		if (onlyOnce && hydrated.current) return;
+		if (hydrated.current) return;
 		hydrated.current = true;
 
 		editor.update(() => {
 			const parser = new DOMParser();
-			const dom = parser.parseFromString(valueHtml, "text/html");
+			const dom = parser.parseFromString(value, "text/html");
 			const nodes = $generateNodesFromDOM(editor, dom);
 
 			const root = $getRoot();
 			root.clear();
 			root.append(...nodes);
 		});
-	}, [editor, valueHtml, onlyOnce]);
+	}, [editor, value]);
 
 	return null;
 }
@@ -84,6 +79,7 @@ export default function DescriptionEditor({
 	uploadUrl = "/uploads/image",
 }: Props) {
 	const { description, setDescription } = useTradeContext();
+	const [draft, setDraft] = useDraft(description);
 
 	const initialConfig = useMemo(
 		() => ({
@@ -107,7 +103,7 @@ export default function DescriptionEditor({
 	);
 
 	return (
-		<Box>
+		<Box onBlur={() => setDescription(draft)}>
 			<Text fontSize="sm" color="fg.muted" mb={2}>
 				Description
 			</Text>
@@ -121,7 +117,7 @@ export default function DescriptionEditor({
 			<Box borderWidth="1px" borderRadius="md" overflow="hidden">
 				<LexicalComposer initialConfig={initialConfig}>
 					<SetEditablePlugin disabled={disabled} />
-					<HydrateHtmlPlugin valueHtml={description} />
+					<HydrateHtmlPlugin value={draft} />
 
 					<Box px={3} py={2}>
 						<RichTextPlugin
@@ -131,11 +127,7 @@ export default function DescriptionEditor({
 									style={{ minHeight: minHeightPx, outline: "none" }}
 								/>
 							}
-							placeholder={
-								<Text opacity={0.6} pointerEvents="none">
-									{placeholder}
-								</Text>
-							}
+							placeholder={<Text opacity={0.6} pointerEvents="none">{placeholder}</Text>}
 							ErrorBoundary={ErrorBoundary}
 						/>
 
@@ -147,7 +139,7 @@ export default function DescriptionEditor({
 							onChange={(editorState, editor) => {
 								editorState.read(() => {
 									const html = $generateHtmlFromNodes(editor, null);
-									setDescription(html);
+									setDraft(html);
 								});
 							}}
 						/>

@@ -46,7 +46,7 @@ export default function CopyMenu({
 				</Text>
 
 				<Button size="sm" onClick={copy}>
-					Copy price
+					Copy
 				</Button>
 			</VStack>
 		</Box>

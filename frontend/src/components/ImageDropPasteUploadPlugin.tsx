@@ -5,9 +5,9 @@ import { $createImageNode } from "./ImageNode";
 import useApi from "../hooks/useApi";
 
 type Props = {
-	uploadUrl?: string; // default: /uploads/image
+	uploadUrl?: string;
 	maxFiles?: number;
-	maxBytes?: number; // per file
+	maxBytes?: number;
 };
 
 export default function ImageDropPasteUploadPlugin({
@@ -15,7 +15,7 @@ export default function ImageDropPasteUploadPlugin({
 	maxFiles = 5,
 	maxBytes = 8 * 1024 * 1024,
 }: Props) {
-	const  api = useApi();
+	const api = useApi();
 	const [editor] = useLexicalComposerContext();
 	const [isUploading, setIsUploading] = useState(false);
 
@@ -29,13 +29,11 @@ export default function ImageDropPasteUploadPlugin({
 
 			setIsUploading(true);
 			try {
-				const urls = await Promise.all(images
-					.filter(i => i.size <= maxBytes)
-					.map(i =>
-						api.postFile(uploadUrl, i)
-							.then(({ url }) => url )
-					)
-				);
+				const imagePromises = images
+					.filter(image => image.size <= maxBytes)
+					.map(image => api.postFile(uploadUrl, image).then(({ url }) => url ));
+
+				const urls = await Promise.all(imagePromises);
 
 				if (urls.length > 0) {
 					editor.update(() => {
@@ -48,6 +46,8 @@ export default function ImageDropPasteUploadPlugin({
 						p.selectEnd();
 					});
 				}
+			} catch(err) {
+				console.error("Image uplaode error: ", err);
 			} finally {
 				setIsUploading(false);
 			}
