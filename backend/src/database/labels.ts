@@ -16,15 +16,21 @@ const useLabels = (db: PrismaClient) => {
 	} as const;
 
 	const getAllLabels = async () => {
-		const _count = { select: { trades: true, } };
-
-		const res = await db.label.findMany({
-			select: { id: true, name: true, _count },
-		});
-
-		return res.map(({ _count, ...rest }) => ({
-			...rest, tradesCount: _count.trades ?? 0,
-		})) as DbLabel[];
+		const labels = await db.$queryRaw<DbLabel[]>`
+			SELECT
+				l.id,
+				l.name,
+				COUNT(t.id) AS "tradeCount"
+			FROM "Label" l
+			LEFT JOIN trade_labels tl
+				ON tl."labelId" = l.id
+			LEFT JOIN "Trade" t
+				ON t.id = tl."tradeId"
+				AND t.deleted = false
+			GROUP BY l.id, l.name
+			ORDER BY l.name;
+		`;
+		return labels;
 	};
 
 	const getLabelById = async (id: number) => {
@@ -42,7 +48,7 @@ const useLabels = (db: PrismaClient) => {
 			...(tradeIds != null ? {
 				trades: {
 					create: tradeIds.map((id) => ({
-						trade: { connect: { id } },
+						trade: { connect: { id, deleted: false } },
 					})),
 				}
 			} : undefined),
@@ -58,7 +64,14 @@ const useLabels = (db: PrismaClient) => {
 			...(name != null ? { name } : undefined),
 			...(tradeId != null ?
 				{ trades: {
-						create: [{ trade: { connect: { id: tradeId } }}]
+						create: [{
+							trade: {
+								connect: {
+									id: tradeId,
+									deleted: false
+								}
+							}
+						}]
 					}
 				} :
 				undefined
@@ -75,7 +88,15 @@ const useLabels = (db: PrismaClient) => {
 		labelId: number,
 		tradeId: number
 	) => {
-		const data = { trades: { deleteMany: { tradeId, labelId } } };
+		const data = {
+			trades: {
+				deleteMany: {
+					tradeId,
+					labelId,
+					deleted: false,
+				}
+			}
+		};
 
 		return await db.label.update({
 			include, where: { id: labelId }, data,

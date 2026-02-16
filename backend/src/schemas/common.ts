@@ -22,7 +22,7 @@ export const Label = Type.Object({
 	tradeId: Type.Optional(Type.Integer()),
 	tradeIds: Type.Optional(Type.Array(Type.Integer())),
 
-	tradesCount: Type.Optional(Type.Integer()),
+	tradeCount: Type.Optional(Type.Integer()),
 
 }, { additionalProperties: false });
 

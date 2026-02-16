@@ -92,7 +92,7 @@ export default function SelectLabels({
 												<Box>
 													<Text fontWeight="semibold">{l.name}</Text>
 													<Text fontSize="xs" color="fg.muted">
-														Used in {l.tradesCount} trades
+														Used in {l.tradeCount} trades
 													</Text>
 												</Box>
 

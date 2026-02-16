@@ -30,18 +30,22 @@ export default function Orders({
 		prev - (o.type == "BUY" ? 1 : -1) * o.quantity * o.price, 0
 	), [orders]);
 
-	const entry = useMemo(() => getEntry(Timeframes.tf30s), [getEntry]);
+	const entry = useMemo(() =>{
+		if (orders.length == 0) return null;
+
+		return getEntry(Timeframes.tf30s);
+	}, [getEntry, orders]);
 
 	const risk = useMemo(() => {
-		if (stop == null) return null;
+		if (stop == null || entry == null) return null;
 
 		const { price: entryPrice, quantity } = entry;
 		return (entryPrice - stop) * quantity;
 
-	}, [stop, entry]);
+	}, [stop, entry, orders]);
 
 	const RR = useMemo(() => {
-		if (orderSum != 0 || risk == null) return null;
+		if (orderSum != 0 || risk == null || entry == null) return null;
 
 		const { price: entryPrice, quantity } = entry;
 

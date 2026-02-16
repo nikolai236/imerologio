@@ -1,5 +1,5 @@
-import { Box, Input, Flex, NativeSelect, Text, HStack, Button } from "@chakra-ui/react";
-import { type DbLabel, type SymbolEnum, type DbSymbol } from "../../../shared/trades.types";
+import { Box, Input, Flex, Text, HStack, Button } from "@chakra-ui/react";
+import { type DbLabel, } from "../../../shared/trades.types";
 
 type Props = {
 	label: DbLabel;
@@ -62,7 +62,7 @@ export default function LabelRow({
 					<Text fontSize="sm" color="fg.muted">
 						Trades Count
 					</Text>
-					<Text fontWeight="semibold">{label.tradesCount}</Text>
+					<Text fontWeight="semibold">{label.tradeCount}</Text>
 				</Box>
 
 				<HStack>

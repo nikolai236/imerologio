@@ -1,4 +1,4 @@
-import { Timeframe } from "./candles.types";
+import type { Timeframe } from "./candles.types";
 
 export const SymbolTypeValues = [
 	"Forex",
@@ -83,6 +83,8 @@ export interface DbTrade<
 	charts:  ChartType[];
 	orders: OrderType[];
 	labels: DbLabel[];
+
+	deleted: boolean;
 }
 
 export type ApiTrade = DbTrade<DbChart<Timeframe>, DbOrder<Date>>
@@ -101,7 +103,7 @@ export interface UpdateLabel extends Partial<Label> {
 
 export interface DbLabel extends LabelEntry {
 	id: number;
-	tradesCount?: number;
+	tradeCount?: number;
 }
 
 export type LabelUnion = Label | DbLabel | LabelEntry;

@@ -65,6 +65,20 @@ export const patchTradeSchema = {
 	}
 } as const;
 
+export const deleteTradeSchema = {
+	schema: {
+		params: IdParams,
+		response: {
+			200: Type.Object({
+				message: Type.String(),
+			}, { additionalProperties: false }),
+			400: ErrorMessage,
+			404: ErrorMessage,
+			500: ErrorMessage,
+		}
+	}
+};
+
 export const deleteLabelFromTradeSchema = {
 	schema: {
 		params: Type.Object({

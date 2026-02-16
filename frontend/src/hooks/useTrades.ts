@@ -43,11 +43,22 @@ const useTrades = () => {
 		return trade as ApiTrade;
 	};
 
+	const deleteTrade = async (id: number) => {
+		try {
+			await api.delete(path + `/${id}`);
+		} catch(err) {
+			console.error(err);
+			return false;
+		}
+		return true;
+	};
+
 	return {
 		getTrade,
 		getTrades,
 		createTrade,
 		editTrade,
+		deleteTrade
 	};
 };
 

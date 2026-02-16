@@ -54,6 +54,8 @@ model Trade {
 	symbolId Int
 	symbol   Symbol @relation(fields: [symbolId], references: [id], onDelete: Cascade)
 
+	deleted Boolean @default(false)
+
 	@@index([symbolId])
 }
 

@@ -9,7 +9,7 @@ const router: FastifyPluginAsync = async (server) => {
 		getLabelById,
 		createLabel,
 		updateLabel,
-		deleteLabel
+		deleteLabel,
 	} = useLabels(server.prisma);
 
 	server.get('/', getLabelsSchema, async (_req, reply) => {
@@ -17,8 +17,8 @@ const router: FastifyPluginAsync = async (server) => {
 		return reply.code(200).send({ labels });
 	});
 
-	interface IPost { Body: Label }
-	server.post<IPost>('/', postLabelSchema, async (req, reply) => {
+	interface Post { Body: Label }
+	server.post<Post>('/', postLabelSchema, async (req, reply) => {
 		try {
 			const label = await createLabel(req.body);
 			return reply.code(201).send({ label });
@@ -28,8 +28,8 @@ const router: FastifyPluginAsync = async (server) => {
 		}
 	});
 
-	interface IPatch { Params: { id: number; }; Body: UpdateLabel; }
-	server.patch<IPatch>('/:id', patchLabelSchema, async (req, reply) => {
+	interface Patch { Params: { id: number; }; Body: UpdateLabel; }
+	server.patch<Patch>('/:id', patchLabelSchema, async (req, reply) => {
 		try {
 			const id = Number(req.params.id);
 			const curr = await getLabelById(id);
@@ -45,8 +45,8 @@ const router: FastifyPluginAsync = async (server) => {
 		}
 	});
 
-	interface IDelete { Params: { id: number; }; };
-	server.delete<IDelete>('/:id', deleteLabelSchema, async (req, reply) => {
+	interface Delete { Params: { id: number; }; };
+	server.delete<Delete>('/:id', deleteLabelSchema, async (req, reply) => {
 		const id = Number(req.params.id);
 
 		const label = await getLabelById(id);

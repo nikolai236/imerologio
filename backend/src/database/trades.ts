@@ -47,7 +47,7 @@ const _produceIncludeObj = <T extends {}>(elements: T[]) => {
 };
 
 type TradeReturnType = DbTrade<ChartUnion<number>, OrderUnion<Date>>;
-const _cleanTrade = (t: any): TradeReturnType => ({
+const _cleanTrade = ({ deleted, ...t }: any): TradeReturnType => ({
 	...t,
 	stop: Number(t.stop),
 	pnl: t.pnl != null ? Number(t.pnl) : null,
@@ -78,7 +78,7 @@ const useTrades = (db: PrismaClient) => {
 		if (to   != null) filters.push(Prisma.sql`t.date <= ${to}`);
 
 		const whereClause = filters.length > 0 ?
-			Prisma.sql`WHERE ${Prisma.join(filters, " AND ")}` :
+			Prisma.sql`AND ${Prisma.join(filters, " AND ")}` :
 			Prisma.empty;
 
 		const labelJoin = labelIds != null && labelIds.length > 0 ?
@@ -107,7 +107,7 @@ const useTrades = (db: PrismaClient) => {
 			FROM "Trade" t
 			${labelJoin}
 			LEFT JOIN "Order" o ON o."tradeId" = t.id
-			${whereClause}
+			WHERE NOT deleted ${whereClause}
 			GROUP BY t.id
 			ORDER BY "entryDate" ASC NULLS LAST, t.id ASC;
 		`;
@@ -117,9 +117,9 @@ const useTrades = (db: PrismaClient) => {
 	const getTradeById = async (id: number) => {
 		const orders = { orderBy: { date: 'asc' as Prisma.SortOrder } };
 
-		const trade = await db.trade.findUnique({
+		const trade = await db.trade.findFirst({
 			include: { ...include, orders },
-			where: { id },
+			where: { id, deleted: false },
 		});
 		if (trade == null) return null;
 
@@ -132,6 +132,7 @@ const useTrades = (db: PrismaClient) => {
 	const createTrade = async (trade: Trade<Chart<number>, Order<Date>>) => {
 		const data = {
 			...trade,
+			deleted: false,
 			orders: { create: trade.orders, },
 			charts: { create: trade.charts  },
 			labels: {
@@ -190,7 +191,9 @@ const useTrades = (db: PrismaClient) => {
 		};
 
 		const ret = await db.trade.update({
-			where: { id }, data, include,
+			where: { id, deleted: false },
+			data,
+			include,
 		});
 		ret.labels = ret.labels.map((o: any) => o.label);
 
@@ -200,7 +203,11 @@ const useTrades = (db: PrismaClient) => {
 	};
 
 	const deleteTrade = async (id: number) => {
-		return await db.trade.delete({ where: { id }});
+		// return await db.trade.delete({ where: { id }});
+		await db.trade.update({
+			where: { id, deleted: false },
+			data: { deleted: true } 
+		});
 	};
 
 	const getOrderById = async (id: number) => {

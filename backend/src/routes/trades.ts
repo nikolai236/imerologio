@@ -27,6 +27,7 @@ import {
 	postTradeSchema,
 	patchTradeSchema,
 	deleteLabelFromTradeSchema,
+	deleteTradeSchema,
 } from "../schemas/trades";
 import { numberToTf, tfToNumber } from "../services/candles";
 
@@ -35,7 +36,8 @@ const router: FastifyPluginAsync = async (server) => {
 		getAllTrades,
 		getTradeById,
 		createTrade,
-		updateTrade
+		updateTrade,
+		deleteTrade,
 	} = useTrades(server.prisma);
 
 	const { deleteTradeFromLabel } = useLabels(server.prisma);
@@ -54,8 +56,8 @@ const router: FastifyPluginAsync = async (server) => {
 		return reply.code(200).send({ trades });
 	});
 
-	interface IGet { Params: { id: number } }
-	server.get<IGet>('/:id', getTradeSchema, async (req, reply) => {
+	interface Get { Params: { id: number } }
+	server.get<Get>('/:id', getTradeSchema, async (req, reply) => {
 		const id = Number(req.params.id);
 
 		const trade = await getTradeById(id);
@@ -67,8 +69,8 @@ const router: FastifyPluginAsync = async (server) => {
 		return reply.code(200).send({ trade: ret });
 	});
 
-	interface IPost { Body: Trade<Chart<Timeframe>, Order<number>>; }
-	server.post<IPost>('/', postTradeSchema, async (req, reply) => {
+	interface Post { Body: Trade<Chart<Timeframe>, Order<number>>; }
+	server.post<Post>('/', postTradeSchema, async (req, reply) => {
 		let { target, stop, pnl, symbolId, orders, charts } = req.body;
 
 		if (!validateOrderQuantities(orders)) {
@@ -112,13 +114,13 @@ const router: FastifyPluginAsync = async (server) => {
 		}
 	});
 
-	interface IPatch {
+	interface Patch {
 		Params: { tradeId: number };
 		Body: Partial<
 			Trade<ChartUnion<Timeframe>, OrderUnion<number>>
 		>;
 	};
-	server.patch<IPatch>('/:tradeId', patchTradeSchema, async (req, reply) => {
+	server.patch<Patch>('/:tradeId', patchTradeSchema, async (req, reply) => {
 		const id = Number(req.params.tradeId);
 		const trade = await getTradeById(id);
 
@@ -153,8 +155,7 @@ const router: FastifyPluginAsync = async (server) => {
 		};
 
 		payload.pnl = orders != null ?
-			calculatePnL(payload.orders ?? trade.orders) :
-			trade.pnl;
+			calculatePnL(payload.orders ?? trade.orders) : trade.pnl;
 
 		try {
 			const res = await updateTrade(id, payload);
@@ -167,19 +168,29 @@ const router: FastifyPluginAsync = async (server) => {
 		}
 	});
 
-	interface IDelete { Params: { tradeId: number; labelId: number }; };
-	server.delete<IDelete>('/:tradeId/labels/:labelId', deleteLabelFromTradeSchema, async (req, reply) => {
-		const tradeId = Number(req.params.tradeId);
-		const labelId = Number(req.params.labelId);
-
-		const trade = await getTradeById(tradeId);
-		if (trade == null) {
-			return reply.code(404).send({ message: 'Trade not found!', });
-		}
-
-		await deleteTradeFromLabel(labelId, tradeId);
-		return reply.code(200).send({ message: 'Label deleted from trade!' });
+	interface Delete { Params: { id: number; }; }
+	server.delete<Delete>("/:id", deleteTradeSchema, async (req, reply) => {
+		await deleteTrade(req.params.id);
+		return reply.code(200).send({ message: "Trade deleted" });
 	});
+
+	interface DeleteLabel { Params: { tradeId: number; labelId: number }; };
+	server.delete<DeleteLabel>(
+		"/:tradeId/labels/:labelId",
+		deleteLabelFromTradeSchema,
+		async (req, reply) => {
+			const tradeId = Number(req.params.tradeId);
+			const labelId = Number(req.params.labelId);
+
+			const trade = await getTradeById(tradeId);
+			if (trade == null) {
+				return reply.code(404).send({ message: "Trade not found!", });
+			}
+
+			await deleteTradeFromLabel(labelId, tradeId);
+			return reply.code(200).send({ message: "Label deleted from trade!" });
+		}
+	);
 };
 
 export default router;
