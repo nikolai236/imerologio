@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import useEditTrade from "../hooks/useEditTrade";
+import useTradePayload from "../hooks/useTradePayload";
 import TradeContext from "../context/TradeContext";
 
 
@@ -12,6 +12,6 @@ export default function TradeContextProvider({
 	children,
 	tradeId,
 }: Props) {
-	const value = useEditTrade(tradeId);
+	const value = useTradePayload(tradeId);
 	return <TradeContext.Provider value={value}>{children}</TradeContext.Provider>;
 }

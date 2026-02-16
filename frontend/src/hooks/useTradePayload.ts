@@ -8,7 +8,7 @@ import useReload from "./useReload";
 import useSymbolId from "./useSymbolId";
 import useEntryCalendar from "./useEntryCalendar";
 
-const useEditTrade = (tradeId?: number) => {
+const useTradePayload = (tradeId?: number) => {
 	const {
 		orders,
 		orderSum,
@@ -230,4 +230,4 @@ const useEditTrade = (tradeId?: number) => {
 	};
 };
 
-export default useEditTrade;
+export default useTradePayload;
