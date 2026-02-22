@@ -53,6 +53,16 @@ export default function Navbar() {
 						</Button>
 					</Link>
 
+					<Link to="/scoring">
+						<Button
+							variant="plain"
+							colorScheme="whiteAlpha"
+							color="white"
+							_hover={{ bg: "whiteAlpha.200" }}
+						> Scoring
+						</Button>
+					</Link>
+
 				</HStack>
 			</Flex>
 		</Box>

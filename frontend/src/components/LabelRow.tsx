@@ -1,13 +1,13 @@
 import { Box, Input, Flex, Text, HStack, Button } from "@chakra-ui/react";
-import { type DbLabel, } from "../../../shared/trades.types";
+import { type DbLabelEntry, } from "../../../shared/trades.types";
 
 type Props = {
-	label: DbLabel;
+	label: DbLabelEntry;
 	isEditing: boolean;
 	draftName: string;
 	error?: string | null;
 
-	onStartEdit: (label: DbLabel) => void;
+	onStartEdit: (label: DbLabelEntry) => void;
 	onDelete: (id: number) => void;
 	onCancelEdit: () => void;
 	onDraftNameChange: (id: number, value: string) => void;

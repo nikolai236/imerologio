@@ -1,5 +1,5 @@
 import { Type } from "@sinclair/typebox";
-import { IdParams, ErrorMessage, Labels, Label } from "./common";
+import { IdParams, ErrorMessage, Labels, Label, ScoringResponse } from "./common";
 
 export const getLabelsSchema = {
 	schema: {
@@ -11,6 +11,16 @@ export const getLabelsSchema = {
 			500: ErrorMessage,
 		},
 	},
+} as const;
+
+export const getLabelScoringSchema = {
+	schema: {
+		response: {
+			200: ScoringResponse,
+			400: ErrorMessage,
+			500: ErrorMessage,
+		}
+	}
 } as const;
 
 export const postLabelSchema = {

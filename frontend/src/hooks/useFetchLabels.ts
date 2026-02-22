@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react";
-import type { DbLabel } from "../../../shared/trades.types";
+import type { DbLabelEntry } from "../../../shared/trades.types";
 import useLabels from "./useLabels";
 import useReload from "./useReload";
 
 
 const useFetchLabels = () => {
 	const { getLabels } = useLabels();
-	const [reloadToken, reload] = useReload();
+	const [token, reload] = useReload();
 
 	const [loading, setLoading] = useState(false);
-	const [labels, setLabels] = useState<DbLabel[]>([]);
+	const [labels, setLabels] = useState<DbLabelEntry[]>([]);
 
 	useEffect(() => {
 		setLoading(true);
@@ -17,7 +17,7 @@ const useFetchLabels = () => {
 			.then(setLabels)
 			.catch(console.error)
 			.finally(() => setLoading(false));
-	}, [reloadToken]);
+	}, [token]);
 
 	return {
 		labels,

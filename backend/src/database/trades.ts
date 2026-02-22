@@ -10,6 +10,7 @@ import type {
 	ChartUnion,
 	OrderUnion,
 	DbTradeEntry,
+	TradeScoringData,
 } from '../../../shared/trades.types';
 import { DateString } from '../../../shared/news.types';
 
@@ -112,6 +113,35 @@ const useTrades = (db: PrismaClient) => {
 			ORDER BY "entryDate" ASC NULLS LAST, t.id ASC;
 		`;
 		return trades.map(_cleanTrade) as DbTradeEntry<Order<Date>>[];
+	};
+
+	const getTradeScoringData = async () => {
+		const data = await db.$queryRaw<TradeScoringData[]>`
+			SELECT
+				t.id,
+				COALESCE(
+					SUM(
+						CASE
+							WHEN o.type = 'SELL' THEN  o.quantity * o.price
+							WHEN o.type = 'BUY'  THEN -o.quantity * o.price
+							ELSE 0
+						END
+					),
+					0
+				) AS pnl
+			FROM "Trade" t
+			LEFT JOIN "Order" o
+				ON o."tradeId" = t.id
+			WHERE t.deleted = false
+			GROUP BY t.id
+			ORDER BY t.id
+		`;
+
+		data.forEach(e => {
+			e.pnl = Number(e.pnl);
+		})
+
+		return data;
 	};
 
 	const getTradeById = async (id: number) => {
@@ -222,6 +252,7 @@ const useTrades = (db: PrismaClient) => {
 		deleteTrade,
 		updateTrade,
 		getOrderById,
+		getTradeScoringData,
 	};
 };
 

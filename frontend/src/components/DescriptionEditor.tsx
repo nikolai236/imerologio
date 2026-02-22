@@ -104,14 +104,14 @@ export default function DescriptionEditor({
 
 	return (
 		<Box onBlur={() => setDescription(draft)}>
-			<Text fontSize="sm" color="fg.muted" mb={2}>
-				Description
-			</Text>
+			<Flex align="center" justify="space-between" mb={2}>
+				<Text fontSize="sm" color="fg.muted">
+					Description
+				</Text>
 
-			<Flex align="right" gap={2}>
 				<EditButton
 					visible={disabled}
-					onClick={handleEditClick ?? (()=>{})}
+					onClick={handleEditClick ?? (() => {})}
 				/>
 			</Flex>
 			<Box borderWidth="1px" borderRadius="md" overflow="hidden">

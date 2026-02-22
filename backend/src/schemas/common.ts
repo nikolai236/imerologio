@@ -111,3 +111,22 @@ export const NewsEvent = Type.Object({
 }, { additionalProperties: false });
 
 export const NewsEvents = Type.Array(NewsEvent);
+
+const ScoreSet = Type.Object({
+
+	labelIds: Type.Array(Type.Integer()),
+	support: Type.Integer(),
+	muIn: Type.Number(),
+	upliftPnl: Type.Number(),
+	score: Type.Number(),
+
+}, { additionalProperties: false }); 
+
+export const ScoringResponse = Type.Object({
+
+	mean: Type.Number(),
+	minSupport: Type.Integer(),
+	tradeCount: Type.Integer(),
+	levels: Type.Array(Type.Array(ScoreSet)),
+
+}, { additionalProperties: false });

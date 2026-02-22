@@ -15,7 +15,10 @@ const prismaPlugin: FastifyPluginAsync = async (server) => {
 		connectionString: process.env.DATABASE_URL,
 	});
 
-	const db = new PrismaClient({ adapter });
+	const db = new PrismaClient({
+		adapter,
+		// log: ["query", "info", "warn", "error"]
+	});
 	await db.$connect();
 
 	server.decorate('prisma', db);

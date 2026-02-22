@@ -82,9 +82,14 @@ export interface DbTrade<
 	symbol: Symbol;
 	charts:  ChartType[];
 	orders: OrderType[];
-	labels: DbLabel[];
+	labels: DbLabelEntry[];
 
 	deleted: boolean;
+}
+
+export interface TradeScoringData {
+	id: number;
+	pnl: number;
 }
 
 export type ApiTrade = DbTrade<DbChart<Timeframe>, DbOrder<Date>>
@@ -97,16 +102,41 @@ export interface Label extends LabelEntry {
 	tradeIds: number[];
 }
 
+export interface LabelTrades extends LabelEntry {
+	trades: DbTrade[],
+}
+
 export interface UpdateLabel extends Partial<Label> {
 	tradeId?: number;
 }
 
-export interface DbLabel extends LabelEntry {
+export interface DbLabelEntry extends LabelEntry {
 	id: number;
 	tradeCount?: number;
 }
 
-export type LabelUnion = Label | DbLabel | LabelEntry;
+export interface DbLabel extends Label {
+	id: number;
+}
+
+export type LabelUnion = Label | DbLabelEntry | LabelEntry;
+
+export interface ScoreSet {
+	labelIds: number[];
+	support: number;
+	muIn: number;
+	upliftPnl: number;
+	score: number;
+}
+
+export type Level = ScoreSet[];
+
+export interface ApiScoringResponse {
+	mean: number;
+	tradeCount: number;
+	levels: Level[];
+	minSupport: number;
+}
 
 type ChartTimeframe = number | Timeframe;
 

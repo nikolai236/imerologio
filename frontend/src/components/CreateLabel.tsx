@@ -81,7 +81,7 @@ export default function CreateLabel({
 				<DialogPositioner>
 					<DialogContent>
 						<DialogHeader>
-							<DialogTitle>Create symbol</DialogTitle>
+							<DialogTitle>Create Label</DialogTitle>
 						</DialogHeader>
 
 						<DialogBody>
@@ -89,7 +89,7 @@ export default function CreateLabel({
 								{error ? <Text color="red.400">{error}</Text> : null}
 
 								<Input
-									placeholder="Symbol name (e.g. NDXm)"
+									placeholder="Label name"
 									value={name}
 									onChange={(e) => {
 										setName(e.target.value);

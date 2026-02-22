@@ -5,6 +5,7 @@ import Symbols from "./Symbols";
 import Labels from "./Labels";
 import TradePageOuter from "./TradePageOuter";
 import CreateTradePageOuter from "./CreateTradePageOuter";
+import Scoring from "./Scoring";
 
 function RootLayout() {
 	return (<>
@@ -25,6 +26,7 @@ export default function App() {
 				</Route>
 				<Route path='symbols' element={<Symbols />} />
 				<Route path='labels' element={<Labels />} />
+				<Route path="scoring" element={<Scoring />} />
 			</Route>
 		</Routes>
 	);

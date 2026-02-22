@@ -16,11 +16,11 @@ import {
 	DialogCloseTrigger,
 } from '@chakra-ui/react';
 import { useState, useMemo } from 'react';
-import type { DbLabel } from '../../../shared/trades.types';
+import type { DbLabelEntry } from '../../../shared/trades.types';
 import useTradeContext from '../hooks/useTradeContext';
 
 type Props = {
-	labels: DbLabel[];
+	labels: DbLabelEntry[];
 	open: boolean;
 	disabled?: boolean;
 	handleEditClick?: () => void;

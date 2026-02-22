@@ -1,7 +1,14 @@
 import type { FastifyPluginAsync } from "fastify";
 import { Label, UpdateLabel } from "../../../shared/trades.types";
 import useLabels from "../database/labels";
-import { deleteLabelSchema, getLabelsSchema, patchLabelSchema, postLabelSchema } from "../schemas/labels";
+import useScoringService from "../services/scoring";
+import {
+	getLabelsSchema,
+	postLabelSchema,
+	patchLabelSchema,
+	deleteLabelSchema,
+	getLabelScoringSchema,
+} from "../schemas/labels";
 
 const router: FastifyPluginAsync = async (server) => {
 	const {
@@ -12,13 +19,31 @@ const router: FastifyPluginAsync = async (server) => {
 		deleteLabel,
 	} = useLabels(server.prisma);
 
-	server.get('/', getLabelsSchema, async (_req, reply) => {
+	const getScores = useScoringService(server.prisma);
+
+	server.get("/", getLabelsSchema, async (_req, reply) => {
 		const labels = await getAllLabels();
 		return reply.code(200).send({ labels });
 	});
 
+	server.get("/scoring", getLabelScoringSchema, async (_req, reply) => {
+		const {
+			means: { muAll: mean },
+			minSupport,
+			tradeCount,
+			levels
+		} = await getScores();
+
+		return reply.code(200).send({
+			mean,
+			levels,
+			minSupport,
+			tradeCount,
+		});
+	});
+
 	interface Post { Body: Label }
-	server.post<Post>('/', postLabelSchema, async (req, reply) => {
+	server.post<Post>("/", postLabelSchema, async (req, reply) => {
 		try {
 			const label = await createLabel(req.body);
 			return reply.code(201).send({ label });
@@ -29,7 +54,7 @@ const router: FastifyPluginAsync = async (server) => {
 	});
 
 	interface Patch { Params: { id: number; }; Body: UpdateLabel; }
-	server.patch<Patch>('/:id', patchLabelSchema, async (req, reply) => {
+	server.patch<Patch>("/:id", patchLabelSchema, async (req, reply) => {
 		try {
 			const id = Number(req.params.id);
 			const curr = await getLabelById(id);
@@ -46,16 +71,16 @@ const router: FastifyPluginAsync = async (server) => {
 	});
 
 	interface Delete { Params: { id: number; }; };
-	server.delete<Delete>('/:id', deleteLabelSchema, async (req, reply) => {
+	server.delete<Delete>("/:id", deleteLabelSchema, async (req, reply) => {
 		const id = Number(req.params.id);
 
 		const label = await getLabelById(id);
 		if (label == null) {
-			return reply.code(404).send({ message: 'Label not found!', });
+			return reply.code(404).send({ message: "Label not found!" });
 		}
 
 		await deleteLabel(id);
-		return reply.code(200).send({ message: 'Deleted' });
+		return reply.code(200).send({ message: "Label deleted" });
 	});
 };
 

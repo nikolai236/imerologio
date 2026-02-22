@@ -58,7 +58,11 @@ export default function CreateSymbolPage({
 
 		try {
 
-			await onCreate({ name: trimmed, type });
+			await onCreate({
+				name: trimmed,
+				type,
+				description: "",
+			});
 			setLoading(false);
 			setOpen(false);
 
