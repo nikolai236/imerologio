@@ -6,6 +6,7 @@ const tsJestTransformCfg = createDefaultPreset().transform;
 module.exports = {
   testEnvironment: "node",
   preset: "ts-jest",
+  maxWorkers: 1,
   transform: {
     ...tsJestTransformCfg,
   },

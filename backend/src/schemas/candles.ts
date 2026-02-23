@@ -11,7 +11,11 @@ const Candle = Type.Object({
 	volume: Type.Number(),
 }, { additionalProperties: false });
 
-const Candles = Type.Array(Candle);
+const EmptyCandle = Type.Object({
+	time: Type.Number(),
+}, { additionalProperties: false });
+
+const Candles = Type.Array(Type.Union([Candle, EmptyCandle]));
 
 export const getSupportedSchema = {
 	schema: {

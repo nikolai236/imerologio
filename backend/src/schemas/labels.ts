@@ -3,6 +3,9 @@ import { IdParams, ErrorMessage, Labels, Label, ScoringResponse } from "./common
 
 export const getLabelsSchema = {
 	schema: {
+		querystring: Type.Optional(Type.Object({
+			symbols: Type.Optional(Type.Boolean()),
+		}, { additionalProperties: false })),
 		response: {
 			200: Type.Object({
 				labels: Labels

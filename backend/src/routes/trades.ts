@@ -40,7 +40,7 @@ const router: FastifyPluginAsync = async (server) => {
 		deleteTrade,
 	} = useTrades(server.prisma);
 
-	const { deleteTradeFromLabel } = useLabels(server.prisma);
+	const { deleteTradeFromLabel, getLabelById } = useLabels(server.prisma);
 	const { getSymbolById } = useSymbols(server.prisma);
 
 	const convertCharts = (charts: DbChart<number>[]) => charts.map(c => ({
@@ -170,6 +170,10 @@ const router: FastifyPluginAsync = async (server) => {
 
 	interface Delete { Params: { id: number; }; }
 	server.delete<Delete>("/:id", deleteTradeSchema, async (req, reply) => {
+		const trade = await getTradeById(req.params.id);
+		if (trade == null) {
+			return reply.code(200).send({ message: "Trade not found" });
+		}
 		await deleteTrade(req.params.id);
 		return reply.code(200).send({ message: "Trade deleted" });
 	});
@@ -185,6 +189,11 @@ const router: FastifyPluginAsync = async (server) => {
 			const trade = await getTradeById(tradeId);
 			if (trade == null) {
 				return reply.code(404).send({ message: "Trade not found!", });
+			}
+
+			const label = await getLabelById(labelId);
+			if (label == null) {
+				return reply.code(404).send({ message: "Label not found!", });
 			}
 
 			await deleteTradeFromLabel(labelId, tradeId);

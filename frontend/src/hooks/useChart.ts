@@ -112,7 +112,7 @@ const useChart = (candles: Candle[], timeframe: Timeframe) => {
 			const entry = getEntry(timeframe);
 			const direction = Number(stop) > entry.price ? 'SELL' : 'BUY';
 
-			const r = new TradePosition(
+			const trade = new TradePosition(
 				[entry],
 				getExits(timeframe),
 				Number(stop),
@@ -120,7 +120,7 @@ const useChart = (candles: Candle[], timeframe: Timeframe) => {
 				Number(target)
 			);
 
-			series.attachPrimitive(r);
+			series.attachPrimitive(trade);
 
 		} catch(err) {
 			console.error(err);

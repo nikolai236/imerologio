@@ -151,26 +151,36 @@ const useTradePayload = (tradeId?: number) => {
 		}
 	};
 
-	const submitTradeEdit = async () => {
-		if (!tradeId) throw new Error('Trade id is null!.');
+	const submitTradeEdit = async (silent=false) => {
+		if (!tradeId) {
+			if (silent) return;
+			throw new Error('Trade id is null!.');
+		}
 
 		let trade: Trade<Chart<Timeframe>>;
 		try {
 			trade = validate();
 		} catch (err: any) {
-			return setFormError(err.message);
+			if (silent) return;
+			else return setFormError(err.message);
 		}
 
-		setSubmitting(true);
-		setFormError(null);
+		if (!silent) {
+			setSubmitting(true);
+			setFormError(null);
+		}
 
 		try {
 			await editTrade(tradeId, trade);
 
 		} catch (e: any) {
+			if (silent) return;
+
 			console.error(e);
 			setFormError(e?.message ?? "Failed to edit trade");
 		} finally {
+			if (silent) return;
+
 			reload();
 			setSubmitting(false);
 		}
@@ -191,6 +201,8 @@ const useTradePayload = (tradeId?: number) => {
 	}, [reloadToken]);
 
 	return {
+		tradeId,
+
 		calendar,
 		calendarError,
 		calendarLoading,

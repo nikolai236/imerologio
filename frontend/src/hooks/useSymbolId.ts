@@ -5,7 +5,7 @@ const useSymbolId = () => {
 	const { isSupported: fetchIsSupported } = useCandles();
 
 	const [isSupported, setIsSupported] = useState(false);
-	const [symbolId, setSymbolId] = useState('');
+	const [symbolId, setSymbolId] = useState("");
 
 	useEffect(() => {
 		if (!symbolId) return;

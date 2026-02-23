@@ -5,8 +5,9 @@ const useLabels = () => {
 	const api = useApi();
 	const path = '/labels';
 
-	const getLabels = async () => {
-		const { labels } = await api.get(path);
+	const getLabels = async (symbols=false) => {
+		let query = symbols ? { symbols } : undefined;
+		const { labels } = await api.get(path, query);
 		return labels as DbLabelEntry[];
 	};
 

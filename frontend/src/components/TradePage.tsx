@@ -26,6 +26,7 @@ import StopInput from "./StopInput";
 import TargetInput from "./TargetInput";
 import Orders from "./Orders";
 import EntryCalendar from "./EntryCalendar";
+import useAutosave from "../hooks/useAutosave";
 
 const Sections = {
 	symbol: "symbol",
@@ -38,11 +39,13 @@ const Sections = {
 } as const;
 
 export default function TradePage() {
-	const { labels, loadingLabels   } = useFetchLabels();
+	const { labels, loadingLabels, reload: reloadLabels } = useFetchLabels();
 	const { symbols, loadingSymbols } = useFetchSymbols();
 
 	const { formError, submitting, submitTradeEdit } = useTradeContext();
 	const { isActive, setActive, lockAll } = useEditLock();
+
+	useAutosave(submitTradeEdit);
 
 	const [labelsOpen, setLabelsOpen] = useState(false);
 
@@ -68,7 +71,7 @@ export default function TradePage() {
 	return (
 		<Box p={6} maxW="1000px" mx="auto">
 			<Text fontSize="2xl" fontWeight="bold" mb={4}>
-				Create Trade
+				View & Edit Trade
 			</Text>
 
 			{formError ? (
@@ -128,7 +131,7 @@ export default function TradePage() {
 						Cancel
 					</Button>
 					<Button
-						onClick={submitTradeEdit}
+						onClick={() => submitTradeEdit()}
 						loading={submitting}
 						disabled={submitting}
 					>
@@ -140,7 +143,9 @@ export default function TradePage() {
 			<SelectLabels
 				labels={labels}
 				open={labelsOpen}
-				setOpen={setLabelsOpen} />
+				setOpen={setLabelsOpen}
+				reloadLabels={reloadLabels}
+			/>
 		</Box>
 	);
 }

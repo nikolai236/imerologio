@@ -44,8 +44,13 @@ export default function Labels() {
 		clearRowError(id);
 	};
 
-	const onDelete = (id: number) => {
-		deleteLabel(id)
+	const onDelete = (label: DbLabelEntry) => {
+		const msg = `Are you sure you want to delete label: "${label.name}"?`;
+
+		const ok = confirm(msg);
+		if (!ok) return;
+
+		deleteLabel(label.id)
 			.then(() => reload())
 			.catch(console.error);
 	};

@@ -37,6 +37,7 @@ export default function SymbolSelect({
 						value={symbolId}
 						onChange={(e) => setSymbolId(e.target.value)}
 					>
+						<option key={0} value="">Select a symbol</option>
 						{symbols.map((s) => (
 							<option key={s.id} value={String(s.id)}>
 								{s.name} ({s.type})

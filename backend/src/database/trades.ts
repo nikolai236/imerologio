@@ -59,6 +59,11 @@ const _cleanTrade = ({ deleted, ...t }: any): TradeReturnType => ({
 const useTrades = (db: PrismaClient) => {
 	const include = {
 		labels: {
+			where: {
+				label: {
+					is: { symbolId: null },
+				},
+			},
 			include: {
 				label: true,
 			}
@@ -144,6 +149,7 @@ const useTrades = (db: PrismaClient) => {
 		return data;
 	};
 
+	// gate to all CRUD operations
 	const getTradeById = async (id: number) => {
 		const orders = { orderBy: { date: 'asc' as Prisma.SortOrder } };
 
@@ -221,7 +227,7 @@ const useTrades = (db: PrismaClient) => {
 		};
 
 		const ret = await db.trade.update({
-			where: { id, deleted: false },
+			where: { id },
 			data,
 			include,
 		});
@@ -235,7 +241,7 @@ const useTrades = (db: PrismaClient) => {
 	const deleteTrade = async (id: number) => {
 		// return await db.trade.delete({ where: { id }});
 		await db.trade.update({
-			where: { id, deleted: false },
+			where: { id },
 			data: { deleted: true } 
 		});
 	};

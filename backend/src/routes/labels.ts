@@ -21,8 +21,10 @@ const router: FastifyPluginAsync = async (server) => {
 
 	const getScores = useScoringService(server.prisma);
 
-	server.get("/", getLabelsSchema, async (_req, reply) => {
-		const labels = await getAllLabels();
+	interface Get { Querystring: { symbols?: boolean; } }
+	server.get<Get>("/", getLabelsSchema, async (req, reply) => {
+		const symbols = Boolean(req.query.symbols);
+		const labels = await getAllLabels(symbols);
 		return reply.code(200).send({ labels });
 	});
 

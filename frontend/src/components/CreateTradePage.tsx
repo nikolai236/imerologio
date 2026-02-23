@@ -22,7 +22,7 @@ import TargetInput from "./TargetInput";
 import EntryCalendar from "./EntryCalendar";
 
 export default function CreateTradePage() {
-	const { labels, loadingLabels   } = useFetchLabels();
+	const { labels, loadingLabels, reload: reloadLabels } = useFetchLabels();
 	const { symbols, loadingSymbols } = useFetchSymbols();
 
 	const {
@@ -99,7 +99,9 @@ export default function CreateTradePage() {
 			<SelectLabels
 				labels={labels}
 				open={labelsOpen}
-				setOpen={setLabelsOpen} />
+				setOpen={setLabelsOpen}
+				reloadLabels={reloadLabels}
+			/>
 		</Box>
 	);
 }

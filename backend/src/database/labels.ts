@@ -17,7 +17,11 @@ const useLabels = (db: PrismaClient) => {
 		}
 	} as const;
 
-	const getAllLabels = async () => {
+	const getAllLabels = async (symbols=false) => {
+		const whereClause = symbols ?
+			Prisma.empty :
+			Prisma.sql`WHERE l."symbolId" IS NULL`;
+
 		const labels = await db.$queryRaw<DbLabelEntry[]>`
 			SELECT
 				l.id,
@@ -29,6 +33,7 @@ const useLabels = (db: PrismaClient) => {
 			LEFT JOIN "Trade" t
 				ON t.id = tl."tradeId"
 				AND t.deleted = false
+			${whereClause}
 			GROUP BY l.id, l.name
 			ORDER BY l.name;
 		`;
@@ -118,9 +123,10 @@ const useLabels = (db: PrismaClient) => {
 		return labels;
 	};
 
+	// gate to all CRUD operations
 	const getLabelById = async (id: number) => {
-		const label = await db.label.findUnique({
-			where: { id }
+		const label = await db.label.findFirst({
+			where: { id, symbolId: null }
 		});
 		return label as LabelEntry | null;
 	};

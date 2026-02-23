@@ -4,7 +4,7 @@ import useLabels from "./useLabels";
 import useReload from "./useReload";
 
 
-const useFetchLabels = () => {
+const useFetchLabels = (symbols=false) => {
 	const { getLabels } = useLabels();
 	const [token, reload] = useReload();
 
@@ -13,7 +13,7 @@ const useFetchLabels = () => {
 
 	useEffect(() => {
 		setLoading(true);
-		getLabels()
+		getLabels(symbols)
 			.then(setLabels)
 			.catch(console.error)
 			.finally(() => setLoading(false));

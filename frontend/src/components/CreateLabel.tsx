@@ -54,6 +54,7 @@ export default function CreateLabel({
 		try {
 
 			await onCreate({ name: trimmed, tradeIds: [] });
+			setName("");
 			setLoading(false);
 			setOpen(false);
 

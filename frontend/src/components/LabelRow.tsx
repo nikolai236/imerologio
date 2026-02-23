@@ -8,7 +8,7 @@ type Props = {
 	error?: string | null;
 
 	onStartEdit: (label: DbLabelEntry) => void;
-	onDelete: (id: number) => void;
+	onDelete: (label: DbLabelEntry) => void;
 	onCancelEdit: () => void;
 	onDraftNameChange: (id: number, value: string) => void;
 	onSave: (id: number) => void;
@@ -81,7 +81,7 @@ export default function LabelRow({
 							<Button
 								colorScheme="red"
 								variant="outline"
-								onClick={() => onDelete(label.id)}
+								onClick={() => onDelete(label)}
 							>
 								Delete
 							</Button>

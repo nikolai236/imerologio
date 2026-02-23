@@ -27,7 +27,7 @@ const useScoring = () => {
 	const [data, setData] = useState<ApiScoringResponse | null>(null);
 
 	const { getScoring } = useLabels();
-	const { labels } = useFetchLabels();
+	const { labels } = useFetchLabels(true);
 
 	useEffect(() => {
 		getScoring()
