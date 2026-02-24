@@ -6,6 +6,7 @@ import Bitset, { and, countTrailingZeros, popcount } from "../../lib/bitset";
 
 type Means = {
 	muAll: number;
+	avgRR: number | null;
 	avgAbsPnl: number;
 };
 
@@ -19,17 +20,21 @@ type Options = {
 
 type WorkingScoreSet = ScoreSet & {
 	bitset: Bitset;
-	muIn: number | null;
-	upliftPnl: number | null;
 };
 
 const EPS = 1e-9;
 
 const computeMeans = (trades: TradeScoringData[]): Means => {
-	let sum = 0, absSum = 0;
+	let sum = 0, absSum = 0, profit = 0, loss = 0;
 	
 	for (const { pnl } of trades) {
 		if (isNaN(pnl)) throw new Error("NaN pnl");
+
+		if (pnl > 0) {
+			profit += pnl;
+		} else {
+			loss += Math.abs(pnl);
+		}
 
 		sum += pnl;
 		absSum += Math.abs(pnl);
@@ -38,6 +43,7 @@ const computeMeans = (trades: TradeScoringData[]): Means => {
 	const count = trades.length;
 	return {
 		muAll:     count ? sum / count : 0,
+		avgRR:     loss  ? profit / loss : null,
 		avgAbsPnl: count ? absSum / count : 1,
 	};
 };
@@ -50,7 +56,7 @@ const getCombinedScore = (support: number, upliftPnl: number | null, means: Mean
 };
 
 const scoreBitset = (set: Bitset, pnls: number[]) => {
-	let support = 0, sum = 0;
+	let support = 0, sum = 0, profit = 0, loss = 0;
 
 	for (let j = 0; j < set.array.length; j++) {
 		let word = set.array[j];
@@ -65,12 +71,19 @@ const scoreBitset = (set: Bitset, pnls: number[]) => {
 			const i = (j << 5) + bit;
 			sum += pnls[i];
 
+			if (pnls[i] > 0) {
+				profit += pnls[i];
+			} else {
+				loss += Math.abs(pnls[i]);
+			}
+
 			word ^= lsb;
 		}
 	}
 
 	return {
 		support,
+		RR: loss ? profit / loss : null,
 		muIn: support ? sum / support : null,
 	};
 };
@@ -103,21 +116,19 @@ const buildFirstLevel = (
 		const bitset = labelIdsBitsets.get(id);
 		if (bitset == null) return prev;
 
-		const score = scoreBitset(bitset, pnls);
-		if (score.support < minSupport) return prev;
+		const { support, muIn, RR } = scoreBitset(bitset, pnls);
+		if (support < minSupport) return prev;
 
-		const upliftPnl = score.muIn != null ?
-			(score.muIn - means.muAll) : null;
+		const upliftPnl = muIn != null ? muIn - means.muAll : null;
 
-		const combined = getCombinedScore(
-			score.support, upliftPnl, means
-		);
+		const combined = getCombinedScore(support, upliftPnl, means);
 
 		prev.push({
 			labelIds: [id],
 			bitset,
-			support: score.support,
-			muIn: score.muIn ?? 0,
+			support,
+			muIn: muIn ?? 0,
+			RR,
 			upliftPnl: upliftPnl ?? 0,
 			score: combined,
 		});
@@ -206,21 +217,19 @@ const buildNextLevel = (
 
 				and(a.bitset, b.bitset, tempBitset);
 
-				const score = scoreBitset(tempBitset, pnls);
-				if (score.support < minSupport) continue;
+				const { support, RR, muIn } = scoreBitset(tempBitset, pnls);
+				if (support < minSupport) continue;
 
-				const upliftPnl = score.muIn != null ?
-					score.muIn - means.muAll : null;
+				const upliftPnl = muIn != null ? muIn - means.muAll : null;
 
-				const combined = getCombinedScore(
-					score.support, upliftPnl, means
-				);
+				const combined = getCombinedScore(support, upliftPnl, means);
 
 				out.push({
 					labelIds: candIds,
 					bitset: cloneBitset(tempBitset),
-					support: score.support,
-					muIn: score.muIn ?? 0,
+					support,
+					RR,
+					muIn: muIn ?? 0,
 					upliftPnl: upliftPnl ?? 0,
 					score: combined,
 				});
@@ -275,6 +284,7 @@ const useScoringService = (db: PrismaClient) => {
 		const scoreSets = sorted.map<ScoreSet>((set) => ({
 			labelIds: set.labelIds,
 			support: set.support,
+			RR: set.RR,
 			muIn: set.muIn,
 			upliftPnl: set.upliftPnl,
 			score: set.score,
@@ -295,6 +305,7 @@ const useScoringService = (db: PrismaClient) => {
 				labelIds: set.labelIds,
 				support: set.support,
 				muIn: set.muIn,
+				RR: set.RR,
 				upliftPnl: set.upliftPnl,
 				score: set.score,
 			}));

@@ -30,13 +30,14 @@ const router: FastifyPluginAsync = async (server) => {
 
 	server.get("/scoring", getLabelScoringSchema, async (_req, reply) => {
 		const {
-			means: { muAll: mean },
+			means: { muAll: mean, avgRR: RR },
 			minSupport,
 			tradeCount,
 			levels
 		} = await getScores();
 
 		return reply.code(200).send({
+			RR,
 			mean,
 			levels,
 			minSupport,

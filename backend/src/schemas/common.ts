@@ -112,6 +112,11 @@ export const NewsEvent = Type.Object({
 
 export const NewsEvents = Type.Array(NewsEvent);
 
+const NullableNumber = Type.Union([
+	Type.Null(),
+	Type.Number(),
+]);
+
 const ScoreSet = Type.Object({
 
 	labelIds: Type.Array(Type.Integer()),
@@ -119,6 +124,7 @@ const ScoreSet = Type.Object({
 	muIn: Type.Number(),
 	upliftPnl: Type.Number(),
 	score: Type.Number(),
+	RR: NullableNumber,
 
 }, { additionalProperties: false }); 
 
@@ -126,6 +132,7 @@ export const ScoringResponse = Type.Object({
 
 	mean: Type.Number(),
 	minSupport: Type.Integer(),
+	RR: NullableNumber,
 	tradeCount: Type.Integer(),
 	levels: Type.Array(Type.Array(ScoreSet)),
 

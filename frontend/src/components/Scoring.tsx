@@ -34,7 +34,7 @@ const fmt = (x: number) =>
 const fmtInt = (x: number) =>
 	new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(x);
 
-type SortBy = "upliftPnl" | "upliftPerSupport" | "muIn" | "score";
+type SortBy = "upliftPnl" | "upliftPerSupport" | "muIn" | "score" | "RR";
 
 const ColoredBar = (props: any) => {
 	const { x, y, width, height, value } = props;
@@ -154,8 +154,8 @@ export default function Scoring() {
 						p={4}
 					>
 						<Stat.Root>
-							<Stat.Label>Combinations (after filter)</Stat.Label>
-							<Stat.ValueText>{fmtInt(filtered.length)}</Stat.ValueText>
+							<Stat.Label>Average Risk to Reward</Stat.Label>
+							<Stat.ValueText>{data?.RR ? fmt(data?.RR) : "∞"}</Stat.ValueText>
 							<Stat.HelpText>
 								max level depth = {fmtInt(Math.max(1, maxObservedK))}
 							</Stat.HelpText>
@@ -237,6 +237,7 @@ export default function Scoring() {
 										<option value="upliftPerSupport">
 											upliftPnl / support (normalized)
 										</option>
+										<option value="RR">RR</option>
 										<option value="muIn">mean</option>
 										<option value="score">score</option>
 									</NativeSelect.Field>
@@ -343,13 +344,17 @@ export default function Scoring() {
 									<Tooltip
 										cursor={{ fill: "rgba(0,0,0,0.05)" }}
 										content={({ label, payload }) => {
+											console.log(payload)
 											if (!payload || !payload.length) return null;
 											return (
 												<div style={{ whiteSpace: "pre-line" }}>
 													<strong>{label}</strong>
 													{payload.map((p) => (
 														<div key={String(p.dataKey)}>
-															{p.name}: {fmt(p.value as number)}
+															{p.name == "sortRR" ?
+																<>RR: {p.payload.RR ? fmt(p.value) : "∞"} </> :
+																<>{p.name}: {fmt(p.value as number)}</>
+															}
 														</div>
 													))}
 												</div>
@@ -358,7 +363,7 @@ export default function Scoring() {
 									/>
 
 									<Bar
-										dataKey={sortBy}
+										dataKey={sortBy == "RR" ? "sortRR" : sortBy}
 										shape={<ColoredBar />}
 									/>
 								</BarChart>
@@ -385,6 +390,7 @@ export default function Scoring() {
 									<Table.ColumnHeader textAlign="end">support</Table.ColumnHeader>
 									<Table.ColumnHeader textAlign="end">upliftPnl per trade</Table.ColumnHeader>
 									<Table.ColumnHeader textAlign="end">mean PNL</Table.ColumnHeader>
+									<Table.ColumnHeader textAlign="end">RR</Table.ColumnHeader>
 									<Table.ColumnHeader textAlign="end">score</Table.ColumnHeader>
 								</Table.Row>
 							</Table.Header>
@@ -424,6 +430,12 @@ export default function Scoring() {
 												<Badge variant={data?.mean && r.muIn > data.mean ? "solid" : "subtle"}>
 													{data?.mean && r.muIn > data.mean ? "+" : ""}
 													{fmt(r.muIn)}
+												</Badge>
+											</Table.Cell>
+
+											<Table.Cell textAlign="end">
+												<Badge variant={(r.RR == null || r.RR > 1) ? "solid" : "subtle"}>
+													{r.RR ? fmt(r.RR) : "∞"}
 												</Badge>
 											</Table.Cell>
 

@@ -125,6 +125,7 @@ export interface ScoreSet {
 	labelIds: number[];
 	support: number;
 	muIn: number;
+	RR: number | null;
 	upliftPnl: number;
 	score: number;
 }
@@ -135,6 +136,7 @@ export interface ApiScoringResponse {
 	mean: number;
 	tradeCount: number;
 	levels: Level[];
+	RR: number | null;
 	minSupport: number;
 }
 

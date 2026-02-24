@@ -3,7 +3,7 @@ import type { DbLabelEntry, ApiScoringResponse, ScoreSet } from "../../../shared
 import useLabels from "./useLabels";
 import useFetchLabels from "./useFetchLabels";
 
-type SortBy = "upliftPnl" | "upliftPerSupport" | "muIn" | "score";
+type SortBy = "upliftPnl" | "upliftPerSupport" | "muIn" | "score" | "RR";
 type SortDir = "desc" | "asc";
 
 type Row = ScoreSet & {
@@ -62,6 +62,15 @@ const useScoring = () => {
 			.flat();
 	}, [data, getKey]);
 
+	const fallbackRR = useMemo(() => 
+		Math.max(
+			...rows
+				.map(e => e.RR)
+				.filter(rr => rr != null)
+			),
+		[rows]
+	);
+
 	const maxObservedK = useMemo(
 		() => Math.max(...rows.map(r => r.k)), [rows]
 	);
@@ -95,6 +104,9 @@ const useScoring = () => {
 			})
 			.sort((a, b) => {
 				if (sortBy != null && a[sortBy] !== b[sortBy]) {
+  					if (a[sortBy] == null || b[sortBy] == null) {
+						return a[sortBy] == null ? -1 : 1;
+					}
 					return (a[sortBy] < b[sortBy] ? -1 : 1) * dir;
 				}
 
@@ -120,11 +132,13 @@ const useScoring = () => {
 			name: r.labelIds.map(getName).join("\n"),
 			upliftPnl: r.upliftPnl,
 			muIn: r.muIn,
+			RR: r.RR,
+			sortRR: r.RR == null ? fallbackRR : r.RR,
 			upliftPerSupport: r.upliftPerSupport,
 			support: r.support,
 			score: r.score,
 		}));
-	}, [filtered, chartCount, sortBy, getName]);
+	}, [filtered, chartCount, sortBy, getName, fallbackRR]);
 
 	return {
 		data,
@@ -137,6 +151,7 @@ const useScoring = () => {
 		sortBy,
 		sortDir,
 		chartCount,
+		fallbackRR,
 
 		getName,
 		setSortBy,
