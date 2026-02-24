@@ -80,10 +80,23 @@ export default class TradePosition extends PluginBase {
 			time: this._entry.time as UTCTimestamp,
 		};
 
-		const p2 = {
-			price: this.getEndPrice(),
-			time: this._exitTime,
-		};
+		let p2: Point;
+		const exitPrice = this.getEndPrice();
+		if (
+			(this._direction === "BUY" && this._entry.price < exitPrice) ||
+			(this._direction === "SELL" && this._entry.price > exitPrice)
+		) {
+			p2 = {
+				price: this.getEndPrice(),
+				time: this._exitTime,
+			};
+		} else {
+			if (this._target == null) return;
+			p2 = {
+				price: this._target,
+				time: this._exitTime,
+			};
+		}
 
 		this._profitRect = new Rectangle(p1, p2, {
 			fillColor: 'rgba(53, 183, 190, 0.2)',

@@ -37,7 +37,7 @@ export default function TradeRow({
 			<Table.Cell
 				textAlign="end"
 				color={!trade.pnl ? 'black' : trade.pnl > 0 ? 'green' : 'red'}
-			> {trade.pnl}
+			> {trade.pnl?.toFixed(2)}
 			</Table.Cell>
 			<Table.Cell textAlign="end">
 				<IconButton

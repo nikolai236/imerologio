@@ -36,6 +36,7 @@ export default function TradesPage() {
 						<Table.ColumnHeader>Date</Table.ColumnHeader>
 						<Table.ColumnHeader>Direction</Table.ColumnHeader>
 						<Table.ColumnHeader textAlign="end">PNL</Table.ColumnHeader>
+						<Table.ColumnHeader></Table.ColumnHeader>
 					</Table.Row>
 				</Table.Header>
 
@@ -45,8 +46,8 @@ export default function TradesPage() {
 							key={t.id}
 							trade={t}
 							onDelete={onDelete(t.id)}
-						/>)
-					}
+						/>
+					)}
 				</Table.Body>
 			</Table.Root>
 

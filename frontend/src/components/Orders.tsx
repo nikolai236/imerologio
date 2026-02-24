@@ -53,7 +53,7 @@ export default function Orders({
 		if (target == null) return null;
 		
 		const profit = (target - entryPrice) * quantity;
-		return profit / Math.abs(pnl);
+		return Math.abs(profit / pnl);
 
 	}, [orderSum, risk, entry, pnl, target]);
 

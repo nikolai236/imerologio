@@ -232,7 +232,7 @@ const buildNextLevel = (
 }
 
 const DEFAULTS: Required<Options> = {
-	minSupportAbs: 1,
+	minSupportAbs: 2,
 	minSupportFrac: 0,
 	maxItemsetsPerLevel: 5000,
 	maxLevels: 10,

@@ -3,7 +3,7 @@ import type { DbLabelEntry, ApiScoringResponse, ScoreSet } from "../../../shared
 import useLabels from "./useLabels";
 import useFetchLabels from "./useFetchLabels";
 
-type SortBy = "upliftPnl" | "upliftPerSupport" | "support" | "score";
+type SortBy = "upliftPnl" | "upliftPerSupport" | "muIn" | "score";
 type SortDir = "desc" | "asc";
 
 type Row = ScoreSet & {
@@ -20,7 +20,7 @@ const useScoring = () => {
 	const [minK, setMinK] = useState<number>(1);
 	const [maxK, setMaxK] = useState<number>(99);
 
-	const [sortBy, setSortBy] = useState<SortBy>("upliftPnl");
+	const [sortBy, setSortBy] = useState<SortBy>("upliftPerSupport");
 	const [sortDir, setSortDir] = useState<SortDir>("desc");
 
 	const [chartCount, setChartCount] = useState<number>(25);
@@ -119,6 +119,7 @@ const useScoring = () => {
 		return top.map((r) => ({
 			name: r.labelIds.map(getName).join("\n"),
 			upliftPnl: r.upliftPnl,
+			muIn: r.muIn,
 			upliftPerSupport: r.upliftPerSupport,
 			support: r.support,
 			score: r.score,
@@ -136,6 +137,7 @@ const useScoring = () => {
 		sortBy,
 		sortDir,
 		chartCount,
+
 		getName,
 		setSortBy,
 		setSortDir,

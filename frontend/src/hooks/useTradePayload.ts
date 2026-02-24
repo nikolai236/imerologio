@@ -92,10 +92,9 @@ const useTradePayload = (tradeId?: number) => {
 			type,
 		}));
 
-		const validatedCharts: Chart<Timeframe>[] = charts.map(c => ({
-			...c,
-			tempId: undefined,
-		}));
+		const validatedCharts: Chart<Timeframe>[] = charts.map(
+			({ tempId, ...c  }) => ({ ...c })
+		);
 
 		const ret: Trade<Chart<Timeframe>> = {
 			stop: stop as number,

@@ -16,14 +16,18 @@ const useTradeCharts = () => {
 	const isTimeframeValid = (tf: string) =>
 		Object.values(Timeframes).includes(tf as Timeframe);
 
-	const _defaultChart = (charts: TempChart[]) => charts.length == 0 ?
-		{
+	const generateDefaultChart = (charts: TempChart[]) => {
+		if (charts.length == 0) return {
 			start: 1765141931000,
 			end: 1765151982716,
 			timeframe: Timeframes.tf1m,
 			tempId: _uid(),
-		} :
-		{ ...charts.at(-1)!, tempId: _uid() };
+		};
+
+		// @ts-ignore
+		const { id, ...payload } = charts.at(-1)!;
+		return { ...payload, tempId: _uid() };
+	};
 
 	const updateChart = (id: string, payload: Partial<Chart<Timeframe>>) => {
 		setCharts(cs =>
@@ -31,12 +35,12 @@ const useTradeCharts = () => {
 		);
 	};
 
-	const addChart = () => setCharts(
-		cs => [...cs, _defaultChart(cs)]
-	);
+	const addChart = () => setCharts(charts => [
+		...charts, generateDefaultChart(charts)
+	]);
 
-	const removeChart = (id: string) => setCharts(
-		cs => cs.filter(c => c.tempId != id)
+	const removeChart = (id: string) => setCharts(charts =>
+		charts.filter(c => c.tempId != id)
 	);
 
 	const overwriteCharts = (charts: DbChart<Timeframe>[]) =>

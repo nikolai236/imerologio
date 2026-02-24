@@ -34,7 +34,7 @@ const fmt = (x: number) =>
 const fmtInt = (x: number) =>
 	new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(x);
 
-type SortBy = "upliftPnl" | "upliftPerSupport" | "support" | "score";
+type SortBy = "upliftPnl" | "upliftPerSupport" | "muIn" | "score";
 
 const ColoredBar = (props: any) => {
 	const { x, y, width, height, value } = props;
@@ -80,11 +80,10 @@ export default function Scoring() {
 		setMaxK,
 	} = useScoring();
 
-	const kOptions = useMemo(
-		() =>
-			Array.from({ length: Math.max(1, maxObservedK) }, (_, i) => i + 1),
-		[maxObservedK]
-	);
+	const kOptions = useMemo(() => Array.from(
+		{ length: Math.max(1, maxObservedK) },
+		(_, i) => i + 1
+	), [maxObservedK]);
 
 	const { xTickHeight, bottomMargin } = useMemo(() => {
 		const maxLines = Math.max(
@@ -235,11 +234,10 @@ export default function Scoring() {
 										onChange={(e) => setSortBy(e.target.value as SortBy)}
 										bg="bg.canvas"
 									>
-										<option value="upliftPnl">upliftPnl (raw)</option>
 										<option value="upliftPerSupport">
 											upliftPnl / support (normalized)
 										</option>
-										<option value="support">support</option>
+										<option value="muIn">mean</option>
 										<option value="score">score</option>
 									</NativeSelect.Field>
 								</NativeSelect.Root>
@@ -360,11 +358,7 @@ export default function Scoring() {
 									/>
 
 									<Bar
-										dataKey={
-											sortBy === "upliftPerSupport"
-												? "upliftPerSupport"
-												: "upliftPnl"
-										}
+										dataKey={sortBy}
 										shape={<ColoredBar />}
 									/>
 								</BarChart>
@@ -389,10 +383,8 @@ export default function Scoring() {
 								<Table.Row>
 									<Table.ColumnHeader>labels</Table.ColumnHeader>
 									<Table.ColumnHeader textAlign="end">support</Table.ColumnHeader>
-									<Table.ColumnHeader textAlign="end">upliftPnl</Table.ColumnHeader>
-									<Table.ColumnHeader textAlign="end">
-										uplift/support
-									</Table.ColumnHeader>
+									<Table.ColumnHeader textAlign="end">upliftPnl per trade</Table.ColumnHeader>
+									<Table.ColumnHeader textAlign="end">mean PNL</Table.ColumnHeader>
 									<Table.ColumnHeader textAlign="end">score</Table.ColumnHeader>
 								</Table.Row>
 							</Table.Header>
@@ -424,25 +416,26 @@ export default function Scoring() {
 											<Table.Cell textAlign="end">
 												<Badge variant={pos ? "solid" : "subtle"}>
 													{pos ? "+" : ""}
-													{fmt(r.upliftPnl)}
+													{fmt(r.upliftPerSupport)}
 												</Badge>
 											</Table.Cell>
 
 											<Table.Cell textAlign="end">
-												{fmt(r.upliftPerSupport)}
+												<Badge variant={data?.mean && r.muIn > data.mean ? "solid" : "subtle"}>
+													{data?.mean && r.muIn > data.mean ? "+" : ""}
+													{fmt(r.muIn)}
+												</Badge>
 											</Table.Cell>
-											<Table.Cell textAlign="end">{fmt(r.score)}</Table.Cell>
+
+											<Table.Cell textAlign="end">
+												{fmt(r.score)}
+											</Table.Cell>
 										</Table.Row>
 									);
 								})}
 							</Table.Body>
 						</Table.Root>
 					</Box>
-
-					<Text fontSize="sm" opacity={0.65} mt={3}>
-						Default sorting is <b>upliftPnl</b> (highest → lowest). If you meant
-						a normalized uplift, switch sort to <b>upliftPnl / support</b>.
-					</Text>
 				</Box>
 			</Flex>
 		</Box>
