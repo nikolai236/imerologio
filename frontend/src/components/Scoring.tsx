@@ -87,8 +87,7 @@ export default function Scoring() {
 
 	const { xTickHeight, bottomMargin } = useMemo(() => {
 		const maxLines = Math.max(
-			1,
-			...chartData.map((d) => String(d.name).split("\n").length)
+			1, ...chartData.map((d) => String(d.name).split("\n").length)
 		);
 		const lineH = 7;
 		const h = maxLines * lineH;
@@ -289,9 +288,7 @@ export default function Scoring() {
 					<Flex justify="space-between" align="baseline" mb={2} gap={4} wrap="wrap">
 						<Heading size="sm">Top combinations chart</Heading>
 						<Text fontSize="sm" opacity={0.75}>
-							Bar ={" "}
-							{sortBy === "upliftPerSupport" ? "uplift per support" : "upliftPnl"}{" "}
-							(sorted)
+							Bar ={" "}{sortBy}{" "}(sorted)
 						</Text>
 					</Flex>
 
@@ -344,7 +341,6 @@ export default function Scoring() {
 									<Tooltip
 										cursor={{ fill: "rgba(0,0,0,0.05)" }}
 										content={({ label, payload }) => {
-											console.log(payload)
 											if (!payload || !payload.length) return null;
 											return (
 												<div style={{ whiteSpace: "pre-line" }}>
@@ -428,13 +424,12 @@ export default function Scoring() {
 
 											<Table.Cell textAlign="end">
 												<Badge variant={data?.mean && r.muIn > data.mean ? "solid" : "subtle"}>
-													{data?.mean && r.muIn > data.mean ? "+" : ""}
 													{fmt(r.muIn)}
 												</Badge>
 											</Table.Cell>
 
 											<Table.Cell textAlign="end">
-												<Badge variant={(r.RR == null || r.RR > 1) ? "solid" : "subtle"}>
+												<Badge variant={(r.RR == null || data?.RR == null || r.RR > data.RR) ? "solid" : "subtle"}>
 													{r.RR ? fmt(r.RR) : "∞"}
 												</Badge>
 											</Table.Cell>

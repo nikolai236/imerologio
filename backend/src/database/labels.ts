@@ -40,7 +40,11 @@ const useLabels = (db: PrismaClient) => {
 		return labels;
 	};
 
-	const getLabelsWithTradeIds = async () => {
+	const getLabelsWithTradeIds = async (allowSymbolLabels=false) => {
+		const whereClause = allowSymbolLabels ?
+			Prisma.empty :
+			Prisma.sql`WHERE l."symbolId" IS NULL`;
+
 		const labels = await db.$queryRaw<DbLabel[]>`
 			SELECT
 				l.id,
@@ -57,6 +61,7 @@ const useLabels = (db: PrismaClient) => {
 			LEFT JOIN "Trade" t
 				ON t.id = tl."tradeId"
 				AND t.deleted = false
+			${whereClause}
 			GROUP BY l.id, l.name
 			ORDER BY l.id
 		`;
