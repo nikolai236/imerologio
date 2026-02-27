@@ -9,31 +9,6 @@ import useSymbolId from "./useSymbolId";
 import useEntryCalendar from "./useEntryCalendar";
 
 const useTradePayload = (tradeId?: number) => {
-	const {
-		orders,
-		orderSum,
-		getEntry,
-		getExits,
-		setOrders,
-		updateOrder,
-		addOrder,
-		removeOrder,
-	} = useTradeOrders(new Date());
-
-	const {
-		charts,
-		setCharts,
-		addChart,
-		removeChart,
-		updateChart,
-	} = useTradeCharts();
-
-	const {
-		calendar,
-		loading: calendarLoading,
-		error: calendarError,
-	} = useEntryCalendar(orders);
-
 	const { symbolId, isSupported, setSymbolId } = useSymbolId();
 	const { createTrade, editTrade, getTrade } = useTrades();
 
@@ -46,6 +21,33 @@ const useTradePayload = (tradeId?: number) => {
 
 	const [selectedLabelIds, setSelectedLabelIds] = useState<number[]>([]);
 	const [description, setDescription] = useState('');
+
+	const {
+		orders,
+		orderSum,
+		entryOrder,
+		exitOrders,
+		getEntryForTf,
+		getExitsForTf,
+		setOrders,
+		updateOrder,
+		addOrder,
+		removeOrder,
+	} = useTradeOrders(new Date(), stop);
+
+	const {
+		charts,
+		setCharts,
+		addChart,
+		removeChart,
+		updateChart,
+	} = useTradeCharts(entryOrder, exitOrders);
+
+	const {
+		calendar,
+		loading: calendarLoading,
+		error: calendarError,
+	} = useEntryCalendar(orders);
 
 	const setNull = () => {
 		setSymbolId('');
@@ -219,8 +221,8 @@ const useTradePayload = (tradeId?: number) => {
 		isSupported,
 		selectedLabelIds,
 
-		getEntry,
-		getExits,
+		getEntryForTf,
+		getExitsForTf,
 
 		setStop,
 		setTarget,

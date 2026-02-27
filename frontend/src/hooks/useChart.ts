@@ -21,7 +21,7 @@ const timeFormatter = (unixEpoch: number) => {
 };
 
 const useChart = (candles: Candle[], timeframe: Timeframe) => {
-	const { getEntry, getExits, stop, target } = useTradeContext();
+	const { getEntryForTf, getExitsForTf, stop, target } = useTradeContext();
 	const { ohlc, changeOhlcOnMouseMove, } = useOhlcLabel();
 	const { position, onClick, destroyPosition } = useCopyMenu();
 
@@ -109,12 +109,15 @@ const useChart = (candles: Candle[], timeframe: Timeframe) => {
 
 		try {
 
-			const entry = getEntry(timeframe);
+			const entry = getEntryForTf(timeframe);
+			if (entry == null) {
+				throw new Error("Entry is not defined");
+			}
 			const direction = Number(stop) > entry.price ? 'SELL' : 'BUY';
 
 			const trade = new TradePosition(
 				[entry],
-				getExits(timeframe),
+				getExitsForTf(timeframe),
 				Number(stop),
 				direction,
 				Number(target)

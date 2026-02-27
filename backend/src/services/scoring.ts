@@ -48,6 +48,30 @@ const computeMeans = (trades: TradeScoringData[]): Means => {
 	};
 };
 
+const computeRedundancyIndex = (
+	upliftPnl: number | null,
+	prevKeysUplift: Map<string, number>,
+	candIds: number[]
+) => {
+	let bestUplift: number = -Infinity;
+	for (let r = 0; r < candIds.length; r++) {
+		let key = "";
+		for (let h = 0; h < candIds.length; h++) {
+			if (r === h) continue;
+			key += (key ? "," : "") + candIds[h]; 
+		}
+
+		const subsetUplift = prevKeysUplift.get(key);
+		if (subsetUplift == null) return null;
+		if (subsetUplift > bestUplift) bestUplift = subsetUplift!;
+	}
+
+	const redundancy = Math.abs(upliftPnl ?? 0) < EPS ?
+		null : bestUplift / (upliftPnl ?? 0);
+
+	return redundancy;
+}
+
 const getCombinedScore = (support: number, upliftPnl: number | null, means: Means) => {
 	const normal = (upliftPnl ?? 0) / (means.avgAbsPnl + EPS);
 	const supportWeight = Math.log1p(support);
@@ -83,7 +107,7 @@ const scoreBitset = (set: Bitset, pnls: number[]) => {
 
 	return {
 		support,
-		RR: loss ? profit / loss : null,
+		RR: profit ? loss ? profit / loss : null : profit,
 		muIn: support ? sum / support : null,
 	};
 };
@@ -127,6 +151,7 @@ const buildFirstLevel = (
 			labelIds: [id],
 			bitset,
 			support,
+			redundancy: null,
 			muIn: muIn ?? 0,
 			RR,
 			upliftPnl: upliftPnl ?? 0,
@@ -153,8 +178,8 @@ const buildNextLevel = (
 ) => {
 	const prefixLen = k - 2;
 
-	const prevKeys = new Set(prevLevel.map(
-		scoreSet => getIdsKey(scoreSet.labelIds)
+	const prevKeysUplift = new Map(prevLevel.map(scoreSet =>
+		[getIdsKey(scoreSet.labelIds), scoreSet.upliftPnl]
 	));
 
 	const passesAprioriPrune = (candIds: number[]) => {
@@ -164,7 +189,7 @@ const buildNextLevel = (
 				if (i === r) continue;
 				key += (key ? "," : "") + candIds[i];
 			}
-			if (!prevKeys.has(key)) return false;
+			if (!prevKeysUplift.has(key)) return false;
 		}
 		return true;
 	};
@@ -224,10 +249,15 @@ const buildNextLevel = (
 
 				const combined = getCombinedScore(support, upliftPnl, means);
 
+				const redundancy = computeRedundancyIndex(
+					upliftPnl, prevKeysUplift, candIds
+				);
+
 				out.push({
 					labelIds: candIds,
 					bitset: cloneBitset(tempBitset),
 					support,
+					redundancy,
 					RR,
 					muIn: muIn ?? 0,
 					upliftPnl: upliftPnl ?? 0,
@@ -285,6 +315,7 @@ const useScoringService = (db: PrismaClient) => {
 			labelIds: set.labelIds,
 			support: set.support,
 			RR: set.RR,
+			redundancy: null,
 			muIn: set.muIn,
 			upliftPnl: set.upliftPnl,
 			score: set.score,
@@ -306,6 +337,7 @@ const useScoringService = (db: PrismaClient) => {
 				support: set.support,
 				muIn: set.muIn,
 				RR: set.RR,
+				redundancy: set.redundancy,
 				upliftPnl: set.upliftPnl,
 				score: set.score,
 			}));

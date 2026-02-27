@@ -50,8 +50,8 @@ export default function Orders({
 		const { price: entryPrice, quantity } = entry;
 
 		if (pnl > 0) return pnl / risk;
-		if (target == null) return null;
-		
+		if (!target) return null;
+
 		const profit = (target - entryPrice) * quantity;
 		return Math.abs(profit / pnl);
 

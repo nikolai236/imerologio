@@ -19,9 +19,7 @@ export default function CopyMenu({
 
 	const copy = async () => {
 		const text = price.toString();
-
 		await navigator.clipboard.writeText(text);
-
 		onClose();
 	};
 
@@ -42,7 +40,7 @@ export default function CopyMenu({
 		>
 			<VStack align="stretch" gap={2}>
 				<Text fontSize="sm">
-					Price: <b>{price}</b>
+					Price: <b>{price.toFixed(4)}</b>
 				</Text>
 
 				<Button size="sm" onClick={copy}>

@@ -125,6 +125,7 @@ export interface ScoreSet {
 	labelIds: number[];
 	support: number;
 	muIn: number;
+	redundancy: number | null;
 	RR: number | null;
 	upliftPnl: number;
 	score: number;

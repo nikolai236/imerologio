@@ -154,7 +154,7 @@ export default function Scoring() {
 					>
 						<Stat.Root>
 							<Stat.Label>Average Risk to Reward</Stat.Label>
-							<Stat.ValueText>{data?.RR ? fmt(data?.RR) : "∞"}</Stat.ValueText>
+							<Stat.ValueText>{data?.RR != null ? fmt(data?.RR) : "∞"}</Stat.ValueText>
 							<Stat.HelpText>
 								max level depth = {fmtInt(Math.max(1, maxObservedK))}
 							</Stat.HelpText>
@@ -348,7 +348,7 @@ export default function Scoring() {
 													{payload.map((p) => (
 														<div key={String(p.dataKey)}>
 															{p.name == "sortRR" ?
-																<>RR: {p.payload.RR ? fmt(p.value) : "∞"} </> :
+																<>RR: {p.payload.RR != null ? fmt(p.value) : "∞"} </> :
 																<>{p.name}: {fmt(p.value as number)}</>
 															}
 														</div>
@@ -387,6 +387,7 @@ export default function Scoring() {
 									<Table.ColumnHeader textAlign="end">upliftPnl per trade</Table.ColumnHeader>
 									<Table.ColumnHeader textAlign="end">mean PNL</Table.ColumnHeader>
 									<Table.ColumnHeader textAlign="end">RR</Table.ColumnHeader>
+									<Table.ColumnHeader textAlign="end">redundancy</Table.ColumnHeader>
 									<Table.ColumnHeader textAlign="end">score</Table.ColumnHeader>
 								</Table.Row>
 							</Table.Header>
@@ -430,8 +431,12 @@ export default function Scoring() {
 
 											<Table.Cell textAlign="end">
 												<Badge variant={(r.RR == null || data?.RR == null || r.RR > data.RR) ? "solid" : "subtle"}>
-													{r.RR ? fmt(r.RR) : "∞"}
+													{r.RR != null ? fmt(r.RR) : "∞"}
 												</Badge>
+											</Table.Cell>
+
+											<Table.Cell textAlign="end">
+												{r.redundancy != null ? fmt(r.redundancy) : "-"}
 											</Table.Cell>
 
 											<Table.Cell textAlign="end">

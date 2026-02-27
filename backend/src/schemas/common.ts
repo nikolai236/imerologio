@@ -122,6 +122,7 @@ const ScoreSet = Type.Object({
 	labelIds: Type.Array(Type.Integer()),
 	support: Type.Integer(),
 	muIn: Type.Number(),
+	redundancy: NullableNumber,
 	upliftPnl: Type.Number(),
 	score: Type.Number(),
 	RR: NullableNumber,

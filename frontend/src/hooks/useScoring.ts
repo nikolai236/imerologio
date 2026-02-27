@@ -53,13 +53,16 @@ const useScoring = () => {
 	const rows: Row[] = useMemo(() => {
 		if (data == null) return [];
 		return data.levels
-			.map(level => level.map(s => ({
-				...s,
-				key: getKey(s.labelIds),
-				k: s.labelIds.length,
-				upliftPerSupport: s.support ? s.upliftPnl / s.support : 0,
-			})))
-			.flat();
+			.map(level => level
+				// .filter(s => s.redundancy == null || s.redundancy != 1)
+				.map(s => ({
+					...s,
+					key: getKey(s.labelIds),
+					k: s.labelIds.length,
+					upliftPerSupport: s.support ?
+						s.upliftPnl / s.support : 0,
+				}))
+			).flat();
 	}, [data, getKey]);
 
 	const fallbackRR = useMemo(() => 
