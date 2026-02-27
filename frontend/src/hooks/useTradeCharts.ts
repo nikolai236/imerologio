@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import { type Timeframe, Timeframes } from "../../../shared/candles.types";
 import type { Chart, DbChart } from "../../../shared/trades.types";
 import type { UTCTimestamp } from "lightweight-charts";
@@ -28,7 +28,7 @@ const useTradeCharts = (entry: OrderArgument | null, exits: OrderArgument[]) => 
 		timeframe: Timeframes.tf1m,
 	};
 
-	const generateDefaultChart = useMemo(() => () => {
+	const generateDefaultChart = (charts: TempChart[], entry: OrderArgument | null, exits: OrderArgument[]) => {
 		if (charts.length == 0) {
 			const ret = {
 				...DEFAULTS,
@@ -58,15 +58,15 @@ const useTradeCharts = (entry: OrderArgument | null, exits: OrderArgument[]) => 
 		// @ts-ignore
 		const { id, ...payload } = charts.at(-1)!;
 		return { ...payload, tempId: _uid() };
-	}, [charts, entry, exits])
+	};
 
 	const updateChart = (id: string, payload: Partial<Chart<Timeframe>>) => setCharts(charts =>
 		charts.map(c => id == c.tempId ? { ...c, ...payload } : c)
 	);
 
-	const addChart = () => setCharts(charts => [
-		...charts, generateDefaultChart()
-	]);
+	const addChart = () => useCallback(() => setCharts(charts => [
+		...charts, generateDefaultChart(charts, entry, exits)
+	]), [entry, exits]);
 
 	const removeChart = (id: string) => setCharts(charts =>
 		charts.filter(c => c.tempId != id)
