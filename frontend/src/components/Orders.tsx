@@ -20,7 +20,7 @@ export default function Orders({
 		target,
 		stop,
 
-		getEntry,
+		getEntryForTf,
 		updateOrder,
 		addOrder,
 		removeOrder
@@ -33,8 +33,8 @@ export default function Orders({
 	const entry = useMemo(() =>{
 		if (orders.length == 0) return null;
 
-		return getEntry(Timeframes.tf30s);
-	}, [getEntry, orders]);
+		return getEntryForTf(Timeframes.tf30s);
+	}, [getEntryForTf, orders]);
 
 	const risk = useMemo(() => {
 		if (stop == null || entry == null) return null;
