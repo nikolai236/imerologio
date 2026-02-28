@@ -18,7 +18,7 @@ export default function CopyMenu({
 	const { x, y, price } = menu;
 
 	const copy = async () => {
-		const text = price.toString();
+		const text = price.toFixed(4);
 		await navigator.clipboard.writeText(text);
 		onClose();
 	};

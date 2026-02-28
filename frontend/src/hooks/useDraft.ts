@@ -15,7 +15,7 @@ export default useDraft;
 
 type Price = number | null;
 
-const PRICE_RE = /^\d{1,3}(?:,\d{3})*$|^\d+$/;
+const PRICE_RE = /^(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?$/;
 const isValidPriceDraft = (s: string) => s === "" || PRICE_RE.test(s);
 
 export const usePriceDraft = (price: Price, save: (price: Price) => void) => {
@@ -36,7 +36,7 @@ export const usePriceDraft = (price: Price, save: (price: Price) => void) => {
 		}
 
 		let toSave: Price = NaN;
-		if (isValidPriceDraft(trimmed)) {
+		if (isValidPriceDraft(trimmed.split(".")[0])) {
 			toSave = Number(trimmed.replaceAll(",", ""));
 		}
 

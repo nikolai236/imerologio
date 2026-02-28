@@ -9,7 +9,7 @@ import { useState, useEffect } from 'react';
 import DatePicker from './DatePicker';
 import type { Candle, Timeframe } from '../../../shared/candles.types';
 import useCandles from '../hooks/useCandles';
-import useTradeCharts from '../hooks/useTradeCharts';
+import { isTimeframeValid } from '../hooks/useTradeCharts';
 import useTradeContext from '../hooks/useTradeContext';
 import useChart from '../hooks/useChart';
 import OhlcLabel from './OhlcLabel';
@@ -41,7 +41,6 @@ export default function ChartPreview({
 		updateChart,
 	} = useTradeContext();
 
-	const { isTimeframeValid } = useTradeCharts();
 	const { getCandlesForRange } = useCandles();
 
 	const [candles, setCandles] = useState<Candle[]>([]);

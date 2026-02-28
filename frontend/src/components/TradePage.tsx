@@ -59,7 +59,10 @@ export default function TradePage() {
 		children: ReactElement<P>;
 	};
 
-	function SectionWrapper<P extends WrapperChildBase>({ section, children }: WrapperProps<P>) {
+	function SectionWrapper<P extends WrapperChildBase>({
+		section,
+		children
+	}: WrapperProps<P>) {
 		const child = Children.only(children);
 
 		return cloneElement(child, {

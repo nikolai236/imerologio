@@ -25,8 +25,6 @@ const useTradePayload = (tradeId?: number) => {
 	const {
 		orders,
 		orderSum,
-		entryOrder,
-		exitOrders,
 		getEntryForTf,
 		getExitsForTf,
 		setOrders,
@@ -41,7 +39,7 @@ const useTradePayload = (tradeId?: number) => {
 		addChart,
 		removeChart,
 		updateChart,
-	} = useTradeCharts(entryOrder, exitOrders);
+	} = useTradeCharts(orders);
 
 	const {
 		calendar,
@@ -240,7 +238,7 @@ const useTradePayload = (tradeId?: number) => {
 		submitNewTrade,
 		submitTradeEdit,
 		setSymbolId
-	};
+	} as const;
 };
 
 export default useTradePayload;

@@ -163,7 +163,7 @@ const useScoring = () => {
 		setChartCount,
 		setMinK,
 		setMaxK,
-	};
+	} as const;
 };
 
 export default useScoring;
