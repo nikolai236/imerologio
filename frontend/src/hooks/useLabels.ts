@@ -11,8 +11,13 @@ const useLabels = () => {
 		return labels as DbLabelEntry[];
 	};
 
-	const getScoring = async () => {
-		const data = await api.get(path + "/scoring");
+	const getScoring = async (filterBe: boolean, beThreshold: number) => {
+		if (filterBe && isNaN(beThreshold)) {
+			throw new Error("BE Threshold cannot be NaN");
+		}
+		const data = await api.get(path + "/scoring", {
+			filterBe, beThreshold
+		});
 		return data as ApiScoringResponse;
 	};
 

@@ -28,13 +28,24 @@ const router: FastifyPluginAsync = async (server) => {
 		return reply.code(200).send({ labels });
 	});
 
-	server.get("/scoring", getLabelScoringSchema, async (_req, reply) => {
+	interface GetScoring { Querystring: { filterBe?: boolean; beThreshold?: number; } }
+	server.get<GetScoring>("/scoring", getLabelScoringSchema, async (req, reply) => {
+
+		const filterBe = req.query.filterBe ?? false;
+		if (filterBe && req.query.beThreshold == null) {
+			return reply.code(400).send({
+				message: "Breakeven threshold not provided",
+			});
+		}
+
+		const beThreshold = req.query.beThreshold ?? 0;
+
 		const {
 			means: { muAll: mean, avgRR: RR },
 			minSupport,
 			tradeCount,
 			levels
-		} = await getScores();
+		} = await getScores(filterBe, beThreshold);
 
 		return reply.code(200).send({
 			RR,

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { DbLabelEntry, ApiScoringResponse, ScoreSet } from "../../../shared/trades.types";
 import useLabels from "./useLabels";
 import useFetchLabels from "./useFetchLabels";
+import { usePriceDraft } from "./useDraft";
 
 type SortBy = "upliftPnl" | "upliftPerSupport" | "muIn" | "score" | "RR";
 type SortDir = "desc" | "asc";
@@ -26,14 +27,26 @@ const useScoring = () => {
 	const [chartCount, setChartCount] = useState<number>(25);
 	const [data, setData] = useState<ApiScoringResponse | null>(null);
 
+	const [filterBreakeven, setFilterBreakeven] = useState(false);
+	const [beThreshold, setBeThreshold] = useState(0);
+
+	const saveBeThreshold = (pnl: number | null) =>
+		setBeThreshold(pnl ?? NaN);
+
+	const {
+		draft: beThresholdDraft,
+		setDraft: setBeThresholdDraft,
+		saveDraft: saveBeThresholdDraft 
+	} = usePriceDraft(beThreshold, saveBeThreshold);
+
 	const { getScoring } = useLabels();
 	const { labels } = useFetchLabels(true);
 
 	useEffect(() => {
-		getScoring()
+		getScoring(filterBreakeven, beThreshold)
 			.then(setData)
 			.catch(console.error);
-	}, []);
+	}, [filterBreakeven, beThreshold]);
 
 	const idsLabels = useMemo(() => labels.reduce((prev, l) => {
 		prev.set(l.id, l)
@@ -155,6 +168,13 @@ const useScoring = () => {
 		sortDir,
 		chartCount,
 		fallbackRR,
+
+		filterBreakeven,
+		beThresholdDraft,
+
+		setFilterBreakeven,
+		setBeThresholdDraft,
+		saveBeThresholdDraft,
 
 		getName,
 		setSortBy,

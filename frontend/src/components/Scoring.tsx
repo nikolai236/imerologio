@@ -14,6 +14,8 @@ import {
 	NativeSelect,
 	Wrap,
 	WrapItem,
+	Tabs,
+	Switch
 } from "@chakra-ui/react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import {
@@ -71,6 +73,12 @@ export default function Scoring() {
 		sortBy,
 		sortDir,
 		chartCount,
+		filterBreakeven,
+		beThresholdDraft,
+
+		setFilterBreakeven,
+		setBeThresholdDraft,
+		saveBeThresholdDraft,
 		getName,
 		setSortBy,
 		setSortDir,
@@ -80,14 +88,19 @@ export default function Scoring() {
 		setMaxK,
 	} = useScoring();
 
-	const kOptions = useMemo(() => Array.from(
-		{ length: Math.max(1, maxObservedK) },
-		(_, i) => i + 1
-	), [maxObservedK]);
+	const kOptions = useMemo(
+		() =>
+			Array.from(
+				{ length: Math.max(1, maxObservedK) },
+				(_, i) => i + 1
+			),
+		[maxObservedK]
+	);
 
 	const { xTickHeight, bottomMargin } = useMemo(() => {
 		const maxLines = Math.max(
-			1, ...chartData.map((d) => String(d.name).split("\n").length)
+			1,
+			...chartData.map((d) => String(d.name).split("\n").length)
 		);
 		const lineH = 7;
 		const h = maxLines * lineH;
@@ -173,109 +186,151 @@ export default function Scoring() {
 						Controls
 					</Heading>
 
-					<Flex gap={3} wrap="wrap" align="center">
-						<Box minW={{ base: "100%", md: "360px" }}>
-							<Text fontSize="sm" mb={1} opacity={0.8}>
-								Filter by labels (type ids like: <code>name1,name2</code>) — must
-								be contained
-							</Text>
-							<Input
-								value={query}
-								onChange={(e) => setQuery(e.target.value)}
-								placeholder="e.g. name1,name2"
-								bg="bg.canvas"
-							/>
-						</Box>
+					<Tabs.Root defaultValue="labels" variant="enclosed">
+						<Tabs.List>
+							<Tabs.Trigger value="labels">Labels & sorting</Tabs.Trigger>
+							<Tabs.Trigger value="breakeven">Breakeven</Tabs.Trigger>
+						</Tabs.List>
 
-						<Box>
-							<Text fontSize="sm" mb={1} opacity={0.8}>
-								k interval
-							</Text>
-							<HStack>
-								<NativeSelect.Root>
-									<NativeSelect.Field
-										value={String(minK)}
-										onChange={(e) => setMinK(Number(e.target.value))}
+						<Tabs.Content value="labels">
+							<Flex gap={3} wrap="wrap" align="center" pt={4}>
+								<Box minW={{ base: "100%", md: "360px" }}>
+									<Text fontSize="sm" mb={1} opacity={0.8}>
+										Filter by labels (type ids like: <code>name1,name2</code>) — must
+										be contained
+									</Text>
+									<Input
+										value={query}
+										onChange={(e) => setQuery(e.target.value)}
+										placeholder="e.g. name1,name2"
 										bg="bg.canvas"
-									>
-										{kOptions.map((k) => (
-											<option key={k} value={k}>
-												min {k}
-											</option>
-										))}
-									</NativeSelect.Field>
-								</NativeSelect.Root>
+									/>
+								</Box>
 
-								<NativeSelect.Root>
-									<NativeSelect.Field
-										value={String(Math.min(maxK, Math.max(1, maxObservedK)))}
-										onChange={(e) => setMaxK(Number(e.target.value))}
+								<Box>
+									<Text fontSize="sm" mb={1} opacity={0.8}>
+										k interval
+									</Text>
+									<HStack>
+										<NativeSelect.Root>
+											<NativeSelect.Field
+												value={String(minK)}
+												onChange={(e) => setMinK(Number(e.target.value))}
+												bg="bg.canvas"
+											>
+												{kOptions.map((k) => (
+													<option key={k} value={k}>
+														min {k}
+													</option>
+												))}
+											</NativeSelect.Field>
+										</NativeSelect.Root>
+
+										<NativeSelect.Root>
+											<NativeSelect.Field
+												value={String(Math.min(maxK, Math.max(1, maxObservedK)))}
+												onChange={(e) => setMaxK(Number(e.target.value))}
+												bg="bg.canvas"
+											>
+												{kOptions.map((k) => (
+													<option key={k} value={k}>
+														max {k}
+													</option>
+												))}
+											</NativeSelect.Field>
+										</NativeSelect.Root>
+									</HStack>
+								</Box>
+
+								<Box>
+									<Text fontSize="sm" mb={1} opacity={0.8}>
+										Sort
+									</Text>
+									<HStack>
+										<NativeSelect.Root>
+											<NativeSelect.Field
+												value={sortBy}
+												onChange={(e) => setSortBy(e.target.value as SortBy)}
+												bg="bg.canvas"
+											>
+												<option value="upliftPerSupport">
+													upliftPnl / support (normalized)
+												</option>
+												<option value="RR">RR</option>
+												<option value="muIn">mean</option>
+												<option value="score">score</option>
+											</NativeSelect.Field>
+										</NativeSelect.Root>
+
+										<IconButton
+											aria-label="Toggle sort direction"
+											onClick={toggleDir}
+											variant="outline"
+										>
+											{sortDir === "desc" ? (
+												<ChevronDown size={18} />
+											) : (
+												<ChevronUp size={18} />
+											)}
+										</IconButton>
+									</HStack>
+								</Box>
+
+								<Box>
+									<Text fontSize="sm" mb={1} opacity={0.8}>
+										Chart bars
+									</Text>
+
+									<NativeSelect.Root>
+										<NativeSelect.Field
+											value={String(chartCount)}
+											onChange={(e) => setChartCount(Number(e.target.value))}
+											bg="bg.canvas"
+										>
+											{[10, 25, 50, 100, 200].map((n) => (
+												<option key={n} value={n}>
+													top {n}
+												</option>
+											))}
+										</NativeSelect.Field>
+									</NativeSelect.Root>
+								</Box>
+							</Flex>
+						</Tabs.Content>
+
+						<Tabs.Content value="breakeven">
+							<Flex gap={4} wrap="wrap" align="center" pt={4}>
+								<HStack>
+									<Switch.Root
+										checked={filterBreakeven}
+										onCheckedChange={(e) => setFilterBreakeven(!!e.checked)}
+									>
+										<Switch.HiddenInput />
+										<Switch.Control>
+											<Switch.Thumb />
+										</Switch.Control>
+									</Switch.Root>
+									<Text fontSize="sm" opacity={0.85}>
+										Filter out breakeven trades
+									</Text>
+								</HStack>
+
+								<Box minW={{ base: "100%", md: "320px" }} opacity={filterBreakeven ? 1 : 0.5}>
+									<Text fontSize="sm" mb={1} opacity={0.8}>
+										Breakeven threshold (|PNL| ≤ threshold is breakeven)
+									</Text>
+									<Input
+										value={beThresholdDraft}
+										disabled={!filterBreakeven}
+										onChange={(e) => setBeThresholdDraft(e.target.value)}
+										onBlur={saveBeThresholdDraft}
+										placeholder="0"
 										bg="bg.canvas"
-									>
-										{kOptions.map((k) => (
-											<option key={k} value={k}>
-												max {k}
-											</option>
-										))}
-									</NativeSelect.Field>
-								</NativeSelect.Root>
-							</HStack>
-						</Box>
-
-						<Box>
-							<Text fontSize="sm" mb={1} opacity={0.8}>
-								Sort
-							</Text>
-							<HStack>
-								<NativeSelect.Root>
-									<NativeSelect.Field
-										value={sortBy}
-										onChange={(e) => setSortBy(e.target.value as SortBy)}
-										bg="bg.canvas"
-									>
-										<option value="upliftPerSupport">
-											upliftPnl / support (normalized)
-										</option>
-										<option value="RR">RR</option>
-										<option value="muIn">mean</option>
-										<option value="score">score</option>
-									</NativeSelect.Field>
-								</NativeSelect.Root>
-
-								<IconButton
-									aria-label="Toggle sort direction"
-									onClick={toggleDir}
-									variant="outline"
-								>
-									{sortDir === "desc" ? (
-										<ChevronDown size={18} />
-									) : (
-										<ChevronUp size={18} />
-									)}
-								</IconButton>
-							</HStack>
-						</Box>
-
-						<Box>
-							<Text fontSize="sm" mb={1} opacity={0.8}>
-								Chart bars
-							</Text>
-
-							<NativeSelect.Root>
-								<NativeSelect.Field
-									value={String(chartCount)}
-									onChange={(e) => setChartCount(Number(e.target.value))}
-									bg="bg.canvas"
-								>
-									{[10, 25, 50, 100, 200].map((n) => (
-										<option key={n} value={n}>
-											top {n}
-										</option>
-									))}
-								</NativeSelect.Field>
-							</NativeSelect.Root>
-						</Box>
-					</Flex>
+									/>
+								</Box>
+							</Flex>
+						</Tabs.Content>
+					</Tabs.Root>
 				</Box>
 
 				<Box

@@ -18,6 +18,10 @@ export const getLabelsSchema = {
 
 export const getLabelScoringSchema = {
 	schema: {
+		querystring: Type.Optional(Type.Object({
+			filterBe: Type.Optional(Type.Boolean()),
+			beThreshold: Type.Optional(Type.Number()),
+		})),
 		response: {
 			200: ScoringResponse,
 			400: ErrorMessage,

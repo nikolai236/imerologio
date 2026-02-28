@@ -283,12 +283,18 @@ const useScoringService = (db: PrismaClient) => {
 	const { getTradeScoringData   } = useTrades(db);
 	const { getLabelsWithTradeIds } = useLabels(db);
 
-	const getScores = async () => {
+	const getScores = async (filterBe: boolean, beThreshold: number) => {
 		const options = { ...DEFAULTS };
 
 		const labels = await getLabelsWithTradeIds();
-		const trades = await getTradeScoringData();
+		let trades = await getTradeScoringData();
 
+		if (filterBe) {
+			trades = trades.filter(({ pnl }) =>
+				Math.abs(pnl) > beThreshold
+			);
+		}
+		
 		const pnls = trades.map(({ pnl }) => pnl);
 		const means = computeMeans(trades);
 
