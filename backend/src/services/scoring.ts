@@ -62,9 +62,11 @@ const computeRedundancyIndex = (
 		}
 
 		const subsetUplift = prevKeysUplift.get(key);
-		if (subsetUplift == null) return null;
+		if (subsetUplift == null) continue;
 		if (subsetUplift > bestUplift) bestUplift = subsetUplift!;
 	}
+
+	if (bestUplift == -Infinity) return null;
 
 	const redundancy = Math.abs(upliftPnl ?? 0) < EPS ?
 		null : bestUplift / (upliftPnl ?? 0);

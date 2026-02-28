@@ -13,12 +13,11 @@ export default function TargetInput({
 	handleEditClick,
 }: Props) {
 	const { target, setTarget } = useTradeContext();
-	const [draft, setDraft] = usePriceDraft(target);
-
-	const saveTarget = () => {
-		const d = draft.trim();
-		setTarget(d ? Number(d) : null);
-	};
+	const {
+		draft,
+		setDraft,
+		saveDraft
+	} = usePriceDraft(target, setTarget);
 
 	return (
 		<Box minW="160px">
@@ -34,7 +33,7 @@ export default function TargetInput({
 				<Input
 					value={draft}
 					disabled={disabled}
-					onBlur={saveTarget}
+					onBlur={() => saveDraft()}
 					onChange={e => setDraft(e.target.value)}
 					placeholder="e.g. 19310.00"
 				/>

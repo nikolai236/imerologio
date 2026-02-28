@@ -1,23 +1,47 @@
-import React, { useEffect, useState } from "react"
-import { sanitizePrice } from "../lib/prices";
+import React, { useCallback, useEffect, useMemo, useState } from "react"
 
-const useDraft = <T>(
-	variable: T,
-	sanitize?: (v: T) => string,
-): [string, React.Dispatch<React.SetStateAction<string>>] => {
-
-	sanitize ??= (v: T) => `${v}`;
-	const [draft, setDraft] = useState(sanitize(variable));
+const useDraft = <T>(variable: T): [string, React.Dispatch<React.SetStateAction<string>>] => {
+	const [draft, setDraft] = useState(`${variable}`);
 
 	useEffect(
-		() => setDraft(sanitize(variable)),
+		() => setDraft(`${variable}`),
 		[variable]
 	);
 
-	return [draft, setDraft];
+	return [draft, setDraft] as const;
 };
 
 export default useDraft;
 
-export const usePriceDraft = <T>(price: T) =>
-	useDraft(price, sanitizePrice);
+type Price = number | null;
+
+const PRICE_RE = /^\d{1,3}(?:,\d{3})*$|^\d+$/;
+const isValidPriceDraft = (s: string) => s === "" || PRICE_RE.test(s);
+
+export const usePriceDraft = (price: Price, save: (price: Price) => void) => {
+	const sanitized = useMemo(() =>
+		price == null ? "" : String(price),
+	[price]);
+
+	const [draft, setDraft] = useState(sanitized);
+
+	useEffect(() =>
+		setDraft(sanitized), [sanitized]
+	);
+
+	const saveDraft = useCallback(() => {
+		const trimmed = draft.trim();
+		if (trimmed == "") {
+			return save(null);
+		}
+
+		let toSave: Price = NaN;
+		if (isValidPriceDraft(trimmed)) {
+			toSave = Number(trimmed.replaceAll(",", ""));
+		}
+
+		save(toSave);
+	}, [save, draft]);
+
+	return { draft, setDraft, saveDraft } as const;
+};

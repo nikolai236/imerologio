@@ -13,7 +13,11 @@ export default function StopInput({
 	handleEditClick,
 }: Props) {
 	const { stop, setStop } = useTradeContext();
-	const [draft, setDraft] = usePriceDraft(stop);
+	const {
+		draft,
+		setDraft,
+		saveDraft,
+	} = usePriceDraft(stop, setStop);
 
 	return (
 		<Box minW="160px">
@@ -29,7 +33,7 @@ export default function StopInput({
 				<Input
 					value={draft}
 					disabled={disabled}
-					onBlur={() => setStop(Number(draft.trim()))}
+					onBlur={() => saveDraft()}
 					onChange={e => setDraft(e.target.value)}
 					placeholder="e.g. 19250.25"
 				/>

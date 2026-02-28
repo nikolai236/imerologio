@@ -31,10 +31,15 @@ export default function OrderRow({
 	destroy
 }: Props) {
 	const [draftQuantity, setDraftQuantity] = useDraft(quantity);
-	const [draftPrice, setDraftPrice] = usePriceDraft(price);
 
-	const commitPrice    = () => onUpdate({ price: Number(draftPrice) });
+	const commitPrice    = (price: number | null) => onUpdate({ price: Number(price) });
 	const commitQunatity = () => onUpdate({ quantity: Number(draftQuantity) });
+
+	const {
+		draft: draftPrice,
+		setDraft: setDraftPrice,
+		saveDraft: saveDraftPrice,
+	}= usePriceDraft(price, commitPrice);
 
 	return (
 		<Box borderWidth="1px" borderRadius="md" p={3}>
@@ -77,7 +82,7 @@ export default function OrderRow({
 					disabled={disabled}
 					value={draftPrice}
 					onChange={e => setDraftPrice(e.target.value)}
-					onBlur={commitPrice}
+					onBlur={saveDraftPrice}
 					placeholder="e.g. 19280.50"
 				/>
 				</Box>
