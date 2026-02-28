@@ -14,14 +14,16 @@ import type {
 } from '../../../shared/trades.types';
 import { DateString } from '../../../shared/news.types';
 
-const _cleanOrder = (o: any): DbOrder<number> => ({
+type TradeReturnType = DbTrade<ChartUnion<number>, OrderUnion<Date>>;
+
+const cleanOrder = (o: any): DbOrder<number> => ({
 	...o,
 	quantity: Number(o.quantity),
 	price: Number(o.price),
 	date: new Date(o.date).getTime(),
 });
 
-const _produceIncludeObj = <T extends {}>(elements: T[]) => {
+const produceIncludeObj = <T extends {}>(elements: T[]) => {
 	const existingIds = elements
 		.map(c => 'id' in c ? c.id : null)
 		.filter((id): id is number => id != null);
@@ -47,13 +49,12 @@ const _produceIncludeObj = <T extends {}>(elements: T[]) => {
 	return { deleteMany, create, upsert };
 };
 
-type TradeReturnType = DbTrade<ChartUnion<number>, OrderUnion<Date>>;
-const _cleanTrade = ({ deleted, ...t }: any): TradeReturnType => ({
+const cleanTrade = ({ deleted, ...t }: any): TradeReturnType => ({
 	...t,
 	stop: Number(t.stop),
 	pnl: t.pnl != null ? Number(t.pnl) : null,
 	target: t.target != null ? Number(t.target) : null,
-	orders: t.orders && t.orders.map(_cleanOrder),
+	orders: t.orders && t.orders.map(cleanOrder),
 });
 
 const useTrades = (db: PrismaClient) => {
@@ -75,23 +76,24 @@ const useTrades = (db: PrismaClient) => {
 
 	const getAllTrades = async (
 		labelIds?: number[],
-		from?: DateString,
-		to?: DateString,
+		from?: number,
+		to?: number,
 	) => {
 		const filters: Prisma.Sql[] = [];
 
-		if (from != null) filters.push(Prisma.sql`t.date >= ${from}`);
-		if (to   != null) filters.push(Prisma.sql`t.date <= ${to}`);
+		if (from != null) filters.push(Prisma.sql`o.date >= ${new Date(from)}`);
+		if (to   != null) filters.push(Prisma.sql`o.date <= ${new Date(to)}`);
 
 		const whereClause = filters.length > 0 ?
 			Prisma.sql`AND ${Prisma.join(filters, " AND ")}` :
 			Prisma.empty;
 
 		const labelJoin = labelIds != null && labelIds.length > 0 ?
-			Prisma.sql`INNER JOIN "_LabelToTrade" lt ON 
-				lt."B" = t.id AND lt."A" IN (${Prisma.join(labelIds)})` :
+			Prisma.sql`INNER JOIN "trade_labels" lt ON 
+				lt."tradeId" = t.id AND lt."labelId" IN (${Prisma.join(labelIds)})` :
 			Prisma.empty;
 
+		console.log(whereClause)
 		const trades = await db.$queryRaw<DbTrade<DbChart<number>, DbOrder<Date>>[]>`
 			SELECT
 				t.*,
@@ -117,7 +119,7 @@ const useTrades = (db: PrismaClient) => {
 			GROUP BY t.id
 			ORDER BY "entryDate" ASC NULLS LAST, t.id ASC;
 		`;
-		return trades.map(_cleanTrade) as DbTradeEntry<Order<Date>>[];
+		return trades.map(cleanTrade) as DbTradeEntry<Order<Date>>[];
 	};
 
 	const getTradeScoringData = async () => {
@@ -142,10 +144,7 @@ const useTrades = (db: PrismaClient) => {
 			ORDER BY t.id
 		`;
 
-		data.forEach(e => {
-			e.pnl = Number(e.pnl);
-		})
-
+		data.forEach(e => { e.pnl = Number(e.pnl); });
 		return data;
 	};
 
@@ -160,7 +159,7 @@ const useTrades = (db: PrismaClient) => {
 		if (trade == null) return null;
 
 		trade.labels = trade.labels.map((o: any) => o.label);
-		return _cleanTrade(trade) as DbTrade<
+		return cleanTrade(trade) as DbTrade<
 			DbChart<number>, DbOrder<Date>
 		>;
 	};
@@ -179,7 +178,7 @@ const useTrades = (db: PrismaClient) => {
 		};
 		const ret = await db.trade.create({ include, data });
 		ret.labels = ret.labels.map((o: any) => o.label);
-		return _cleanTrade(ret) as DbTrade<DbChart<number>, DbOrder<Date>>;
+		return cleanTrade(ret) as DbTrade<DbChart<number>, DbOrder<Date>>;
 	};
 
 	type TradeType = Partial<
@@ -191,10 +190,10 @@ const useTrades = (db: PrismaClient) => {
 		payload: TradeType,
 	) => {
 		const charts = payload.charts == null ?
-			undefined : _produceIncludeObj(payload.charts);
+			undefined : produceIncludeObj(payload.charts);
 
 		const orders = payload.orders == null ?
-			undefined : _produceIncludeObj(payload.orders);
+			undefined : produceIncludeObj(payload.orders);
 
 		const symbol = payload.symbolId == null ?
 			undefined : { connect: { id: payload.symbolId} };
@@ -233,7 +232,7 @@ const useTrades = (db: PrismaClient) => {
 		});
 		ret.labels = ret.labels.map((o: any) => o.label);
 
-		return _cleanTrade(ret) as DbTrade<
+		return cleanTrade(ret) as DbTrade<
 			DbChart<number>, DbOrder<Date>
 		>;
 	};
@@ -248,7 +247,7 @@ const useTrades = (db: PrismaClient) => {
 
 	const getOrderById = async (id: number) => {
 		const order = await db.order.findUnique({ where: { id } });
-		return _cleanOrder(order);
+		return cleanOrder(order);
 	};
 
 	return {
@@ -259,7 +258,7 @@ const useTrades = (db: PrismaClient) => {
 		updateTrade,
 		getOrderById,
 		getTradeScoringData,
-	};
+	} as const;
 };
 
 export default useTrades;

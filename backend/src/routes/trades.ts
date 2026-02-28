@@ -47,12 +47,22 @@ const router: FastifyPluginAsync = async (server) => {
 		...c, timeframe: numberToTf(c.timeframe),
 	}));
 
-	server.get('/', getTradesSchema, async (_req, reply) => {
-		const trades = await getAllTrades();
-		trades
-			.filter(({ pnl }) => pnl == null)
-			.forEach((t) => { t.pnl = calculatePnL(t.orders); });
+	interface Get {
+		Querystring: {
+			from?: number;
+			to?: number;
+		};
+	}
+	server.get<Get>('/', getTradesSchema, async (req, reply) => {
+		const from = req.query.to != null ? Number(req.query.from) : undefined;
+		const to   = req.query.to != null ? Number(req.query.to  ) : undefined;
 
+		const trades = await getAllTrades(undefined, from, to);
+
+		for (const trade of trades) {
+			if (trade.pnl != null) continue;
+			trade.pnl = calculatePnL(trade.orders);
+		}
 		return reply.code(200).send({ trades });
 	});
 

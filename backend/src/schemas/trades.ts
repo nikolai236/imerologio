@@ -3,6 +3,10 @@ import { ErrorMessage, IdParams, Trade } from "./common";
 
 export const getTradesSchema = {
 	schema: {
+		querystring: Type.Optional(Type.Object({
+			from: Type.Optional(Type.Integer()),
+			to:   Type.Optional(Type.Integer()),
+		}, { additionalProperties: false })),
 		response: {
 			200: Type.Object({
 				trades: Type.Array(Type.Omit(

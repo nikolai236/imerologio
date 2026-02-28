@@ -10,12 +10,15 @@ type Props = {
 	disabled?: boolean;
 	invalid?: boolean;
 
+	maxW?: string;
+
 	onChangeEpoch: (ms: number | null) => void;
 };
 
 export default function DatePicker({
 	label = "Date / Time (ET)",
 	epoch,
+	maxW,
 
 	disabled,
 	invalid,
@@ -46,10 +49,9 @@ export default function DatePicker({
 			type="text"
 			value={draft}
 			step={60}
+			maxW={maxW}
 			onChange={(e) => setDraft(e.target.value)}
-			onBlur={() => {
-				commit(draft);
-			}}
+			onBlur={() => commit(draft)}
 			onKeyDown={(e) => {
 				if (e.key === "Enter") (e.target as HTMLInputElement).blur();
 				if (e.key === "Escape") {

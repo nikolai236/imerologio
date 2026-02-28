@@ -19,8 +19,12 @@ const useTrades = () => {
 		o.date = new Date(o.date);
 	};
 
-	const getTrades = async () => {
-		const { trades } = await api.get(path) as { trades: DbTradeEntry[] };
+	const getTrades = async (from?: number, to?: number) => {
+		const { trades } = await api.get(path, {
+			...(from && { from }),
+			...(to && { to }),
+		}) as { trades: DbTradeEntry[] };
+
 		trades.forEach(({ orders }) => orders.forEach(_assureIsDate));
 		return trades;
 	};

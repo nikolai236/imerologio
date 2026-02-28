@@ -291,7 +291,7 @@ const useScoringService = (db: PrismaClient) => {
 
 		if (filterBe) {
 			trades = trades.filter(({ pnl }) =>
-				Math.abs(pnl) > beThreshold
+				Math.abs(pnl) >= beThreshold
 			);
 		}
 		
@@ -360,7 +360,7 @@ const useScoringService = (db: PrismaClient) => {
 			minSupport,
 			tradeCount: trades.length,
 			levels,
-		};
+		} as const;
 	};
 
 	return getScores;
