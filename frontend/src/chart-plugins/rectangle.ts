@@ -8,7 +8,7 @@ import {
 	isBusinessDay
 } from "lightweight-charts";
 import { positionsBox, PluginBase, type ViewPoint, type Point } from "./plugin-base";
-import { type CanvasRenderingTarget2D, } from 'fancy-canvas';
+import type { CanvasRenderingTarget2D, } from 'fancy-canvas';
 
 class RectanglePaneRenderer implements IPrimitivePaneRenderer {
 	_p1: ViewPoint;

@@ -15,7 +15,7 @@ export default function TradesPage() {
 	const { getTrades, deleteTrade } = useTrades();
 
 	const [from, setFrom] = useState<number>(Date.now());
-	const [to, setTo] = useState<number>(Date.now());
+	const [to,   setTo] = useState<number>(Date.now());
 
 	const [trades, setTrades] = useState<DbTradeEntry[]>([]);
 	const [token, reload] = useReload();

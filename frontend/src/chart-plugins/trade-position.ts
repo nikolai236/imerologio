@@ -1,12 +1,20 @@
 import Rectangle from "./rectangle";
 import { PluginBase, type Point } from "./plugin-base";
-import type { Entry, Exit } from "../../../shared/candles.types";
 import type { SeriesAttachedParameter, Time, UTCTimestamp } from "lightweight-charts";
-import PriceLine from "./price-line";
+
+import type { Entry, Exit } from "../../../shared/candles.types";
 import type { OrderEnum } from "../../../shared/trades.types";
+
+import PriceLine from "./price-line";
 import TextLabel from "./text-label";
+import OrderTrangle, { type TriangleDirection } from "./order-triangle";
 
 export default class TradePosition extends PluginBase {
+	private static readonly PROFIT_COLOR = "rgba(53, 183, 190, 0.2)";
+	private static readonly LOSS_COLOR   = "rgba(210, 210, 210, 0.3)";
+	private static readonly ENTRY_COLOR  = "rgb(47, 172, 255)";
+	private static readonly EXIT_COLOR   = "rgb(0, 0, 0)";
+
 	_entry: Entry;
 	_exits: Exit[];
 	_direction: OrderEnum;
@@ -16,11 +24,19 @@ export default class TradePosition extends PluginBase {
 
 	_exitTime: UTCTimestamp;
 
-	_stopRect?: Rectangle;
-	_profitRect?: Rectangle;
+	_children: {
+		stopRect?: Rectangle;
+		profitRect?: Rectangle;
 
-	_exitLines: PriceLine[];
-	_exitLabels: TextLabel[];
+		exitLines: PriceLine[];
+		exitLabels: TextLabel[];
+
+		triangles: OrderTrangle[];
+	} = {
+		exitLines: [],
+		exitLabels: [],
+		triangles: [],
+	}
 
 	constructor(
 		entries: Entry[],
@@ -48,14 +64,38 @@ export default class TradePosition extends PluginBase {
 
 		this._exitTime = exits.at(-1)!.time as UTCTimestamp;
 
-		this._exitLines = [];
-		this._exitLabels = [];
+		this.createEntryTriangle(this._entry);
+		this._exits.forEach(this.createExitTriangle);
 
 		this.createProfitRectangle();
 		this.createStopRectangle();
 
 		this._exits.forEach(this.createExitLine);
 		this._exits.forEach(this.createExitLabel);
+	}
+
+	private createEntryTriangle = (entry: Entry) => {
+		this.createOrderTriangle(
+			entry,
+			TradePosition.ENTRY_COLOR,
+			this._direction === "BUY" ? "up" : "down",
+		);
+	};
+
+	private createExitTriangle = (exit: Exit) => {
+		this.createOrderTriangle(
+			exit,
+			TradePosition.EXIT_COLOR,
+			this._direction === "BUY" ? "down" : "up",
+		);
+	};
+
+	private createOrderTriangle = ({ price, time }: Entry | Exit, color: string, dir: TriangleDirection) => {
+		const p = { price, time: time as UTCTimestamp };
+
+		this._children.triangles.push(
+			new OrderTrangle(p, dir, { color })
+		);
 	}
 
 	private createStopRectangle = () => {
@@ -69,8 +109,8 @@ export default class TradePosition extends PluginBase {
 			time: this._exitTime,
 		};
 
-		this._stopRect = new Rectangle(p1, p2, {
-			fillColor: 'rgba(210, 210, 210, 0.3)',
+		this._children.stopRect = new Rectangle(p1, p2, {
+			fillColor: TradePosition.LOSS_COLOR,
 		});
 	}
 
@@ -98,8 +138,8 @@ export default class TradePosition extends PluginBase {
 			};
 		}
 
-		this._profitRect = new Rectangle(p1, p2, {
-			fillColor: 'rgba(53, 183, 190, 0.2)',
+		this._children.profitRect = new Rectangle(p1, p2, {
+			fillColor: TradePosition.PROFIT_COLOR,
 		});
 	}
 
@@ -121,85 +161,58 @@ export default class TradePosition extends PluginBase {
 			{ stokeColor: 'rgba(45, 117, 42, 0.84)', }
 		);
 
-		this._exitLines.push(line);
+		this._children.exitLines.push(line);
 	}
 
 	private createExitLabel = ({ price, time }: Exit, i: number) => {
 		const p = { price, time: time as UTCTimestamp };
 		const label = new TextLabel(p, `exit #${i+1}`);
-		this._exitLabels.push(label);
+		this._children.exitLabels.push(label);
+	}
+
+	private getChildren = (): PluginBase[] => {
+		return [
+			this._children.profitRect!,
+			this._children.stopRect!,
+			...this._children.exitLines,
+			...this._children.exitLabels,
+			...this._children.triangles,
+		];
 	}
 
 	public updateAllViews() {
-		this._stopRect?.updateAllViews();
-		this._profitRect?.updateAllViews();
-
-		this._exitLines.forEach(e => e.updateAllViews());
-		this._exitLabels.forEach(e => e.updateAllViews());
+		this.getChildren().forEach(c => c.updateAllViews());
 	}
 
 	public override attached(params: SeriesAttachedParameter<Time>): void {
 		super.attached(params);
 
-		this._stopRect?.attached(params);
-		this._profitRect?.attached(params);
-
-		this._exitLines.forEach(e => e.attached(params));
-		this._exitLabels.forEach(e => e.attached(params));
+		this.getChildren().forEach(c => c.attached(params));
 	}
 
 	public override detached(){
 		super.detached();
 
-		this._stopRect?.detached();
-		this._profitRect?.detached();
-
-		this._exitLines.forEach(e => e.detached());
-		this._exitLabels.forEach(e => e.detached());
+		this.getChildren().forEach(c => c.detached);
 	}
 
 	public paneViews() {
-		return [
-			...this._stopRect!.paneViews(),
-			...this._profitRect!.paneViews(),
-			...this._exitLines.map(e => e.paneViews()).flat(),
-			...this._exitLabels.map(e => e.paneViews()).flat(),
-		];
+		return this.getChildren().map(c => c.paneViews()).flat();
 	}
 
 	public priceAxisViews() {
-		return [
-			...this._stopRect!.priceAxisViews(),
-			...this._profitRect!.priceAxisViews(),
-			...this._exitLines.map(e => e.priceAxisViews()).flat(),
-			...this._exitLabels.map(e => e.priceAxisViews()).flat()
-		];
+		return this.getChildren().map(c => c.priceAxisViews()).flat();
 	}
 
 	public timeAxisViews() {
-		return [
-			...this._stopRect!.timeAxisViews(),
-			...this._profitRect!.timeAxisViews(),
-			...this._exitLines.map(e => e.timeAxisViews()).flat(),
-			...this._exitLabels.map(e => e.timeAxisViews()).flat(),
-		];
+		return this.getChildren().map(c => c.timeAxisViews()).flat();
 	}
 
 	public priceAxisPaneViews() {
-		return [
-			...this._stopRect!.priceAxisPaneViews(),
-			...this._profitRect!.priceAxisPaneViews(),
-			...this._exitLines.map(e => e.priceAxisPaneViews()).flat(),
-			...this._exitLabels.map(e => e.priceAxisPaneViews()).flat()
-		];
+		return this.getChildren().map(c => c.priceAxisPaneViews()).flat();
 	}
 
 	public timeAxisPaneViews() {
-		return [
-			...this._stopRect!.timeAxisPaneViews(),
-			...this._profitRect!.timeAxisPaneViews(),
-			...this._exitLines.map(e => e.timeAxisPaneViews()).flat(),
-			...this._exitLabels.map(e => e.timeAxisPaneViews()).flat(),
-		];
+		return this.getChildren().map(c => c.timeAxisPaneViews()).flat();
 	}
 }

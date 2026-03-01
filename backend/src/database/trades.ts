@@ -117,7 +117,7 @@ const useTrades = (db: PrismaClient) => {
 			LEFT JOIN "Order" o ON o."tradeId" = t.id
 			WHERE NOT deleted ${whereClause}
 			GROUP BY t.id
-			ORDER BY "entryDate" ASC NULLS LAST, t.id ASC;
+			ORDER BY "entryDate" DESC NULLS LAST, t.id ASC;
 		`;
 		return trades.map(cleanTrade) as DbTradeEntry<Order<Date>>[];
 	};

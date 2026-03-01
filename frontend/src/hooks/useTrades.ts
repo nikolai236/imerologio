@@ -11,13 +11,13 @@ import type {
 } from '../../../shared/trades.types';
 import type { Timeframe } from "../../../shared/candles.types";
 
+const assureIsDate = (o: DbOrder<Date>) =>{
+	o.date = new Date(o.date);
+};
+
 const useTrades = () => {
 	const api = useApi();
 	const path = '/trades';
-
-	const _assureIsDate = (o: DbOrder<Date>) =>{
-		o.date = new Date(o.date);
-	};
 
 	const getTrades = async (from?: number, to?: number) => {
 		const { trades } = await api.get(path, {
@@ -25,25 +25,25 @@ const useTrades = () => {
 			...(to && { to }),
 		}) as { trades: DbTradeEntry[] };
 
-		trades.forEach(({ orders }) => orders.forEach(_assureIsDate));
+		trades.forEach(({ orders }) => orders.forEach(assureIsDate));
 		return trades;
 	};
 
 	const getTrade = async (id: number) => {
 		const { trade } = await api.get(path + `/${id}`);
-		trade.orders.forEach(_assureIsDate);
+		trade.orders.forEach(assureIsDate);
 		return trade as ApiTrade;
 	};
 
 	const editTrade = async (id: number, paylaod: Partial<Trade<ChartUnion<Timeframe>, OrderUnion<number>>>) => {
 		const { trade } = await api.patch(path + `/${id}`, paylaod);
-		trade.orders.forEach(_assureIsDate);
+		trade.orders.forEach(assureIsDate);
 		return trade as ApiTrade;
 	};
 
 	const createTrade = async (payload: Trade<Chart<Timeframe>>) => {
 		const { trade } = await api.post(path, payload);
-		trade.orders.forEach(_assureIsDate);
+		trade.orders.forEach(assureIsDate);
 		return trade as ApiTrade;
 	};
 

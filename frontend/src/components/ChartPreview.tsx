@@ -45,7 +45,7 @@ export default function ChartPreview({
 
 	const [candles, setCandles] = useState<Candle[]>([]);
 	const [loading, setLoading] = useState(false);
-	const [error, setError] = useState<string|null>(null);
+	const [error, setError] = useState<string | null>(null);
 	const [draftTimeframe, setDraftTimeframe] = useDraft(timeframe);
 
 	const { containerRef, ohlc, menu, closeMenu } = useChart(candles, timeframe);
