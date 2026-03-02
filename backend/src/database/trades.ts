@@ -93,7 +93,6 @@ const useTrades = (db: PrismaClient) => {
 				lt."tradeId" = t.id AND lt."labelId" IN (${Prisma.join(labelIds)})` :
 			Prisma.empty;
 
-		console.log(whereClause)
 		const trades = await db.$queryRaw<DbTrade<DbChart<number>, DbOrder<Date>>[]>`
 			SELECT
 				t.*,

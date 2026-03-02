@@ -61,6 +61,7 @@ export interface TradeEntry {
 
 export interface DbTradeEntry<OrderType = DbOrder> extends TradeEntry {
 	id: number;
+	entryDate: string;
 	orders: OrderType[];
 }
 

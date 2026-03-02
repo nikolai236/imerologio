@@ -49,11 +49,11 @@ const computeMeans = (trades: TradeScoringData[]): Means => {
 };
 
 const computeRedundancyIndex = (
-	upliftPnl: number | null,
-	prevKeysUplift: Map<string, number>,
+	batchMean: number | null,
+	prevKeysMeans: Map<string, number>,
 	candIds: number[]
 ) => {
-	let bestUplift: number = -Infinity;
+	let bestMean: number = -Infinity;
 	for (let r = 0; r < candIds.length; r++) {
 		let key = "";
 		for (let h = 0; h < candIds.length; h++) {
@@ -61,15 +61,15 @@ const computeRedundancyIndex = (
 			key += (key ? "," : "") + candIds[h]; 
 		}
 
-		const subsetUplift = prevKeysUplift.get(key);
+		const subsetUplift = prevKeysMeans.get(key);
 		if (subsetUplift == null) continue;
-		if (subsetUplift > bestUplift) bestUplift = subsetUplift!;
+		if (subsetUplift > bestMean) bestMean = subsetUplift!;
 	}
 
-	if (bestUplift == -Infinity) return null;
+	if (bestMean == -Infinity) return null;
 
-	const redundancy = Math.abs(upliftPnl ?? 0) < EPS ?
-		null : bestUplift / (upliftPnl ?? 0);
+	const redundancy = Math.abs(batchMean ?? 0) < EPS ?
+		null : bestMean / (batchMean ?? 0);
 
 	return redundancy;
 }
@@ -180,8 +180,8 @@ const buildNextLevel = (
 ) => {
 	const prefixLen = k - 2;
 
-	const prevKeysUplift = new Map(prevLevel.map(scoreSet =>
-		[getIdsKey(scoreSet.labelIds), scoreSet.upliftPnl]
+	const prevKeysMeans = new Map(prevLevel.map(scoreSet =>
+		[getIdsKey(scoreSet.labelIds), scoreSet.muIn]
 	));
 
 	const passesAprioriPrune = (candIds: number[]) => {
@@ -191,7 +191,7 @@ const buildNextLevel = (
 				if (i === r) continue;
 				key += (key ? "," : "") + candIds[i];
 			}
-			if (!prevKeysUplift.has(key)) return false;
+			if (!prevKeysMeans.has(key)) return false;
 		}
 		return true;
 	};
@@ -252,7 +252,7 @@ const buildNextLevel = (
 				const combined = getCombinedScore(support, upliftPnl, means);
 
 				const redundancy = computeRedundancyIndex(
-					upliftPnl, prevKeysUplift, candIds
+					muIn, prevKeysMeans, candIds
 				);
 
 				out.push({
@@ -273,7 +273,7 @@ const buildNextLevel = (
 }
 
 const DEFAULTS: Required<Options> = {
-	minSupportAbs: 2,
+	minSupportAbs: 3,
 	minSupportFrac: 0,
 	maxItemsetsPerLevel: 5000,
 	maxLevels: 10,

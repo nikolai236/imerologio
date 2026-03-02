@@ -80,6 +80,8 @@ export const Trade = Type.Object({
 	pnl: Type.Optional(Type.Number()),
 	description: Type.String(),
 
+	entryDate: Type.Optional(Type.String()),
+
 	symbol: Type.Optional(Symbol),
 	labels: Labels,
 

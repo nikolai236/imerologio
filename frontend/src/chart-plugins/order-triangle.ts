@@ -96,10 +96,10 @@ type CandleSeries = ISeriesApi<
 >;
 
 class TrianglePaneView implements IPrimitivePaneView {
-	private _source: OrderTrangle;
+	private _source: Triangle;
 	private _p: ViewPoint = { x: null, y: null };
 
-	constructor(source: OrderTrangle) {
+	constructor(source: Triangle) {
 		this._source = source;
 	}
 
@@ -145,7 +145,7 @@ class TrianglePaneView implements IPrimitivePaneView {
 	}
 }
 
-export default class OrderTrangle extends PluginBase {
+export default class Triangle extends PluginBase {
 	_p: Point;
 	_direction: TriangleDirection;
 	_options: TriangleOptions;

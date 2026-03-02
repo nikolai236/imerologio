@@ -15,7 +15,7 @@ export default function TradeRow({
 	onDelete
 }: Props) {
 	const dateStr = trade.orders?.length > 0 ?
-		epochToDateStrInTZ(new Date(trade.orders[0].date ?? Date.now()).getTime()) : null;
+		epochToDateStrInTZ(new Date(trade.entryDate ?? Date.now()).getTime()) : null;
 
 	const direction = trade.orders?.length > 0 && trade.orders[0].type == 'BUY' ?
 		'Long' : 'Short';

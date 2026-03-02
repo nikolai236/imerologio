@@ -442,7 +442,7 @@ export default function Scoring() {
 									<Table.ColumnHeader textAlign="end">upliftPnl per trade</Table.ColumnHeader>
 									<Table.ColumnHeader textAlign="end">mean PNL</Table.ColumnHeader>
 									<Table.ColumnHeader textAlign="end">RR</Table.ColumnHeader>
-									<Table.ColumnHeader textAlign="end">redundancy</Table.ColumnHeader>
+									<Table.ColumnHeader textAlign="end">best mean / batch mean</Table.ColumnHeader>
 									<Table.ColumnHeader textAlign="end">score</Table.ColumnHeader>
 								</Table.Row>
 							</Table.Header>

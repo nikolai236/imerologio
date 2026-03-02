@@ -1,13 +1,17 @@
-import Rectangle from "./rectangle";
-import { PluginBase, type Point } from "./plugin-base";
-import type { SeriesAttachedParameter, Time, UTCTimestamp } from "lightweight-charts";
+import type {
+	SeriesAttachedParameter,
+	Time,
+	UTCTimestamp
+} from "lightweight-charts";
 
 import type { Entry, Exit } from "../../../shared/candles.types";
 import type { OrderEnum } from "../../../shared/trades.types";
 
+import { PluginBase, type Point } from "./plugin-base";
+import Rectangle from "./rectangle";
 import PriceLine from "./price-line";
 import TextLabel from "./text-label";
-import OrderTrangle, { type TriangleDirection } from "./order-triangle";
+import Triangle, { type TriangleDirection } from "./order-triangle";
 
 export default class TradePosition extends PluginBase {
 	private static readonly PROFIT_COLOR = "rgba(53, 183, 190, 0.2)";
@@ -31,7 +35,7 @@ export default class TradePosition extends PluginBase {
 		exitLines: PriceLine[];
 		exitLabels: TextLabel[];
 
-		triangles: OrderTrangle[];
+		triangles: Triangle[];
 	} = {
 		exitLines: [],
 		exitLabels: [],
@@ -94,7 +98,7 @@ export default class TradePosition extends PluginBase {
 		const p = { price, time: time as UTCTimestamp };
 
 		this._children.triangles.push(
-			new OrderTrangle(p, dir, { color })
+			new Triangle(p, dir, { color })
 		);
 	}
 

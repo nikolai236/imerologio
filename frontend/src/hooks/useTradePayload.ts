@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { Chart, Order, Trade, ApiTrade } from "../../../shared/trades.types";
 import useTradeOrders from "./useTradeOrders";
 import type { Timeframe } from "../../../shared/candles.types";
@@ -20,7 +20,7 @@ const useTradePayload = (tradeId?: number) => {
 	const [target, setTarget] = useState<number|null>(null);
 
 	const [selectedLabelIds, setSelectedLabelIds] = useState<number[]>([]);
-	const [description, setDescription] = useState('');
+	const [description, setDescription] = useState("");
 
 	const {
 		orders,
@@ -74,8 +74,6 @@ const useTradePayload = (tradeId?: number) => {
 	};
 
 	const validate = () => {
-		setFormError(null);
-
 		const sId = Number(symbolId);
 		if (!Number.isInteger(sId) || sId <= 0) throw new Error("Please select a valid symbol.");
 
@@ -92,13 +90,15 @@ const useTradePayload = (tradeId?: number) => {
 			type,
 		}));
 
+		if (stop == null) throw new Error("Please set a stop loss.");
+
 		const validatedCharts: Chart<Timeframe>[] = charts.map(
 			({ tempId, ...c  }) => ({ ...c })
 		);
 
 		const ret: Trade<Chart<Timeframe>> = {
-			stop: stop as number,
-			target: target as number,
+			stop,
+			target: target ?? undefined,
 			description,
 			labels: selectedLabelIds.map(id => ({ id })),
 			charts: validatedCharts,
@@ -199,6 +199,21 @@ const useTradePayload = (tradeId?: number) => {
 			});
 	}, [reloadToken]);
 
+	const setAndValidateStop = useCallback((stop: number | null) => {
+		if (orders.length == 0 || stop == null) {
+			return setStop(stop);
+		}
+		const { type, price } = orders[0];
+
+		const long  = price >= stop && type == "BUY";
+		const short = price <= stop && type == "SELL";
+
+		if (!long && !short) {
+			return setFormError("Invalid stop loss");
+		}
+		return setStop(stop);
+	}, [orders]);
+
 	return {
 		tradeId,
 
@@ -222,7 +237,7 @@ const useTradePayload = (tradeId?: number) => {
 		getEntryForTf,
 		getExitsForTf,
 
-		setStop,
+		setStop: setAndValidateStop,
 		setTarget,
 		setDescription,
 
