@@ -1,5 +1,5 @@
-import type { MouseEventParams, Time } from "lightweight-charts";
-import { useState } from "react";
+import type { IChartApi, MouseEventParams, Time } from "lightweight-charts";
+import { useState, type RefObject } from "react";
 
 type Position = {
 	x: number;
@@ -7,30 +7,30 @@ type Position = {
 	price: number;
 };
 
-const useCopyMenu = () => {
+const useCopyMenu = (
+	seriesRef: RefObject<ReturnType<IChartApi["addSeries"]> | null>
+) => {
 	const [position, setPosition] = useState<Position | null>(null);
 
-	const destroyPosition = () => {
-		setPosition(null)
-	};
+	const closeMenu = () => setPosition(null);
 
-	const onClick = (getPrice: (p: MouseEventParams) => number) =>
-		(param: MouseEventParams<Time>) => setPosition((prev) => {
-			if (param.point == null || prev != null) {
+	const handleCopyClick = (params: MouseEventParams<Time>) => setPosition((prev) => {
+			if (params.point == null || prev != null || seriesRef.current == null) {
 				return null;
 			}
 
-			const price = getPrice(param);
+			const { point: { x, y } } = params;
+			const price = seriesRef.current.coordinateToPrice(params.point!.y);
 			if (!price) return null;
 
-			return {
-				x: param.point.x + 8,
-				y: param.point.y + 8,
-				price,
-			};
+			return { x: x + 8, y: y + 8, price };
 		});
 
-	return { position, destroyPosition, onClick };
+	return {
+		position,
+		closeMenu,
+		handleCopyClick,
+	} as const;
 };
 
 export default useCopyMenu;

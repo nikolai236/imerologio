@@ -1,32 +1,48 @@
-import { CandlestickSeries, ColorType, createChart, CrosshairMode, type BarData, type IChartApi, type MouseEventParams, type Time, type UTCTimestamp } from "lightweight-charts";
-import { useEffect,  useRef } from "react";
+import {
+	CandlestickSeries,
+	ColorType,
+	createChart,
+	CrosshairMode,
+	type IChartApi,
+	type UTCTimestamp,
+} from "lightweight-charts";
+import { useEffect, useRef } from "react";
 import type { Candle, Timeframe } from "../../../shared/candles.types";
 import TradePosition from "../chart-plugins/trade-position";
 import useTradeContext from "./useTradeContext";
 import useOhlcLabel from "./useOhlcLabel";
 import useCopyMenu from "./useCopyMenu";
+import useDrawLines from "./useDrawLines";
 
 const SECOND = 1000;
 
 const timeFormatter = (unixEpoch: number) => {
-	return new Date(unixEpoch * SECOND)
-		.toLocaleString('en-US', {
-			timeZone: "America/New_York",
-			day: "numeric",
-			month: "short",
-			year: "2-digit",
-			hour: "numeric",
-			minute: "2-digit"
-		});
+	return new Date(unixEpoch * SECOND).toLocaleString("en-US", {
+		timeZone: "America/New_York",
+		day: "numeric",
+		month: "short",
+		year: "2-digit",
+		hour: "numeric",
+		minute: "2-digit",
+	});
 };
 
-const useChart = (candles: Candle[], timeframe: Timeframe) => {
+const useChart = (candles: Candle[], timeframe: Timeframe, lineMode: boolean) => {
 	const { getEntryForTf, getExitsForTf, stop, target } = useTradeContext();
-	const { ohlc, changeOhlcOnMouseMove, } = useOhlcLabel();
-	const { position, onClick, destroyPosition } = useCopyMenu();
 
-	const containerRef = useRef<HTMLDivElement|null>(null);
-	const chartRef = useRef<IChartApi|null>(null);
+	const containerRef = useRef<HTMLDivElement | null>(null);
+	const chartRef = useRef<IChartApi | null>(null);
+
+	const seriesRef = useRef<ReturnType<IChartApi["addSeries"]> | null>(null);
+
+	const { ohlc, changeOhlcOnMouseMove } = useOhlcLabel(seriesRef);
+	const { position, handleCopyClick, closeMenu } = useCopyMenu(seriesRef);
+
+	const {
+		lineClickHandler,
+		lineMouseMoveHandler,
+		linesRef,
+	} = useDrawLines(seriesRef, closeMenu);
 
 	const getConfig = () => ({
 		height: 500,
@@ -35,85 +51,72 @@ const useChart = (candles: Candle[], timeframe: Timeframe) => {
 			textColor: "#ffffffff",
 			background: {
 				type: ColorType.Solid,
-				color: "transparent"
+				color: "transparent",
 			},
 		},
-		rightPriceScale: {
-			borderVisible: false,
-		},
-		timeScale: {
-			borderVisible: false,
-		},
-		localization: {
-			timeFormatter
-		}, 
-		crosshair: {
-			mode: CrosshairMode.Normal,
-		},
+		rightPriceScale: { borderVisible: false },
+		timeScale: { borderVisible: false },
+		localization: { timeFormatter },
+		crosshair: { mode: CrosshairMode.Normal },
 	});
 
 	const transformCandle = (candle: Candle) => ({
-		time: Math.floor(candle.time) / 1000 as UTCTimestamp,
-
+		time: (Math.floor(candle.time) / 1000) as UTCTimestamp,
 		open: candle.open,
 		high: candle.high,
-		low:  candle.low,
+		low: candle.low,
 		close: candle.close,
 	});
 
 	useEffect(() => {
-		if (containerRef.current == null || candles.length == 0) return;
+		if (containerRef.current == null || candles.length === 0) return;
 
-		// destroyOhlc();
+		linesRef.current = [];
 
 		if (chartRef.current != null) {
 			chartRef.current.remove();
 			chartRef.current = null;
+			seriesRef.current = null;
 		}
 
 		const chart = createChart(containerRef.current, getConfig());
 		const series = chart.addSeries(CandlestickSeries, {
 			upColor: "#ffffff",
 			downColor: "#000000",
-
 			borderUpColor: "#000000",
 			borderDownColor: "#000000",
-
 			wickUpColor: "#000000",
 			wickDownColor: "#000000",
 		});
 
+		seriesRef.current = series;
+
 		series.setData(candles.map(transformCandle));
-		series.applyOptions({ priceFormat: {
-			type: "price",
-			precision: 6,
-			minMove: 0.000001,
-		}});
+		series.applyOptions({
+			priceFormat: {
+				type: "price",
+				precision: 6,
+				minMove: 0.000001,
+			},
+		});
 
-		const getPriceOhlc = (params: MouseEventParams<Time>) =>
-			params.seriesData.get(series) as BarData<Time>;
+		chart.subscribeCrosshairMove(changeOhlcOnMouseMove);
 
-		const getPrice = (params: MouseEventParams) =>
-			series.coordinateToPrice(params.point!.y) ?? 0;
-
-		const ohlcHandler = changeOhlcOnMouseMove(getPriceOhlc);
-		chart.subscribeCrosshairMove(ohlcHandler);
-
-		const copyMenuHandler = onClick(getPrice);
-		chart.subscribeClick(copyMenuHandler);
+		if (lineMode) {
+			chart.subscribeClick(lineClickHandler);
+			chart.subscribeCrosshairMove(lineMouseMoveHandler);
+		} else {
+			chart.subscribeClick(handleCopyClick);
+		}
 
 		const preventContext = (e: Event) => e.preventDefault();
-		containerRef.current.addEventListener(
-			"contextmenu", preventContext, { capture: true }
-		);
+		containerRef.current.addEventListener("contextmenu", preventContext, { capture: true });
 
 		try {
-
 			const entry = getEntryForTf(timeframe);
-			if (entry == null) {
-				throw new Error("Entry is not defined");
-			}
-			const direction = Number(stop) > entry.price ? 'SELL' : 'BUY';
+			if (entry == null) throw new Error("Entry is not defined");
+
+			const direction = Number(stop) > entry.price ? "SELL" : "BUY";
 
 			const trade = new TradePosition(
 				[entry],
@@ -124,10 +127,10 @@ const useChart = (candles: Candle[], timeframe: Timeframe) => {
 			);
 
 			series.attachPrimitive(trade);
-
-		} catch(err) {
+		} catch (err) {
 			console.error(err);
 		}
+
 		chartRef.current = chart;
 
 		const handleResize = () => {
@@ -142,21 +145,32 @@ const useChart = (candles: Candle[], timeframe: Timeframe) => {
 		return () => {
 			window.removeEventListener("resize", handleResize);
 
-			chart.unsubscribeClick(copyMenuHandler);
-			chart.unsubscribeCrosshairMove(ohlcHandler);
+			// unsubscribe correct click handler
+			if (chartRef.current) {
+				if (lineMode) {
+					chartRef.current.unsubscribeCrosshairMove(lineMouseMoveHandler);
+					chartRef.current.unsubscribeClick(lineClickHandler);
+				} else {
+					chartRef.current.unsubscribeClick(handleCopyClick);
+				}
+				chartRef.current.unsubscribeCrosshairMove(changeOhlcOnMouseMove);
+			}
 
-			containerRef.current?.removeEventListener(
-				"contextmenu", preventContext, { capture: true }
-			);
+			containerRef.current?.removeEventListener("contextmenu", preventContext, { capture: true });
 
 			chart.remove();
 			chartRef.current = null;
-		};
+			seriesRef.current = null;
 
-	}, [candles]);
+			linesRef.current = [];
+		};
+	}, [candles, timeframe, lineMode]);
 
 	return {
-		menu: position, ohlc, containerRef, closeMenu: destroyPosition
+		menu: position,
+		ohlc,
+		containerRef,
+		closeMenu,
 	};
 };
 

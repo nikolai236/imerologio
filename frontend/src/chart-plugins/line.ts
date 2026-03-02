@@ -97,7 +97,7 @@ export default class Line extends PluginBase {
 	constructor(
 		p1: Point,
 		p2: Point,
-		options: Partial<LineDrawingToolOptions>
+		options?: Partial<LineDrawingToolOptions>
 	) {
 		super();
 
@@ -106,6 +106,12 @@ export default class Line extends PluginBase {
 
 		this._options = { ...defaultOptions, ...options };
 		this._paneView = new LinePaneView(this);
+	}
+
+	public setSecondPoint(p2: Point) {
+		this._p2 = p2;
+		this.updateAllViews();
+		this.requestUpdate();
 	}
 
 	public updateAllViews() {

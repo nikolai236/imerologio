@@ -1,5 +1,5 @@
-import type { BarData, MouseEventParams, Time } from "lightweight-charts";
-import { useState } from "react";
+import type { BarData, IChartApi, MouseEventParams, Time } from "lightweight-charts";
+import { useState, type RefObject } from "react";
 
 export type Ohlc = {
 	open: number;
@@ -8,30 +8,33 @@ export type Ohlc = {
 	close: number;
 };
 
-const useOhlcLabel = () => {
+const useOhlcLabel = (
+	seriesRef: RefObject<ReturnType<IChartApi["addSeries"]> | null>
+) => {
 	const [ohlc, setOhlc] = useState<Ohlc | null>(null);
 
-	const changeOhlcOnMouseMove = (getPriceData: (p: MouseEventParams<Time>) => BarData<Time>) =>
-		(param: MouseEventParams<Time>) => setOhlc(() => {
-			if (!param.time || param.seriesData.size == 0) {
-				return null;
-			}
-			const price = getPriceData(param);
-			if (!price) return null;
+	const changeOhlcOnMouseMove = (param: MouseEventParams<Time>) => setOhlc(() => {
+		if (!param.time || param.seriesData.size == 0 || seriesRef.current == null) {
+			return null;
+		}
 
-			return {
-				open: price.open,
-				high: price.high,
-				low: price.low,
-				close: price.close
-			};
-		});
+		const price = param
+			.seriesData
+			.get(seriesRef.current) as BarData<Time>;
+
+		return price ? {
+			open: price.open,
+			high: price.high,
+			low: price.low,
+			close: price.close
+		} : null;
+	});
 
 	return {
 		ohlc,
 		destroyOhlc: () => setOhlc(null),
 		changeOhlcOnMouseMove,
-	}
+	} as const;
 };
 
 export default useOhlcLabel;
