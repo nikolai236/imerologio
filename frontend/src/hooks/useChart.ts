@@ -13,6 +13,7 @@ import useTradeContext from "./useTradeContext";
 import useOhlcLabel from "./useOhlcLabel";
 import useCopyMenu from "./useCopyMenu";
 import useDrawLines from "./useDrawLines";
+import type { ChartLine } from "../../../shared/trades.types";
 
 const SECOND = 1000;
 
@@ -27,7 +28,21 @@ const timeFormatter = (unixEpoch: number) => {
 	});
 };
 
-const useChart = (candles: Candle[], timeframe: Timeframe, lineMode: boolean) => {
+const transformCandle = (candle: Candle) => ({
+	time: (Math.floor(candle.time) / 1000) as UTCTimestamp,
+	open: candle.open,
+	high: candle.high,
+	low: candle.low,
+	close: candle.close,
+});
+
+const useChart = (
+	candles: Candle[],
+	timeframe: Timeframe,
+	lineMode: boolean,
+	lines: ChartLine[],
+	commitLines: (lines: ChartLine[]) => void,
+) => {
 	const { getEntryForTf, getExitsForTf, stop, target } = useTradeContext();
 
 	const containerRef = useRef<HTMLDivElement | null>(null);
@@ -39,10 +54,10 @@ const useChart = (candles: Candle[], timeframe: Timeframe, lineMode: boolean) =>
 	const { position, handleCopyClick, closeMenu } = useCopyMenu(seriesRef);
 
 	const {
+		attachAll,
 		lineClickHandler,
 		lineMouseMoveHandler,
-		linesRef,
-	} = useDrawLines(seriesRef, closeMenu);
+	} = useDrawLines(seriesRef, lines, closeMenu, commitLines);
 
 	const getConfig = () => ({
 		height: 500,
@@ -60,18 +75,8 @@ const useChart = (candles: Candle[], timeframe: Timeframe, lineMode: boolean) =>
 		crosshair: { mode: CrosshairMode.Normal },
 	});
 
-	const transformCandle = (candle: Candle) => ({
-		time: (Math.floor(candle.time) / 1000) as UTCTimestamp,
-		open: candle.open,
-		high: candle.high,
-		low: candle.low,
-		close: candle.close,
-	});
-
 	useEffect(() => {
 		if (containerRef.current == null || candles.length === 0) return;
-
-		linesRef.current = [];
 
 		if (chartRef.current != null) {
 			chartRef.current.remove();
@@ -99,6 +104,8 @@ const useChart = (candles: Candle[], timeframe: Timeframe, lineMode: boolean) =>
 				minMove: 0.000001,
 			},
 		});
+
+		attachAll();
 
 		chart.subscribeCrosshairMove(changeOhlcOnMouseMove);
 
@@ -153,16 +160,18 @@ const useChart = (candles: Candle[], timeframe: Timeframe, lineMode: boolean) =>
 				} else {
 					chartRef.current.unsubscribeClick(handleCopyClick);
 				}
-				chartRef.current.unsubscribeCrosshairMove(changeOhlcOnMouseMove);
+				chartRef.current.unsubscribeCrosshairMove(
+					changeOhlcOnMouseMove
+				);
 			}
 
-			containerRef.current?.removeEventListener("contextmenu", preventContext, { capture: true });
+			containerRef.current?.removeEventListener(
+				"contextmenu", preventContext, { capture: true }
+			);
 
 			chart.remove();
 			chartRef.current = null;
 			seriesRef.current = null;
-
-			linesRef.current = [];
 		};
 	}, [candles, timeframe, lineMode]);
 

@@ -53,7 +53,7 @@ const router: FastifyPluginAsync = async (server) => {
 			to?: number;
 		};
 	}
-	server.get<Get>('/', getTradesSchema, async (req, reply) => {
+	server.get<Get>("/", getTradesSchema, async (req, reply) => {
 		const from = req.query.to != null ? Number(req.query.from) : undefined;
 		const to   = req.query.to != null ? Number(req.query.to  ) : undefined;
 
@@ -67,7 +67,7 @@ const router: FastifyPluginAsync = async (server) => {
 	});
 
 	interface Get { Params: { id: number } }
-	server.get<Get>('/:id', getTradeSchema, async (req, reply) => {
+	server.get<Get>("/:id", getTradeSchema, async (req, reply) => {
 		const id = Number(req.params.id);
 
 		const trade = await getTradeById(id);
@@ -80,7 +80,7 @@ const router: FastifyPluginAsync = async (server) => {
 	});
 
 	interface Post { Body: Trade<Chart<Timeframe>, Order<number>>; }
-	server.post<Post>('/', postTradeSchema, async (req, reply) => {
+	server.post<Post>("/", postTradeSchema, async (req, reply) => {
 		let { target, stop, pnl, symbolId, orders, charts } = req.body;
 
 		if (!validateOrderQuantities(orders)) {
@@ -99,6 +99,7 @@ const router: FastifyPluginAsync = async (server) => {
 			id: 'id' in c ? c.id : undefined,
 			start: Number(c.start),
 			end: Number(c.end),
+			lines: c.lines,
 			timeframe: tfToNumber(c.timeframe),
 		}));
 
@@ -153,6 +154,7 @@ const router: FastifyPluginAsync = async (server) => {
 			start: Number(c.start),
 			end: Number(c.end),
 			timeframe: tfToNumber(c.timeframe),
+			lines: c.lines,
 			id: 'id' in c ? Number(c.id) : undefined,
 		})) : undefined;
 

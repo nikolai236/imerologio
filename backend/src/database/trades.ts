@@ -12,7 +12,7 @@ import type {
 	DbTradeEntry,
 	TradeScoringData,
 } from '../../../shared/trades.types';
-import { DateString } from '../../../shared/news.types';
+
 
 type TradeReturnType = DbTrade<ChartUnion<number>, OrderUnion<Date>>;
 
@@ -118,7 +118,7 @@ const useTrades = (db: PrismaClient) => {
 			GROUP BY t.id
 			ORDER BY "entryDate" DESC NULLS LAST, t.id ASC;
 		`;
-		return trades.map(cleanTrade) as DbTradeEntry<Order<Date>>[];
+		return trades.map(cleanTrade) as unknown as DbTradeEntry<Order<Date>>[];
 	};
 
 	const getTradeScoringData = async () => {

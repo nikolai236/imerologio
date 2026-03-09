@@ -28,11 +28,11 @@ const useTradeCharts = (orders: TempOrder[]) => {
 	) => {
 		if (charts.length > 0) {
 			// @ts-ignore
-			const { id, ...payload } = charts.at(-1)!;
-			return { ...payload, tempId: uid() };
+			const { id, lines, ...payload } = charts.at(-1)!;
+			return { ...payload, lines: [], tempId: uid() };
 		}
 
-		const ret = { ...DEFAULTS, tempId: uid() };
+		const ret = { ...DEFAULTS, tempId: uid(), lines: [] };
 		if (orders.length == 0) return ret;
 
 		ret.start = Math.min(...orders.map(o => o.date));

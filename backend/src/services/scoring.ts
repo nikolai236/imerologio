@@ -273,8 +273,8 @@ const buildNextLevel = (
 }
 
 const DEFAULTS: Required<Options> = {
-	minSupportAbs: 3,
-	minSupportFrac: 0,
+	minSupportAbs: 0,
+	minSupportFrac: 1 / 10,
 	maxItemsetsPerLevel: 5000,
 	maxLevels: 10,
 } as const;

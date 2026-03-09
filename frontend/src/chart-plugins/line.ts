@@ -1,6 +1,7 @@
 import type { IPanePrimitivePaneView, IPrimitivePaneRenderer } from "lightweight-charts";
 import type { CanvasRenderingTarget2D } from "fancy-canvas";
 import { PluginBase, type ViewPoint, type Point, positionPoint } from "./plugin-base";
+import type { ChartLine } from "../../../shared/trades.types";
 
 class LinePaneRenderer implements IPrimitivePaneRenderer {
 	_p1: ViewPoint;
@@ -106,6 +107,13 @@ export default class Line extends PluginBase {
 
 		this._options = { ...defaultOptions, ...options };
 		this._paneView = new LinePaneView(this);
+	}
+
+	public toChartLine(): ChartLine {
+		const p1 = { time: this._p1.time as number, price: this._p1.price };
+		const p2 = { time: this._p2.time as number, price: this._p2.price };
+
+		return [p1, p2];
 	}
 
 	public setSecondPoint(p2: Point) {

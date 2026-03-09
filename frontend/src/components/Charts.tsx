@@ -57,6 +57,7 @@ export default function Charts({
 				<ChartPreview
 					num={i+1}
 					timeframe={c.timeframe}
+					lines={c.lines}
 					symbol={symbols.find(s => s.id == Number(symbolId))!.name}
 					disabled={disabledForEdits || disabled}
 					id={c.tempId}

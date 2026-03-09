@@ -48,10 +48,10 @@ const useTradePayload = (tradeId?: number) => {
 	} = useEntryCalendar(orders);
 
 	const setNull = () => {
-		setSymbolId('');
+		setSymbolId("");
 		setStop(null);
 		setTarget(null);
-		setDescription('');
+		setDescription("");
 
 		setSelectedLabelIds([]);
 

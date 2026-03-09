@@ -33,7 +33,6 @@ export default function DatePicker({
 
 	const [draft, setDraft] = useDraft(parsedEpoch);
 
-
 	const commit = (v: string) => {
 		const newEpoch = dateStrToEpochMs(v);
 		onChangeEpoch(newEpoch);

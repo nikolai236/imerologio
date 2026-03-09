@@ -90,6 +90,8 @@ model Chart {
 	start BigInt
 	end   BigInt
 
+	lines Json @default("[]")
+
 	tradeId Int
 	trade   Trade @relation(fields: [tradeId], references: [id], onDelete: Cascade)
 

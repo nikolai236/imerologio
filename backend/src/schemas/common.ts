@@ -47,7 +47,14 @@ export const OrderEnum = Type.Union(
 
 export const TimeframeEnum = Type.Union(
 	Object.values(Timeframes).map(v => Type.Literal(v))
-)
+);
+
+const Point = Type.Object({
+	price: Type.Number(),
+	time: Type.Integer(),
+});
+
+const Line = Type.Tuple([Point, Point]);
 
 export const Chart = Type.Object({
 	id: Type.Optional(Type.Integer()),
@@ -56,6 +63,9 @@ export const Chart = Type.Object({
 	timeframe: TimeframeEnum,
 	start: Type.Integer(),
 	end: Type.Integer(),
+
+	lines: Type.Array(Line),
+
 }, { additionalProperties: false });
 
 export const Order = Type.Object({

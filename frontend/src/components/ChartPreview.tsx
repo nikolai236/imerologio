@@ -1,5 +1,3 @@
-// ChartPreview.tsx (FULL) — overlay "Draw line" button inside the chart area
-
 import {
 	Box,
 	Text,
@@ -18,13 +16,16 @@ import useChart from '../hooks/useChart';
 import OhlcLabel from './OhlcLabel';
 import useDraft from '../hooks/useDraft';
 import CopyMenu from './CopyMenu';
+import type { ChartLine } from '../../../shared/trades.types';
 
 type Props = {
 	num: number;
 	id: string;
+
 	symbol: string;
 	start: number;
 	end: number;
+	lines: ChartLine[];
 
 	timeframe: Timeframe;
 	disabled?: boolean;
@@ -33,6 +34,7 @@ type Props = {
 export default function ChartPreview({
 	id,
 	num,
+	lines,
 	symbol,
 	start,
 	end,
@@ -48,25 +50,16 @@ export default function ChartPreview({
 	const [draftTimeframe, setDraftTimeframe] = useDraft(timeframe);
 
 	const [drawLineMode, setDrawLineMode] = useState(false);
-	const { containerRef, ohlc, menu, closeMenu } = useChart(candles, timeframe, drawLineMode);
 
-	useEffect(() => {
-		if (!symbol) return;
+	const commitLines = (lines: ChartLine[]) => {
+		updateChart(id, { lines });
+	};
 
-		setLoading(true);
-		setError(null);
+	const { containerRef, ohlc, menu, closeMenu } = useChart(
+		candles, timeframe, drawLineMode, lines, commitLines
+	);
 
-		getCandlesForRange(symbol, timeframe, Number(start), Number(end))
-			.then(setCandles)
-			.catch((e) => {
-				setError(e?.message ?? "Failed to load candles");
-				setCandles([]);
-			})
-			.finally(() => setLoading(false));
-
-	}, [symbol, id, start, end, timeframe]);
-
-	const commitTimeFrame = () => {
+	const commitTimeframe = () => {
 		updateChart(id, { timeframe: draftTimeframe as Timeframe });
 
 		if (!isTimeframeValid(draftTimeframe)) {
@@ -85,6 +78,22 @@ export default function ChartPreview({
 		!loading &&
 		!error &&
 		candles.length > 0;
+
+	useEffect(() => {
+		if (!symbol) return;
+
+		setLoading(true);
+		setError(null);
+
+		getCandlesForRange(symbol, timeframe, Number(start), Number(end))
+			.then(setCandles)
+			.catch((e) => {
+				setError(e?.message ?? "Failed to load candles");
+				setCandles([]);
+			})
+			.finally(() => setLoading(false));
+
+	}, [symbol, id, start, end, timeframe]);
 
 	return (
 		<Box
@@ -120,7 +129,7 @@ export default function ChartPreview({
 						disabled={disabled}
 						value={draftTimeframe}
 						onChange={e => setDraftTimeframe(e.target.value)}
-						onBlur={commitTimeFrame}
+						onBlur={commitTimeframe}
 						placeholder="e.g. 5m or 15000"
 					/>
 				</Box>

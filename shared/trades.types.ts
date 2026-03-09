@@ -144,13 +144,22 @@ export interface ApiScoringResponse {
 
 type ChartTimeframe = number | Timeframe;
 
+export type ChartPoint = {
+	time: number;
+	price: number;
+};
+
+export type ChartLine = [ChartPoint, ChartPoint];
+
 export interface Chart<
 	TimeframeType extends ChartTimeframe = number
 > {
 	timeframe: TimeframeType;
-
+	
 	start: number;
 	end:   number;
+
+	lines: ChartLine[];
 }
 
 export interface DbChart<
