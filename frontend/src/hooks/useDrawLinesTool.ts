@@ -21,7 +21,43 @@ const useDrawLinesTool = (
 ) => {
 	const serializedLinesRef = useRef<ChartLine[]>(serializedLines);
 	const linePrimitivesRef = useRef<Line[]>([]);
+	const selectedLine = useRef<Line | null>(null);
 	const drawingRef = useRef(false);
+
+	const deleteSelectedLine = () => {
+		if (!selectedLine.current) return;
+
+		deleteLine(selectedLine.current);
+		selectedLine.current = null;
+	};
+
+	const findLineNearPoint = (x: number, y: number) => {
+		const n = linePrimitivesRef.current.length;
+		for (let i = n - 1; i >= 0; i--) {
+			const line = linePrimitivesRef.current[i];
+			if (line.isNearPoint(x, y)) return line;
+		}
+		return null;
+	};
+
+	const lineSelectionHandler = (x: number, y: number) => {
+		const clickedLine = findLineNearPoint(x, y);
+		const selected = selectedLine.current;
+
+		if (selected != null) {
+			if (selected === clickedLine) return true;
+
+			selected.deselect();
+			selectedLine.current = null;
+		}
+
+		if (clickedLine == null) return selected != null;
+
+		clickedLine.select();
+		selectedLine.current = clickedLine;
+
+		return true;
+	};
 
 	// copy lines' state to hook safely
 	useEffect(() => {
@@ -133,8 +169,9 @@ const useDrawLinesTool = (
 	};
 
 	return {
-		linesRef: linePrimitivesRef,
-		deleteLine,
+		selectedLine,
+		lineSelectionHandler,		
+		deleteSelectedLine,
 		attachPrimitives,
 		lineClickHandler,
 		lineMouseMoveHandler,

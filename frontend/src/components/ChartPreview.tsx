@@ -7,16 +7,20 @@ import {
 	Button,
 } from '@chakra-ui/react';
 import { useState, useEffect } from 'react';
-import DatePicker from './DatePicker';
+
 import type { Candle, Timeframe } from '../../../shared/candles.types';
+import type { ChartLine } from '../../../shared/trades.types';
+
 import useCandles from '../hooks/useCandles';
 import { isTimeframeValid } from '../hooks/useTradeCharts';
 import useTradeContext from '../hooks/useTradeContext';
 import useChart from '../hooks/useChart';
-import OhlcLabel from './OhlcLabel';
 import useDraft from '../hooks/useDraft';
+
+import DatePicker from './DatePicker';
+import OhlcLabel from './OhlcLabel';
 import CopyMenu from './CopyMenu';
-import type { ChartLine } from '../../../shared/trades.types';
+
 
 type Props = {
 	num: number;
@@ -47,9 +51,9 @@ export default function ChartPreview({
 	const [candles, setCandles] = useState<Candle[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
-	const [draftTimeframe, setDraftTimeframe] = useDraft(timeframe);
+	const [draftTf, setDraftTf] = useDraft(timeframe);
 
-	const [drawLineMode, setDrawLineMode] = useState(false);
+	const [drawingMode, setDrawingMode] = useState(false);
 
 	const commitLines = (lines: ChartLine[]) => {
 		updateChart(id, { lines });
@@ -59,33 +63,30 @@ export default function ChartPreview({
 		containerRef,
 		ohlcLabel,
 		copyMenuContext,
-		deletedSelectedLine,
+		deleteSelectedLine,
 		closeCopyMenu,
 	} = useChart(
 		candles,
 		timeframe,
-		drawLineMode,
+		drawingMode,
 		lines,
-		setDrawLineMode,
+		setDrawingMode,
 		commitLines,
 	);
 
 	const commitTimeframe = () => {
-		updateChart(id, { timeframe: draftTimeframe as Timeframe });
+		updateChart(id, { timeframe: draftTf as Timeframe });
 
-		if (!isTimeframeValid(draftTimeframe)) {
-			return setError("Invalid timeframe value");
+		if (!isTimeframeValid(draftTf)) {
+			setError("Invalid timeframe value");
+		} else {
+			setError(null);
 		}
-		return setError(null);
 	};
 
 	const drawButtonOnclick = () => {
-		if (!drawLineMode) closeCopyMenu();
-		setDrawLineMode(v => !v);
-	};
-
-	const deleteButtonOnClick = () => {
-		deletedSelectedLine()
+		if (!drawingMode) closeCopyMenu();
+		setDrawingMode(v => !v);
 	};
 
 	const canInteract =
@@ -142,8 +143,8 @@ export default function ChartPreview({
 					</Text>
 					<Input
 						disabled={disabled}
-						value={draftTimeframe}
-						onChange={e => setDraftTimeframe(e.target.value)}
+						value={draftTf}
+						onChange={e => setDraftTf(e.target.value)}
 						onBlur={commitTimeframe}
 						placeholder="e.g. 5m or 15000"
 					/>
@@ -211,18 +212,18 @@ export default function ChartPreview({
 						<Flex gap={2}>
 							<Button
 								size="xs"
-								variant={drawLineMode ? "solid" : "outline"}
+								variant={drawingMode ? "solid" : "outline"}
 								disabled={!canInteract}
 								onClick={drawButtonOnclick}
 							>
-								{drawLineMode ? "Drawing…" : "Draw line"}
+								{drawingMode ? "Drawing…" : "Draw line"}
 							</Button>
 
 							<Button
 								size="xs"
 								variant="outline"
 								disabled={!canInteract}
-								onClick={deleteButtonOnClick}
+								onClick={deleteSelectedLine}
 							>
 								Delete
 							</Button>

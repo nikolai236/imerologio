@@ -9,14 +9,16 @@ import {
 	type UTCTimestamp,
 } from "lightweight-charts";
 import { useEffect, useRef, type Dispatch } from "react";
+
 import type { Candle, Timeframe } from "../../../shared/candles.types";
+import type { ChartLine } from "../../../shared/trades.types";
+
 import TradePosition from "../chart-plugins/trade-position";
+
 import useTradeContext from "./useTradeContext";
 import useOhlcLabel from "./useOhlcLabel";
 import useCopyMenu from "./useCopyMenu";
 import useDrawLinesTool from "./useDrawLinesTool";
-import type { ChartLine } from "../../../shared/trades.types";
-import type Line from "../chart-plugins/line";
 
 const SECOND = 1000;
 
@@ -67,8 +69,9 @@ const useChart = (
 	const { copyMenuContext, copyClickHandler, closeCopyMenu } = useCopyMenu(seriesRef);
 
 	const {
-		linesRef,
-		deleteLine,
+		selectedLine,
+		lineSelectionHandler,
+		deleteSelectedLine,
 		attachPrimitives,
 		lineClickHandler,
 		lineMouseMoveHandler,
@@ -79,43 +82,6 @@ const useChart = (
 		closeCopyMenu,
 		commitLines
 	);
-
-	const selectedLine = useRef<Line | null>(null);
-
-	const deletedSelectedLine = () => {
-		if (!selectedLine.current) return;
-
-		deleteLine(selectedLine.current);
-		selectedLine.current = null;
-	};
-
-	const findLineNearPoint = (x: number, y: number) => {
-		const n = linesRef.current.length;
-		for (let i = n - 1; i >= 0; i--) {
-			const line = linesRef.current[i];
-			if (line.isNearPoint(x, y)) return line;
-		}
-		return null;
-	};
-
-	const lineSelectionHandler = (x: number, y: number) => {
-		const clickedLine = findLineNearPoint(x, y);
-		const selected = selectedLine.current;
-
-		if (selected != null) {
-			if (selected === clickedLine) return true;
-
-			selected.deselect();
-			selectedLine.current = null;
-		}
-
-		if (clickedLine == null) return selected != null;
-
-		clickedLine.select();
-		selectedLine.current = clickedLine;
-
-		return true;
-	};
 
 	const onKeyDown = (e: KeyboardEvent) => {
 		if (e.key !== "Backspace") return;
@@ -129,7 +95,7 @@ const useChart = (
 
 		if (editable || !selectedLine.current) return;
 
-		deletedSelectedLine();
+		deleteSelectedLine();
 	};
 
 	// combine click handlers
@@ -232,6 +198,7 @@ const useChart = (
 
 		return () => {
 			window.removeEventListener("resize", handleChartResize);
+			window.removeEventListener("keydown", onKeyDown);
 
 			// unsubscribe the correct click handler
 			if (drawingMode) {
@@ -241,12 +208,7 @@ const useChart = (
 				chartRef.current?.unsubscribeClick(clickHandler);
 			}
 
-			chartRef.current?.unsubscribeCrosshairMove(
-				ohlcMouseMoveHandler
-			);
-
-			window.removeEventListener("keydown", onKeyDown);
-
+			chartRef.current?.unsubscribeCrosshairMove(ohlcMouseMoveHandler);
 			containerRef.current?.removeEventListener("contextmenu",preventContext);
 
 			chart.remove();
@@ -259,10 +221,9 @@ const useChart = (
 	return {
 		containerRef,
 		ohlcLabel,
-		selectedLine,
 		copyMenuContext,
 		closeCopyMenu,
-		deletedSelectedLine,
+		deleteSelectedLine,
 	} as const;
 };
 
