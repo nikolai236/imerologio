@@ -8,12 +8,11 @@ import TradeRow from "./TradeRow";
 import PlusButton from "./PlusButton";
 import DatePicker from "./DatePicker";
 
-import useTrades from "../hooks/useTrades";
 import useReload from "../hooks/useReload";
 
-export default function TradesPage() {
-	const { getTrades, deleteTrade } = useTrades();
+import { getTrades, deleteTrade } from "../api/trades";
 
+export default function TradesPage() {
 	const [from, setFrom] = useState<number>(Date.now());
 	const [to,   setTo] = useState<number>(Date.now());
 

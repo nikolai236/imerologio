@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
-import useCandles from "./useCandles";
+import { isSupported as fetchIsSupported } from "../api/candles";
 
 const useSymbolId = () => {
-	const { isSupported: fetchIsSupported } = useCandles();
-
 	const [isSupported, setIsSupported] = useState(false);
 	const [symbolId, setSymbolId] = useState("");
 

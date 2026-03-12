@@ -11,7 +11,6 @@ import { useState, useEffect } from 'react';
 import type { Candle, Timeframe } from '../../../shared/candles.types';
 import type { ChartLine } from '../../../shared/trades.types';
 
-import useCandles from '../hooks/useCandles';
 import { isTimeframeValid } from '../hooks/useTradeCharts';
 import useTradeContext from '../hooks/useTradeContext';
 import useChart from '../hooks/useChart';
@@ -20,6 +19,8 @@ import useDraft from '../hooks/useDraft';
 import DatePicker from './DatePicker';
 import OhlcLabel from './OhlcLabel';
 import CopyMenu from './CopyMenu';
+
+import { getCandlesForRange } from "../api/candles";
 
 
 type Props = {
@@ -46,7 +47,6 @@ export default function ChartPreview({
 	disabled = false,
 }: Props) {
 	const { removeChart, updateChart } = useTradeContext();
-	const { getCandlesForRange } = useCandles();
 
 	const [candles, setCandles] = useState<Candle[]>([]);
 	const [loading, setLoading] = useState(false);

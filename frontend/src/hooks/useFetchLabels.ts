@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
 import type { DbLabelEntry } from "../../../shared/trades.types";
-import useLabels from "./useLabels";
 import useReload from "./useReload";
 
+import { getLabels } from "../api/labels";
 
 const useFetchLabels = (symbols=false) => {
-	const { getLabels } = useLabels();
 	const [token, reload] = useReload();
 
 	const [loading, setLoading] = useState(false);

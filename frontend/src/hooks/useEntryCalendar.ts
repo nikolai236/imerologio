@@ -1,12 +1,10 @@
 import { useEffect, useState } from "react";
-import useNews from "./useNews";
 
-import type { TempOrder } from "./useTradeOrders";
 import type { EntryCalendar } from "../../../shared/news.types";
+import type { TempOrder } from "./useTradeOrders";
+import { getEntryCalendarForDate } from "../api/news";
 
 const useEntryCalendar = (orders: TempOrder[]) => {
-	const { getEntryCalendarForDate } = useNews();
-
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [calendar, setCalendar] = useState<EntryCalendar|null>(null);

@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import type { DbLabelEntry, ApiScoringResponse, ScoreSet } from "../../../shared/trades.types";
-import useLabels from "./useLabels";
+
 import useFetchLabels from "./useFetchLabels";
 import { usePriceDraft } from "./useDraft";
+
+import { getScoring } from "../api/labels";
 
 type SortBy = "upliftPnl" | "upliftPerSupport" | "muIn" | "score" | "profitFactor";
 type SortDir = "desc" | "asc";
@@ -39,7 +41,6 @@ const useScoring = () => {
 		saveDraft: saveBeThresholdDraft 
 	} = usePriceDraft(beThreshold, saveBeThreshold);
 
-	const { getScoring } = useLabels();
 	const { labels } = useFetchLabels(true);
 
 	useEffect(() => {

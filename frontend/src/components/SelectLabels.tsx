@@ -5,7 +5,7 @@ import {
 	VStack,
 	Text,
 	Button,
-	HStack, // CHANGE: add HStack for nicer layout of search + button
+	HStack,
 	DialogHeader,
 	DialogBody,
 	DialogFooter,
@@ -19,7 +19,7 @@ import {
 import { useState, useMemo } from 'react';
 import type { DbLabelEntry } from '../../../shared/trades.types';
 import useTradeContext from '../hooks/useTradeContext';
-import useLabels from '../hooks/useLabels';
+import { createLabel } from "../api/labels";
 
 type Props = {
 	labels: DbLabelEntry[];
@@ -41,7 +41,6 @@ export default function SelectLabels({
 		selectedLabelIds: selectedIds,
 		setSelectedLabelIds: setSelectedIds,
 	} = useTradeContext();
-	const { createLabel } = useLabels();
 	
 	const [query, setQuery] = useState("");
 	const [loading, setLoading] = useState(false);

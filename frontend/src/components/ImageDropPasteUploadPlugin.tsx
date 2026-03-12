@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { $createParagraphNode, $insertNodes } from "lexical";
 import { $createImageNode } from "./ImageNode";
-import useApi from "../hooks/useApi";
+
+import api from "../api/api";
 
 type Props = {
 	uploadUrl?: string;
@@ -15,7 +16,6 @@ export default function ImageDropPasteUploadPlugin({
 	maxFiles = 5,
 	maxBytes = 8 * 1024 * 1024,
 }: Props) {
-	const api = useApi();
 	const [editor] = useLexicalComposerContext();
 	const [isUploading, setIsUploading] = useState(false);
 

@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react"
 import type { DbSymbol } from "../../../shared/trades.types"
-import useSymbols from "./useSymbols";
 import useReload from "./useReload";
 
+import { getSymbols } from "../api/symbols";
+
 const useFetchSymbols = () => {
-	const { getSymbols } = useSymbols();
 	const [reloadToken, reload] = useReload();
 
 	const [loading, setLoading] = useState(false);

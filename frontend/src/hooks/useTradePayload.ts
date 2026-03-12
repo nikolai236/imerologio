@@ -3,14 +3,14 @@ import type { Chart, Order, Trade, ApiTrade } from "../../../shared/trades.types
 import useTradeOrders from "./useTradeOrders";
 import type { Timeframe } from "../../../shared/candles.types";
 import useTradeCharts from "./useTradeCharts";
-import useTrades from "./useTrades";
 import useReload from "./useReload";
 import useSymbolId from "./useSymbolId";
 import useEntryCalendar from "./useEntryCalendar";
 
+import { createTrade, editTrade, getTrade } from "../api/trades";
+
 const useTradePayload = (tradeId?: number) => {
 	const { symbolId, isSupported, setSymbolId } = useSymbolId();
-	const { createTrade, editTrade, getTrade } = useTrades();
 
 	const [formError, setFormError] = useState<string | null>(null);
 	const [submitting, setSubmitting] = useState(false);

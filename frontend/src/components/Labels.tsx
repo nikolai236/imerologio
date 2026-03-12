@@ -7,24 +7,19 @@ import {
 	Stack,
 	Text,
 } from "@chakra-ui/react";
-import useLabels from "../hooks/useLabels";
 import type { DbLabelEntry, Label } from "../../../shared/trades.types";
 import LabelRow from "./LabelRow";
 import useRowErrors from "../hooks/useRowErrors";
 import CreateLabel from "./CreateLabel";
 import useFetchLabels from "../hooks/useFetchLabels";
 
-export default function Labels() {
-	const {
-		deleteLabel,
-		updateLabel,
-		createLabel,
-	} = useLabels();
+import { deleteLabel, updateLabel, createLabel } from "../api/labels";
 
+export default function Labels() {
 	const { rowErrorById, setRowError, clearRowError } = useRowErrors();
 	const { labels, reload } = useFetchLabels();
 
-	const [draftName, setDraftName] = useState('');
+	const [draftName, setDraftName] = useState("");
 	const [editingId, setEditingId] = useState<number|null>(null);
 
 	const startEdit = (label: DbLabelEntry) => {

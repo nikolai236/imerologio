@@ -9,13 +9,13 @@ import {
 } from "@chakra-ui/react";
 import SymbolRow from "./SymbolRow";
 import { type SymbolEnum, type DbSymbol, type Symbol } from "../../../shared/trades.types";
-import useSymbols from "../hooks/useSymbols";
 import CreateSymbolPage from "./CreateSymbol";
 import useRowErrors from "../hooks/useRowErrors";
 import useFetchSymbols from "../hooks/useFetchSymbols";
 
+import { updateSymbol, createSymbol } from "../api/symbols";
+
 export default function Symbols() {
-	const { updateSymbol, createSymbol } = useSymbols();
 	const { rowErrorById, setRowError, clearRowError } = useRowErrors();
 	const { symbols: unsorted, reload } = useFetchSymbols();
 
