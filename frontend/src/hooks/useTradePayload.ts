@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import type { Chart, Order, Trade, ApiTrade } from "../../../shared/trades.types";
 import useTradeOrders from "./useTradeOrders";
 import type { Timeframe } from "../../../shared/candles.types";
@@ -91,6 +91,15 @@ const useTradePayload = (tradeId?: number) => {
 		}));
 
 		if (stop == null) throw new Error("Please set a stop loss.");
+
+		const { type, price } = orders[0];
+
+		const long  = price >= stop && type == "BUY";
+		const short = price <= stop && type == "SELL";
+
+		if (!long && !short) {
+			throw new Error("Invalid stop loss");
+		}
 
 		const validatedCharts: Chart<Timeframe>[] = charts.map(
 			({ tempId, ...c  }) => ({ ...c })
@@ -199,20 +208,22 @@ const useTradePayload = (tradeId?: number) => {
 			});
 	}, [reloadToken]);
 
-	const setAndValidateStop = useCallback((stop: number | null) => {
+	useEffect(() => {
+		setFormError(null);
+
 		if (orders.length == 0 || stop == null) {
-			return setStop(stop);
+			return;
 		}
+
 		const { type, price } = orders[0];
 
 		const long  = price >= stop && type == "BUY";
 		const short = price <= stop && type == "SELL";
 
 		if (!long && !short) {
-			return setFormError("Invalid stop loss");
+			setFormError("Invalid stop loss");
 		}
-		return setStop(stop);
-	}, [orders]);
+	}, [orders, stop]);
 
 	return {
 		tradeId,
@@ -237,7 +248,7 @@ const useTradePayload = (tradeId?: number) => {
 		getEntryForTf,
 		getExitsForTf,
 
-		setStop: setAndValidateStop,
+		setStop,
 		setTarget,
 		setDescription,
 

@@ -1,8 +1,8 @@
 import { Box } from '@chakra-ui/react';
-import type { Ohlc } from "../hooks/useOhlcLabel";
+import type { OhlcLabel } from "../hooks/useOhlcLabel";
 
-export default function OhlcLabel({ ohlc }: { ohlc?: Ohlc|null }) {
-	if (!ohlc) return null;
+export default function OhlcLabel({ values }: { values?: OhlcLabel|null }) {
+	if (!values) return null;
 
 	return (
 		<Box
@@ -19,10 +19,10 @@ export default function OhlcLabel({ ohlc }: { ohlc?: Ohlc|null }) {
 			color="black"
 			borderRadius="sm"
 		>
-			O {ohlc.open.toFixed(6)}{" "}
-			H {ohlc.high.toFixed(6)}{" "}
-			L {ohlc.low.toFixed(6)} {" "}
-			C {ohlc.close.toFixed(6)}
+			O {values.open.toFixed(6)}{" "}
+			H {values.high.toFixed(6)}{" "}
+			L {values.low.toFixed(6)} {" "}
+			C {values.close.toFixed(6)}
 		</Box>
 	);
 }

@@ -6,7 +6,7 @@ import Bitset, { and, countTrailingZeros, popcount } from "../../lib/bitset";
 
 type Means = {
 	muAll: number;
-	avgRR: number | null;
+	profitFactor: number | null;
 	avgAbsPnl: number;
 };
 
@@ -42,8 +42,8 @@ const computeMeans = (trades: TradeScoringData[]): Means => {
 
 	const count = trades.length;
 	return {
-		muAll:     count ? sum / count : 0,
-		avgRR:     loss  ? profit / loss : null,
+		muAll: count ? sum / count : 0,
+		profitFactor: loss  ? profit / loss : null,
 		avgAbsPnl: count ? absSum / count : 1,
 	};
 };
@@ -109,7 +109,7 @@ const scoreBitset = (set: Bitset, pnls: number[]) => {
 
 	return {
 		support,
-		RR: profit ? loss ? profit / loss : null : profit,
+		profitFactor: profit ? loss ? profit / loss : null : profit,
 		muIn: support ? sum / support : null,
 	};
 };
@@ -142,7 +142,7 @@ const buildFirstLevel = (
 		const bitset = labelIdsBitsets.get(id);
 		if (bitset == null) return prev;
 
-		const { support, muIn, RR } = scoreBitset(bitset, pnls);
+		const { support, muIn, profitFactor } = scoreBitset(bitset, pnls);
 		if (support < minSupport) return prev;
 
 		const upliftPnl = muIn != null ? muIn - means.muAll : null;
@@ -155,7 +155,7 @@ const buildFirstLevel = (
 			support,
 			redundancy: null,
 			muIn: muIn ?? 0,
-			RR,
+			profitFactor,
 			upliftPnl: upliftPnl ?? 0,
 			score: combined,
 		});
@@ -244,7 +244,7 @@ const buildNextLevel = (
 
 				and(a.bitset, b.bitset, tempBitset);
 
-				const { support, RR, muIn } = scoreBitset(tempBitset, pnls);
+				const { support, profitFactor, muIn } = scoreBitset(tempBitset, pnls);
 				if (support < minSupport) continue;
 
 				const upliftPnl = muIn != null ? muIn - means.muAll : null;
@@ -260,7 +260,7 @@ const buildNextLevel = (
 					bitset: cloneBitset(tempBitset),
 					support,
 					redundancy,
-					RR,
+					profitFactor,
 					muIn: muIn ?? 0,
 					upliftPnl: upliftPnl ?? 0,
 					score: combined,
@@ -322,7 +322,7 @@ const useScoringService = (db: PrismaClient) => {
 		const scoreSets = sorted.map<ScoreSet>((set) => ({
 			labelIds: set.labelIds,
 			support: set.support,
-			RR: set.RR,
+			profitFactor: set.profitFactor,
 			redundancy: null,
 			muIn: set.muIn,
 			upliftPnl: set.upliftPnl,
@@ -344,7 +344,7 @@ const useScoringService = (db: PrismaClient) => {
 				labelIds: set.labelIds,
 				support: set.support,
 				muIn: set.muIn,
-				RR: set.RR,
+				profitFactor: set.profitFactor,
 				redundancy: set.redundancy,
 				upliftPnl: set.upliftPnl,
 				score: set.score,

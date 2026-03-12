@@ -55,8 +55,19 @@ export default function ChartPreview({
 		updateChart(id, { lines });
 	};
 
-	const { containerRef, ohlc, menu, closeMenu } = useChart(
-		candles, timeframe, drawLineMode, lines, commitLines
+	const {
+		containerRef,
+		ohlcLabel,
+		copyMenuContext,
+		deletedSelectedLine,
+		closeCopyMenu,
+	} = useChart(
+		candles,
+		timeframe,
+		drawLineMode,
+		lines,
+		setDrawLineMode,
+		commitLines,
 	);
 
 	const commitTimeframe = () => {
@@ -69,8 +80,12 @@ export default function ChartPreview({
 	};
 
 	const drawButtonOnclick = () => {
-		if (!drawLineMode) closeMenu();
+		if (!drawLineMode) closeCopyMenu();
 		setDrawLineMode(v => !v);
+	};
+
+	const deleteButtonOnClick = () => {
+		deletedSelectedLine()
 	};
 
 	const canInteract =
@@ -193,21 +208,32 @@ export default function ChartPreview({
 						zIndex={10}
 						pointerEvents="auto"
 					>
-						<Button
-							size="xs"
-							variant={drawLineMode ? "solid" : "outline"}
-							disabled={!canInteract}
-							onClick={drawButtonOnclick}
-						>
-							{drawLineMode ? "Drawing…" : "Draw line"}
-						</Button>
+						<Flex gap={2}>
+							<Button
+								size="xs"
+								variant={drawLineMode ? "solid" : "outline"}
+								disabled={!canInteract}
+								onClick={drawButtonOnclick}
+							>
+								{drawLineMode ? "Drawing…" : "Draw line"}
+							</Button>
+
+							<Button
+								size="xs"
+								variant="outline"
+								disabled={!canInteract}
+								onClick={deleteButtonOnClick}
+							>
+								Delete
+							</Button>
+						</Flex>
 					</Box>
 
-					<OhlcLabel ohlc={ohlc} />
+					<OhlcLabel values={ohlcLabel} />
 
 					<CopyMenu
-						menu={menu ?? undefined}
-						onClose={closeMenu}
+						context={copyMenuContext ?? undefined}
+						onClose={closeCopyMenu}
 					/>
 
 					{!loading && !error && candles.length === 0 && (

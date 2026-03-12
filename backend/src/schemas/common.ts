@@ -137,7 +137,7 @@ const ScoreSet = Type.Object({
 	redundancy: NullableNumber,
 	upliftPnl: Type.Number(),
 	score: Type.Number(),
-	RR: NullableNumber,
+	profitFactor: NullableNumber,
 
 }, { additionalProperties: false }); 
 
@@ -145,7 +145,7 @@ export const ScoringResponse = Type.Object({
 
 	mean: Type.Number(),
 	minSupport: Type.Integer(),
-	RR: NullableNumber,
+	profitFactor: NullableNumber,
 	tradeCount: Type.Integer(),
 	levels: Type.Array(Type.Array(ScoreSet)),
 

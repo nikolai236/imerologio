@@ -4,7 +4,7 @@ import useLabels from "./useLabels";
 import useFetchLabels from "./useFetchLabels";
 import { usePriceDraft } from "./useDraft";
 
-type SortBy = "upliftPnl" | "upliftPerSupport" | "muIn" | "score" | "RR";
+type SortBy = "upliftPnl" | "upliftPerSupport" | "muIn" | "score" | "profitFactor";
 type SortDir = "desc" | "asc";
 
 type Row = ScoreSet & {
@@ -78,10 +78,10 @@ const useScoring = () => {
 			).flat();
 	}, [data, getKey]);
 
-	const fallbackRR = useMemo(() => 
+	const fallbackpF = useMemo(() => 
 		Math.max(
 			...rows
-				.map(e => e.RR)
+				.map(e => e.profitFactor)
 				.filter(rr => rr != null)
 			),
 		[rows]
@@ -148,13 +148,13 @@ const useScoring = () => {
 			name: r.labelIds.map(getName).join("\n"),
 			upliftPnl: r.upliftPnl,
 			muIn: r.muIn,
-			RR: r.RR,
-			sortRR: r.RR == null ? fallbackRR : r.RR,
+			profitFactor: r.profitFactor,
+			sortPf: r.profitFactor == null ? fallbackpF : r.profitFactor,
 			upliftPerSupport: r.upliftPerSupport,
 			support: r.support,
 			score: r.score,
 		}));
-	}, [filtered, chartCount, sortBy, getName, fallbackRR]);
+	}, [filtered, chartCount, sortBy, getName, fallbackpF]);
 
 	return {
 		data,
@@ -167,7 +167,7 @@ const useScoring = () => {
 		sortBy,
 		sortDir,
 		chartCount,
-		fallbackRR,
+		fallbackpF,
 
 		filterBreakeven,
 		beThresholdDraft,

@@ -1,25 +1,23 @@
 import { Box, VStack, Text, Button } from "@chakra-ui/react";
+import type { CopyMenuContext } from "../hooks/useCopyMenu";
 
 type Props = {
-	menu?: {
-		x: number;
-		y: number;
-		price: number;
-	},
+	context?: CopyMenuContext,
 	onClose: () => void;
 };
 
-
 export default function CopyMenu({
-	menu, onClose
+	context, onClose
 }: Props) {
-	if (!menu) return null;
+	if (!context) return null;
 
-	const { x, y, price } = menu;
+	const { x, y, price } = context;
 
 	const copy = async () => {
 		const text = price.toFixed(4);
+
 		await navigator.clipboard.writeText(text);
+
 		onClose();
 	};
 

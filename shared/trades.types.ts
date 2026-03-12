@@ -127,7 +127,7 @@ export interface ScoreSet {
 	support: number;
 	muIn: number;
 	redundancy: number | null;
-	RR: number | null;
+	profitFactor: number | null;
 	upliftPnl: number;
 	score: number;
 }
@@ -138,7 +138,7 @@ export interface ApiScoringResponse {
 	mean: number;
 	tradeCount: number;
 	levels: Level[];
-	RR: number | null;
+	profitFactor: number | null;
 	minSupport: number;
 }
 

@@ -4,16 +4,19 @@ import {
 	createChart,
 	CrosshairMode,
 	type IChartApi,
+	type MouseEventParams,
+	type Time,
 	type UTCTimestamp,
 } from "lightweight-charts";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type Dispatch } from "react";
 import type { Candle, Timeframe } from "../../../shared/candles.types";
 import TradePosition from "../chart-plugins/trade-position";
 import useTradeContext from "./useTradeContext";
 import useOhlcLabel from "./useOhlcLabel";
 import useCopyMenu from "./useCopyMenu";
-import useDrawLines from "./useDrawLines";
+import useDrawLinesTool from "./useDrawLinesTool";
 import type { ChartLine } from "../../../shared/trades.types";
+import type Line from "../chart-plugins/line";
 
 const SECOND = 1000;
 
@@ -36,11 +39,21 @@ const transformCandle = (candle: Candle) => ({
 	close: candle.close,
 });
 
+const getCandleOptions = () => ({
+	upColor: "#ffffff",
+	downColor: "#000000",
+	borderUpColor: "#000000",
+	borderDownColor: "#000000",
+	wickUpColor: "#000000",
+	wickDownColor: "#000000",
+});
+
 const useChart = (
 	candles: Candle[],
-	timeframe: Timeframe,
-	lineMode: boolean,
+	tf: Timeframe,
+	drawingMode: boolean,
 	lines: ChartLine[],
+	setDrawingMode: Dispatch<React.SetStateAction<boolean>>,
 	commitLines: (lines: ChartLine[]) => void,
 ) => {
 	const { getEntryForTf, getExitsForTf, stop, target } = useTradeContext();
@@ -50,14 +63,93 @@ const useChart = (
 
 	const seriesRef = useRef<ReturnType<IChartApi["addSeries"]> | null>(null);
 
-	const { ohlc, changeOhlcOnMouseMove } = useOhlcLabel(seriesRef);
-	const { position, handleCopyClick, closeMenu } = useCopyMenu(seriesRef);
+	const { ohlcLabel, ohlcMouseMoveHandler } = useOhlcLabel(seriesRef);
+	const { copyMenuContext, copyClickHandler, closeCopyMenu } = useCopyMenu(seriesRef);
 
 	const {
-		attachAll,
+		linesRef,
+		deleteLine,
+		attachPrimitives,
 		lineClickHandler,
 		lineMouseMoveHandler,
-	} = useDrawLines(seriesRef, lines, closeMenu, commitLines);
+	} = useDrawLinesTool(
+		seriesRef,
+		lines,
+		setDrawingMode,
+		closeCopyMenu,
+		commitLines
+	);
+
+	const selectedLine = useRef<Line | null>(null);
+
+	const deletedSelectedLine = () => {
+		if (!selectedLine.current) return;
+
+		deleteLine(selectedLine.current);
+		selectedLine.current = null;
+	};
+
+	const findLineNearPoint = (x: number, y: number) => {
+		const n = linesRef.current.length;
+		for (let i = n - 1; i >= 0; i--) {
+			const line = linesRef.current[i];
+			if (line.isNearPoint(x, y)) return line;
+		}
+		return null;
+	};
+
+	const lineSelectionHandler = (x: number, y: number) => {
+		const clickedLine = findLineNearPoint(x, y);
+		const selected = selectedLine.current;
+
+		if (selected != null) {
+			if (selected === clickedLine) return true;
+
+			selected.deselect();
+			selectedLine.current = null;
+		}
+
+		if (clickedLine == null) return selected != null;
+
+		clickedLine.select();
+		selectedLine.current = clickedLine;
+
+		return true;
+	};
+
+	const onKeyDown = (e: KeyboardEvent) => {
+		if (e.key !== "Backspace") return;
+
+		const target = e.target as HTMLElement | null;
+		const tag = target?.tagName;
+		const editable =
+			tag === "INPUT" ||
+			tag === "TEXTAREA" ||
+			target?.isContentEditable;
+
+		if (editable || !selectedLine.current) return;
+
+		deletedSelectedLine();
+	};
+
+	// combine click handlers
+	const clickHandler = (params: MouseEventParams<Time>) => {
+		if (params.point != null) {
+			const { point: { x, y } } = params;
+
+			const halt = lineSelectionHandler(x, y);
+			if (halt) return;
+		}
+
+		copyClickHandler(params);
+	};
+
+	const handleChartResize = () => {
+		if (!containerRef.current || !chartRef.current) return;
+		chartRef.current.applyOptions({
+			width: containerRef.current.clientWidth || undefined,
+		});
+	};
 
 	const getConfig = () => ({
 		height: 500,
@@ -76,7 +168,9 @@ const useChart = (
 	});
 
 	useEffect(() => {
-		if (containerRef.current == null || candles.length === 0) return;
+		if (containerRef.current == null || candles.length === 0) {
+			return;
+		}
 
 		if (chartRef.current != null) {
 			chartRef.current.remove();
@@ -85,14 +179,7 @@ const useChart = (
 		}
 
 		const chart = createChart(containerRef.current, getConfig());
-		const series = chart.addSeries(CandlestickSeries, {
-			upColor: "#ffffff",
-			downColor: "#000000",
-			borderUpColor: "#000000",
-			borderDownColor: "#000000",
-			wickUpColor: "#000000",
-			wickDownColor: "#000000",
-		});
+		const series = chart.addSeries(CandlestickSeries, getCandleOptions());
 
 		seriesRef.current = series;
 
@@ -105,29 +192,29 @@ const useChart = (
 			},
 		});
 
-		attachAll();
+		attachPrimitives();
 
-		chart.subscribeCrosshairMove(changeOhlcOnMouseMove);
+		chart.subscribeCrosshairMove(ohlcMouseMoveHandler);
 
-		if (lineMode) {
+		if (drawingMode) {
 			chart.subscribeClick(lineClickHandler);
 			chart.subscribeCrosshairMove(lineMouseMoveHandler);
 		} else {
-			chart.subscribeClick(handleCopyClick);
+			chart.subscribeClick(clickHandler);
 		}
 
 		const preventContext = (e: Event) => e.preventDefault();
-		containerRef.current.addEventListener("contextmenu", preventContext, { capture: true });
+		containerRef.current.addEventListener("contextmenu", preventContext);
 
 		try {
-			const entry = getEntryForTf(timeframe);
+			const entry = getEntryForTf(tf);
 			if (entry == null) throw new Error("Entry is not defined");
 
 			const direction = Number(stop) > entry.price ? "SELL" : "BUY";
 
 			const trade = new TradePosition(
 				[entry],
-				getExitsForTf(timeframe),
+				getExitsForTf(tf),
 				Number(stop),
 				direction,
 				Number(target)
@@ -140,47 +227,43 @@ const useChart = (
 
 		chartRef.current = chart;
 
-		const handleResize = () => {
-			if (!containerRef.current || !chartRef.current) return;
-			chartRef.current.applyOptions({
-				width: containerRef.current.clientWidth || undefined,
-			});
-		};
-
-		window.addEventListener("resize", handleResize);
+		window.addEventListener("resize", handleChartResize);
+		window.addEventListener("keydown", onKeyDown);
 
 		return () => {
-			window.removeEventListener("resize", handleResize);
+			window.removeEventListener("resize", handleChartResize);
 
-			// unsubscribe correct click handler
-			if (chartRef.current) {
-				if (lineMode) {
-					chartRef.current.unsubscribeCrosshairMove(lineMouseMoveHandler);
-					chartRef.current.unsubscribeClick(lineClickHandler);
-				} else {
-					chartRef.current.unsubscribeClick(handleCopyClick);
-				}
-				chartRef.current.unsubscribeCrosshairMove(
-					changeOhlcOnMouseMove
-				);
+			// unsubscribe the correct click handler
+			if (drawingMode) {
+				chartRef.current?.unsubscribeCrosshairMove(lineMouseMoveHandler);
+				chartRef.current?.unsubscribeClick(lineClickHandler);
+			} else {
+				chartRef.current?.unsubscribeClick(clickHandler);
 			}
 
-			containerRef.current?.removeEventListener(
-				"contextmenu", preventContext, { capture: true }
+			chartRef.current?.unsubscribeCrosshairMove(
+				ohlcMouseMoveHandler
 			);
 
+			window.removeEventListener("keydown", onKeyDown);
+
+			containerRef.current?.removeEventListener("contextmenu",preventContext);
+
 			chart.remove();
+
 			chartRef.current = null;
 			seriesRef.current = null;
 		};
-	}, [candles, timeframe, lineMode]);
+	}, [candles, tf, drawingMode]);
 
 	return {
-		menu: position,
-		ohlc,
 		containerRef,
-		closeMenu,
-	};
+		ohlcLabel,
+		selectedLine,
+		copyMenuContext,
+		closeCopyMenu,
+		deletedSelectedLine,
+	} as const;
 };
 
 export default useChart;

@@ -1,7 +1,7 @@
 import type { BarData, IChartApi, MouseEventParams, Time } from "lightweight-charts";
 import { useState, type RefObject } from "react";
 
-export type Ohlc = {
+export type OhlcLabel = {
 	open: number;
 	high:number;
 	low: number;
@@ -11,29 +11,28 @@ export type Ohlc = {
 const useOhlcLabel = (
 	seriesRef: RefObject<ReturnType<IChartApi["addSeries"]> | null>
 ) => {
-	const [ohlc, setOhlc] = useState<Ohlc | null>(null);
+	const [ohlcLabel, setOhlcLabel] = useState<OhlcLabel | null>(null);
 
-	const changeOhlcOnMouseMove = (param: MouseEventParams<Time>) => setOhlc(() => {
+	const ohlcMouseMoveHandler = (param: MouseEventParams<Time>) => setOhlcLabel(() => {
 		if (!param.time || param.seriesData.size == 0 || seriesRef.current == null) {
 			return null;
 		}
 
-		const price = param
-			.seriesData
+		const price = param.seriesData
 			.get(seriesRef.current) as BarData<Time>;
 
 		return price ? {
-			open: price.open,
-			high: price.high,
-			low: price.low,
+			open:  price.open,
+			high:  price.high,
+			low:   price.low,
 			close: price.close
 		} : null;
 	});
 
 	return {
-		ohlc,
-		destroyOhlc: () => setOhlc(null),
-		changeOhlcOnMouseMove,
+		ohlcLabel,
+		ohlcMouseMoveHandler,
+		destroyOhlc: () => setOhlcLabel(null),
 	} as const;
 };
 
