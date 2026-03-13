@@ -1,8 +1,8 @@
 import { FastifyPluginAsync } from "fastify";
 import { Timeframe } from "../../../shared/candles.types";
 
-import useCandles from "../database/candles";
-import useSymbols from "../database/symbols";
+import candleRepositroy from "../database/candles";
+import symbolRepository from "../database/symbols";
 
 import {
 	getSupportedSchema,
@@ -14,9 +14,9 @@ const router: FastifyPluginAsync = async (server) => {
 	const {
 		isSymbolSupported,
 		getCandlesInRange,
-	} = useCandles(server.duckdb);
+	} = candleRepositroy(server.duckdb);
 
-	const { getSymbolById } = useSymbols(server.prisma);
+	const { getSymbolById } = symbolRepository(server.prisma);
 
 	interface IGet { Params: { symbolId: string }; };
 	server.get<IGet>('/supported/:symbolId', getSupportedSchema, async (req, reply) => {

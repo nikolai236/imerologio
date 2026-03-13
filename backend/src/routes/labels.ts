@@ -1,7 +1,7 @@
 import type { FastifyPluginAsync } from "fastify";
 import { Label, UpdateLabel } from "../../../shared/trades.types";
-import useLabels from "../database/labels";
-import useScoringService from "../services/scoring";
+import labelRepository from "../database/labels";
+import scoringService from "../services/scoring";
 import {
 	getLabelsSchema,
 	postLabelSchema,
@@ -17,9 +17,9 @@ const router: FastifyPluginAsync = async (server) => {
 		createLabel,
 		updateLabel,
 		deleteLabel,
-	} = useLabels(server.prisma);
+	} = labelRepository(server.prisma);
 
-	const getScores = useScoringService(server.prisma);
+	const getScores = scoringService(server.prisma);
 
 	interface Get { Querystring: { symbols?: boolean; } }
 	server.get<Get>("/", getLabelsSchema, async (req, reply) => {

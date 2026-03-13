@@ -1,7 +1,7 @@
 import type { PrismaClient } from "@prisma/client";
 import type { TradeScoringData, DbLabel, ScoreSet, Level } from "../../../shared/trades.types";
-import useTrades from "../database/trades";
-import useLabels from "../database/labels";
+import tradeRepository from "../database/trades";
+import labelRepository from "../database/labels";
 import Bitset, { and, countTrailingZeros, popcount } from "../../lib/bitset";
 
 type Means = {
@@ -279,9 +279,9 @@ const DEFAULTS: Required<Options> = {
 	maxLevels: 10,
 } as const;
 
-const useScoringService = (db: PrismaClient) => {
-	const { getTradeScoringData   } = useTrades(db);
-	const { getLabelsWithTradeIds } = useLabels(db);
+const scoringService = (db: PrismaClient) => {
+	const { getTradeScoringData   } = tradeRepository(db);
+	const { getLabelsWithTradeIds } = labelRepository(db);
 
 	const getScores = async (filterBe: boolean, beThreshold: number) => {
 		const options = { ...DEFAULTS };
@@ -366,4 +366,4 @@ const useScoringService = (db: PrismaClient) => {
 	return getScores;
 };
 
-export default useScoringService;
+export default scoringService;

@@ -57,7 +57,7 @@ const cleanTrade = ({ deleted, ...t }: any): TradeReturnType => ({
 	orders: t.orders && t.orders.map(cleanOrder),
 });
 
-const useTrades = (db: PrismaClient) => {
+const tradeRepository = (db: PrismaClient) => {
 	const include = {
 		labels: {
 			where: {
@@ -260,4 +260,4 @@ const useTrades = (db: PrismaClient) => {
 	} as const;
 };
 
-export default useTrades;
+export default tradeRepository;

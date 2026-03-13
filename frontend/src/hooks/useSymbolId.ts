@@ -18,7 +18,7 @@ const useSymbolId = () => {
 		symbolId,
 		isSupported,
 		setSymbolId,
-	}
+	} as const;
 };
 
 export default useSymbolId;

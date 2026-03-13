@@ -1,6 +1,6 @@
 import type { PrismaClient } from "@prisma/client";
 import type { DateString, EntryCalendar, FolderColor } from "../../../shared/news.types";
-import useNews from "../database/news";
+import newsRepository from "../database/news";
 
 const BANK_HOLIDAY = "Bank Holiday";
 
@@ -36,8 +36,8 @@ const _getDays = (date: Date | DateString) => {
 	return { prevDay, day, nextDay };
 };
 
-const useNewsService = (db: PrismaClient) => {
-	const { getNewsEvents } = useNews(db);
+const newsService = (db: PrismaClient) => {
+	const { getNewsEvents } = newsRepository(db);
 
 	const getNewsEventsForDate = async (
 		date?: Date,
@@ -76,7 +76,7 @@ const useNewsService = (db: PrismaClient) => {
 	return {
 		getEntryCalendar,
 		getNewsEventsForDate,
-	};
+	} as const;
 };
 
-export default useNewsService;
+export default newsService;

@@ -1,7 +1,7 @@
 import type { Candle } from '../../../shared/candles.types';
 import { FastifyInstance } from "fastify";
 
-const useCandles = (db: FastifyInstance["duckdb"]) => {
+const candleRepositroy = (db: FastifyInstance["duckdb"]) => {
 	const dbFrame = 15_000;
 
 	const _parseBigInt = <T extends Record<string, any>>(obj: T): T =>
@@ -64,7 +64,7 @@ const useCandles = (db: FastifyInstance["duckdb"]) => {
 		isSymbolSupported,
 		getRange,
 		getCandlesInRange,
-	};
+	} as const;
 };
 
-export default useCandles;
+export default candleRepositroy;

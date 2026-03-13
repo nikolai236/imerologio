@@ -1,6 +1,6 @@
 import type { FastifyPluginAsync } from "fastify";
 import type { Symbol, UpdateSymbol } from "../../../shared/trades.types";
-import useSymbols from "../database/symbols";
+import symbolRepository from "../database/symbols";
 import {
 	getSymbolSchema,
 	getSymbolsSchema,
@@ -17,7 +17,7 @@ const router: FastifyPluginAsync = async (server) => {
 		createSymbol,
 		updateSymbol,
 		deleteSymbol,
-	} = useSymbols(server.prisma);
+	} = symbolRepository(server.prisma);
 
 	server.get('/', getSymbolsSchema, async (_req, reply) => {
 		const symbols = await getAllSymbols();

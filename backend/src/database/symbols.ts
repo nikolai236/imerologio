@@ -1,7 +1,7 @@
 import type { Prisma, PrismaClient } from '@prisma/client'
 import { DbSymbol, Symbol, UpdateSymbol } from '../../../shared/trades.types';
 
-const useSymbols = (db: PrismaClient) => {
+const symbolRepository = (db: PrismaClient) => {
 	const getAllSymbols = async () => {
 		const symbols = await db.symbol.findMany();
 		return symbols as DbSymbol[];
@@ -45,7 +45,7 @@ const useSymbols = (db: PrismaClient) => {
 		createSymbol,
 		updateSymbol,
 		deleteSymbol,
-	};
+	} as const;
 };
 
-export default useSymbols;
+export default symbolRepository;

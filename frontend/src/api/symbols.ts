@@ -2,10 +2,10 @@ import type {
 	Symbol,
 	DbSymbol,
 	UpdateSymbol
-} from '../../../shared/trades.types';
-import api from './api';
+} from "../../../shared/trades.types";
+import api from "./api";
 
-const path = '/symbols';
+const path = "/symbols";
 
 export async function getSymbols() {
 	const { symbols } = await api.get(path);

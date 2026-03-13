@@ -29,7 +29,7 @@ const useScoring = () => {
 	const [chartCount, setChartCount] = useState<number>(25);
 	const [data, setData] = useState<ApiScoringResponse | null>(null);
 
-	const [filterBreakeven, setFilterBreakeven] = useState(false);
+	const [filterBe, setFilterBe] = useState(false);
 	const [beThreshold, setBeThreshold] = useState(0);
 
 	const saveBeThreshold = (pnl: number | null) =>
@@ -44,10 +44,10 @@ const useScoring = () => {
 	const { labels } = useFetchLabels(true);
 
 	useEffect(() => {
-		getScoring(filterBreakeven, beThreshold)
+		getScoring(filterBe, beThreshold)
 			.then(setData)
 			.catch(console.error);
-	}, [filterBreakeven, beThreshold]);
+	}, [filterBe, beThreshold]);
 
 	const idsLabels = useMemo(() => labels.reduce((prev, l) => {
 		prev.set(l.id, l)
@@ -170,10 +170,10 @@ const useScoring = () => {
 		chartCount,
 		fallbackpF,
 
-		filterBreakeven,
+		filterBreakeven: filterBe,
 		beThresholdDraft,
 
-		setFilterBreakeven,
+		setFilterBreakeven: setFilterBe,
 		setBeThresholdDraft,
 		saveBeThresholdDraft,
 

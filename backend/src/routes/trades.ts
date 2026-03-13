@@ -11,9 +11,9 @@ import type {
 } from "../../../shared/trades.types";
 import { Timeframe } from "../../../shared/candles.types";
 
-import useSymbols from "../database/symbols";
-import useTrades from "../database/trades";
-import useLabels from "../database/labels";
+import symbolRepository from "../database/symbols";
+import tradeRepository from "../database/trades";
+import labelRepository from "../database/labels";
 
 import {
 	calculatePnL,
@@ -38,10 +38,10 @@ const router: FastifyPluginAsync = async (server) => {
 		createTrade,
 		updateTrade,
 		deleteTrade,
-	} = useTrades(server.prisma);
+	} = tradeRepository(server.prisma);
 
-	const { deleteTradeFromLabel, getLabelById } = useLabels(server.prisma);
-	const { getSymbolById } = useSymbols(server.prisma);
+	const { deleteTradeFromLabel, getLabelById } = labelRepository(server.prisma);
+	const { getSymbolById } = symbolRepository(server.prisma);
 
 	const convertCharts = (charts: DbChart<number>[]) => charts.map(c => ({
 		...c, timeframe: numberToTf(c.timeframe),

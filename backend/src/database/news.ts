@@ -1,7 +1,7 @@
 import { Prisma, PrismaClient } from "@prisma/client";
 import type { DateString, FolderColor, NewsEvent, NewsEventWithId } from "../../../shared/news.types";
 
-const useNews = (db: PrismaClient) => {
+const newsRepository = (db: PrismaClient) => {
 	const _cleanNewsEvent = <T extends NewsEvent|NewsEventWithId>(ev: T): T => ({
 		...ev,
 		date: new Date(ev.date).toISOString(),
@@ -98,7 +98,7 @@ const useNews = (db: PrismaClient) => {
 		getNewsEvents,
 		createNewsEvent,
 		createManyNewsEvents,
-	};
+	} as const;
 };
 
-export default useNews;
+export default newsRepository;

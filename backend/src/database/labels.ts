@@ -8,7 +8,7 @@ import type {
 	DbLabel,
 } from "../../../shared/trades.types";
 
-const useLabels = (db: PrismaClient) => {
+const labelRepository = (db: PrismaClient) => {
 	const include = {
 		trades: {
 			include: {
@@ -210,7 +210,7 @@ const useLabels = (db: PrismaClient) => {
 		deleteLabel,
 		getLabelsWithTradeIds,
 		getLabelsWithTrades,
-	};
+	} as const;
 };
 
-export default useLabels;
+export default labelRepository;

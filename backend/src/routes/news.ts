@@ -1,24 +1,24 @@
 import type { FastifyPluginAsync } from "fastify";
 import type { NewsEvent, DateString } from "../../../shared/news.types";
-import useNews from "../database/news";
+import newsRepository from "../database/news";
 import {
 	getEntryCalendarSchema,
 	getNewsEventsSchema,
 	postBulkNewsSchema,
 	postNewsSchema
 } from "../schemas/news";
-import useNewsService from "../services/news";
+import newsService from "../services/news";
 
 const router: FastifyPluginAsync = async (server) => {
 	const {
 		createNewsEvent,
 		createManyNewsEvents,
-	} = useNews(server.prisma);
+	} = newsRepository(server.prisma);
 
 	const {
 		getEntryCalendar,
 		getNewsEventsForDate
-	} = useNewsService(server.prisma);
+	} = newsService(server.prisma);
 
 	interface IGet { Querystring: { date?: DateString; types?: string[]; }; }
 	server.get<IGet>('/', getNewsEventsSchema, async (req, reply) => {
