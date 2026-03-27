@@ -32,6 +32,16 @@ export default function Navbar() {
 						> Trades
 						</Button>
 					</Link>
+				
+					<Link to="/journal">
+						<Button
+							variant="plain"
+							colorScheme="whiteAlpha"
+							color="white"
+							_hover={{ bg: "whiteAlpha.200" }}
+						> Journal
+						</Button>
+					</Link>
 
 					<Link to="/symbols">
 						<Button

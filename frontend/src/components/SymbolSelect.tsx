@@ -1,26 +1,29 @@
 import { Box, Flex, NativeSelect, Text } from "@chakra-ui/react"
 import type { DbSymbol } from "../../../shared/trades.types";
 import EditButton from "./EditButton";
-import useTradeContext from "../hooks/useTradeContext";
 
 type Props = {	
 	loading: boolean;
 	disabled?: boolean;
 
+	symbolId: string;
+	setSymbolId: React.Dispatch<string>;
+
 	symbols: DbSymbol[];
 
 	handleEditClick?: () => void;
-}
+};
 
 export default function SymbolSelect({
 	symbols,
 	loading,
 	disabled=false,
 
+	symbolId,
+	setSymbolId,
+
 	handleEditClick,
 }: Props) {
-	const { symbolId, setSymbolId } = useTradeContext();
-
 	return (
 		<Box minW="260px" flex="1">
 			<Text fontSize="sm" color="fg.muted" mb={1}>

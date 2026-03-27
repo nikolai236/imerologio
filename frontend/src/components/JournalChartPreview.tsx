@@ -4,16 +4,15 @@ import {
 	Flex,
 	Input,
 	IconButton,
+	VStack,
 	Button,
 } from '@chakra-ui/react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 import type { Candle, Timeframe } from '../../../shared/candles.types';
-import type { ChartLine } from '../../../shared/trades.types';
+import type { DbSymbol } from '../../../shared/trades.types';
 
 import { isTimeframeValid } from '../hooks/useTradeCharts';
-import useTradeContext from '../hooks/useTradeContext';
-import useChartPreview from '../hooks/useChartPreview';
 import useDraft from '../hooks/useDraft';
 
 import DatePicker from './DatePicker';
@@ -21,61 +20,86 @@ import OhlcLabel from './OhlcLabel';
 import CopyMenu from './CopyMenu';
 
 import { getCandlesForRange } from "../api/candles";
+import SymbolSelect from './SymbolSelect';
+import useSymbolId from '../hooks/useSymbolId';
+import type { UpdateJournalChart } from '../../../shared/journal.types';
+import useJournalChartPreview from '../hooks/useJournalChartPreview';
+import type { Direction, AddTrade, TempJournalTrade } from '../hooks/useJournalTrades';
+import type { TempJournalChart } from '../hooks/useJournalCharts';
 
 
 type Props = {
-	num: number;
-	id: string;
+	idx: number;
+	chart: TempJournalChart,
 
-	symbol: string;
-	start: number;
-	end: number;
-	lines: ChartLine[];
+	symbols: DbSymbol[];
+	parentLoading: boolean;
 
-	timeframe: Timeframe;
+	trades: TempJournalTrade[];
 	disabled?: boolean;
+
+	addTrade: AddTrade,
+	updateChart: (id: string, payload: UpdateJournalChart<Timeframe>) => void;
+	removeChart: (id: string) => void;
 };
 
-export default function ChartPreview({
-	id,
-	num,
-	lines,
-	symbol,
-	start,
-	end,
-	timeframe,
+export default function JournalChartPreview({
+	idx,
+	chart,
+	symbols,
+	parentLoading,
 	disabled = false,
+	trades,
+
+	addTrade,
+	updateChart,
+	removeChart,
 }: Props) {
-	const { removeChart, updateChart } = useTradeContext();
+	const {
+		tempId,
+		start,
+		end,
+		timeframe,
+	} = chart;
 
 	const [candles, setCandles] = useState<Candle[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [draftTf, setDraftTf] = useDraft(timeframe);
+	const [drawingTrade, setDrawingTrade] = useState<Direction | null>(null);
 
-	const [drawingMode, setDrawingMode] = useState(false);
+	const {
+		symbolId,
+		setSymbolId,
+		isSupported
+	} = useSymbolId();
 
-	const commitLines = (lines: ChartLine[]) => {
-		updateChart(id, { lines });
-	};
+	const symbol = useMemo(
+		() => symbols.find(s => s.id == Number(symbolId)) ?? null,
+		[symbols, symbolId],
+	);
+
+	const relevantTrades = useMemo(
+		() => trades.filter(t => t.symbolId === Number(symbolId)),
+		[symbolId, trades]
+	);
 
 	const {
 		containerRef,
 		ohlcLabel,
 		copyMenuContext,
-		deleteSelectedLine,
 		closeCopyMenu,
-	} = useChartPreview(
+	} = useJournalChartPreview(
+		chart,
 		candles,
+		relevantTrades,
 		timeframe,
-		drawingMode,
-		lines,
-		setDrawingMode,
-		commitLines,
+		drawingTrade,
+		addTrade,
 	);
 
 	const commitTimeframe = () => {
-		updateChart(id, { timeframe: draftTf as Timeframe });
+		updateChart(tempId, { timeframe: draftTf as Timeframe });
 
 		if (!isTimeframeValid(draftTf)) {
 			setError("Invalid timeframe value");
@@ -84,24 +108,21 @@ export default function ChartPreview({
 		}
 	};
 
-	const drawButtonOnclick = () => {
-		if (!drawingMode) closeCopyMenu();
-		setDrawingMode(v => !v);
-	};
-
-	const canInteract =
+	const canPlaceTrade =
 		!disabled &&
 		!loading &&
 		!error &&
-		candles.length > 0;
+		candles.length > 0 &&
+		Number(symbolId) > 0;
 
 	useEffect(() => {
-		if (!symbol) return;
+		if (!isSupported || symbol == null) return;
 
 		setLoading(true);
 		setError(null);
 
-		getCandlesForRange(symbol, timeframe, Number(start), Number(end))
+		const symbolName = symbol.name;
+		getCandlesForRange(symbolName, timeframe, Number(start), Number(end))
 			.then(setCandles)
 			.catch((e) => {
 				setError(e?.message ?? "Failed to load candles");
@@ -109,18 +130,22 @@ export default function ChartPreview({
 			})
 			.finally(() => setLoading(false));
 
-	}, [symbol, id, start, end, timeframe]);
+	}, [symbolId, tempId, start, end, timeframe]);
+
+	useEffect(() => {
+		chart.symbolId = Number(symbolId);
+	}, [symbolId])
 
 	return (
 		<Box
-			key={id}
+			key={tempId}
 			p={3}
 			borderWidth="1px"
 			borderRadius="md"
 		>
 			<Flex justify="space-between" align="center" mb={3}>
 				<Text fontSize="sm" fontWeight="medium">
-					Chart #{num}
+					Chart #{idx}
 				</Text>
 				<Flex gap={2} align="center">
 					{disabled ? null : (
@@ -128,7 +153,7 @@ export default function ChartPreview({
 							aria-label="Remove chart"
 							size="xs"
 							variant="ghost"
-							onClick={() => removeChart(id)}
+							onClick={() => removeChart(tempId)}
 						>
 							✕
 						</IconButton>
@@ -136,20 +161,30 @@ export default function ChartPreview({
 				</Flex>
 			</Flex>
 
-			<Flex gap={3} wrap="wrap" mb={3}>
-				<Box minW="140px">
-					<Text fontSize="xs" color="fg.muted" mb={1}>
-						Timeframe
-					</Text>
-					<Input
-						disabled={disabled}
-						value={draftTf}
-						onChange={e => setDraftTf(e.target.value)}
-						onBlur={commitTimeframe}
-						placeholder="e.g. 5m or 15000"
-					/>
-				</Box>
-			</Flex>
+			<VStack align="stretch" gap={5}>
+
+				<SymbolSelect
+					symbols={symbols}
+					loading={parentLoading}
+					symbolId={symbolId}
+					setSymbolId={setSymbolId}
+				/>
+
+				<Flex gap={3} wrap="wrap" mb={3}>
+					<Box minW="140px">
+						<Text fontSize="xs" color="fg.muted" mb={1}>
+							Timeframe
+						</Text>
+						<Input
+							disabled={disabled}
+							value={draftTf}
+							onChange={e => setDraftTf(e.target.value)}
+							onBlur={commitTimeframe}
+							placeholder="e.g. 5m or 15000"
+						/>
+					</Box>
+				</Flex>
+			</VStack>
 
 			<Box borderWidth="1px" borderRadius="md" mt={3} p={3}>
 				<Flex justify="space-between" align="center" mb={2}>
@@ -179,7 +214,7 @@ export default function ChartPreview({
 							disabled={disabled}
 							label="Start"
 							epoch={start ? Number(start) : undefined}
-							onChangeEpoch={(start) => start && updateChart(id, { start })}
+							onChangeEpoch={(start) => start && updateChart(tempId, { start })}
 						/>
 					</Box>
 
@@ -188,7 +223,7 @@ export default function ChartPreview({
 							disabled={disabled}
 							label="End"
 							epoch={end ? Number(end) : undefined}
-							onChangeEpoch={(end) => end && updateChart(id, { end })}
+							onChangeEpoch={(end) => end && updateChart(tempId, { end })}
 						/>
 					</Box>
 				</Flex>
@@ -209,7 +244,7 @@ export default function ChartPreview({
 						zIndex={10}
 						pointerEvents="auto"
 					>
-						<Flex gap={2}>
+						{/* <Flex gap={2}>
 							<Button
 								size="xs"
 								variant={drawingMode ? "solid" : "outline"}
@@ -226,6 +261,33 @@ export default function ChartPreview({
 								onClick={deleteSelectedLine}
 							>
 								Delete
+							</Button>
+						</Flex> */}
+					</Box>
+					<Box
+						position="absolute"
+						top="8px"
+						right="8px"
+						zIndex={10}
+						pointerEvents="auto"
+					>
+						<Flex gap={2}>
+							<Button
+								size="xs"
+								variant={drawingTrade === "Long" ? "solid" : "outline"}
+								disabled={!canPlaceTrade}
+								onClick={() => setDrawingTrade(prev => prev === "Long" ? null : "Long")}
+							>
+								{drawingTrade === "Long" ? "Click chart…" : "Long"}
+							</Button>
+
+							<Button
+								size="xs"
+								variant={drawingTrade === "Short" ? "solid" : "outline"}
+								disabled={!canPlaceTrade}
+								onClick={() => setDrawingTrade(prev => prev === "Short" ? null : "Short")}
+							>
+								{drawingTrade === "Short" ? "Click chart…" : "Short"}
 							</Button>
 						</Flex>
 					</Box>

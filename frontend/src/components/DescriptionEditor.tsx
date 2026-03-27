@@ -17,7 +17,6 @@ import { $getRoot } from "lexical";
 import { ImageNode } from "./ImageNode";
 import ImageDropPasteUploadPlugin from "./ImageDropPasteUploadPlugin";
 import EditButton from "./EditButton";
-import useTradeContext from "../hooks/useTradeContext";
 import useDraft from "../hooks/useDraft";
 
 type Props = {
@@ -25,6 +24,11 @@ type Props = {
 	placeholder?: string;
 	minHeightPx?: number;
 	uploadUrl?: string;
+
+	name?: string;
+
+	description: string;
+	setDescription: React.Dispatch<string>;
 
 	handleEditClick?: () => void;
 };
@@ -76,9 +80,11 @@ export default function DescriptionEditor({
 	disabled = false,
 	placeholder = "Write notes… (drag & drop or paste images)",
 	minHeightPx = 180,
+	name = "Description",
 	uploadUrl = "/uploads/image",
+	description,
+	setDescription,
 }: Props) {
-	const { description, setDescription } = useTradeContext();
 	const [draft, setDraft] = useDraft(description);
 
 	const initialConfig = useMemo(
@@ -105,8 +111,8 @@ export default function DescriptionEditor({
 	return (
 		<Box onBlur={() => setDescription(draft)}>
 			<Flex align="center" justify="space-between" mb={2}>
-				<Text fontSize="sm" color="fg.muted">
-					Description
+				<Text fontSize="sm" color="fg.muted" mb={2}>
+					{name}
 				</Text>
 
 				<EditButton

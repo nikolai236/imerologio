@@ -42,7 +42,19 @@ export default function TradePage() {
 	const { labels, loadingLabels, reload: reloadLabels } = useFetchLabels();
 	const { symbols, loadingSymbols } = useFetchSymbols();
 
-	const { formError, submitting, submitTradeEdit } = useTradeContext();
+	const {
+		formError,
+		submitting,
+		submitTradeEdit,
+
+		symbolId,
+		setSymbolId,
+
+		description,
+		setDescription,
+
+	} = useTradeContext();
+
 	const { isActive, setActive, lockAll } = useEditLock();
 
 	useAutosave(submitTradeEdit);
@@ -87,7 +99,12 @@ export default function TradePage() {
 				<Flex gap={4} wrap="wrap" align="flex-end">
 
 					<SectionWrapper section={Sections.symbol}>
-						<SymbolSelect symbols={symbols} loading={loadingSymbols} />
+						<SymbolSelect
+							symbols={symbols}
+							loading={loadingSymbols}
+							symbolId={symbolId}
+							setSymbolId={setSymbolId}
+						/>
 					</SectionWrapper>
 
 					<SectionWrapper section={Sections.stop}>
@@ -118,7 +135,11 @@ export default function TradePage() {
 				<EntryCalendar />
 
 				<SectionWrapper section={Sections.description}>
-					<DescriptionEditor placeholder="Write your trade notes…" />
+					<DescriptionEditor
+						description={description}
+						setDescription={setDescription}
+						placeholder="Write your trade notes…"
+					/>
 				</SectionWrapper>
 
 				<Box borderBottomWidth="1px" />

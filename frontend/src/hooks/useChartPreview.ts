@@ -25,6 +25,7 @@ const SECOND = 1000;
 const timeFormatter = (unixEpoch: number) => {
 	return new Date(unixEpoch * SECOND).toLocaleString("en-US", {
 		timeZone: "America/New_York",
+		weekday: "short",
 		day: "numeric",
 		month: "short",
 		year: "2-digit",
@@ -50,7 +51,7 @@ const getCandleOptions = () => ({
 	wickDownColor: "#000000",
 });
 
-const useChart = (
+const useChartPreview = (
 	candles: Candle[],
 	tf: Timeframe,
 	drawingMode: boolean,
@@ -227,4 +228,4 @@ const useChart = (
 	} as const;
 };
 
-export default useChart;
+export default useChartPreview;

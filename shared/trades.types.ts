@@ -11,7 +11,8 @@ export const SymbolTypeValues = [
 ] as const;
 
 export const OrderTypeValues = [
-	"BUY", "SELL"
+	"BUY",
+	"SELL"
 ] as const;
 
 export type OrderEnum  = typeof OrderTypeValues[number];
@@ -142,7 +143,7 @@ export interface ApiScoringResponse {
 	minSupport: number;
 }
 
-type ChartTimeframe = number | Timeframe;
+export type ChartTimeframe = number | Timeframe;
 
 export type ChartPoint = {
 	time: number;

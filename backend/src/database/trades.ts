@@ -14,7 +14,10 @@ import type {
 } from '../../../shared/trades.types';
 
 
-type TradeReturnType = DbTrade<ChartUnion<number>, OrderUnion<Date>>;
+type TradeReturnType = DbTrade<
+	ChartUnion<number>,
+	OrderUnion<Date>
+>;
 
 const cleanOrder = (o: any): DbOrder<number> => ({
 	...o,
@@ -23,17 +26,19 @@ const cleanOrder = (o: any): DbOrder<number> => ({
 	date: new Date(o.date).getTime(),
 });
 
-const produceIncludeObj = <T extends {}>(elements: T[]) => {
+const produceOverwriteObj = <T extends {}>(elements: T[]) => {
 	const existingIds = elements
 		.map(c => 'id' in c ? c.id : null)
 		.filter((id): id is number => id != null);
 
-	const deleteMany = existingIds.length > 0 ?
-		{ id: { notIn: existingIds } } : {}
+	const deleteMany = existingIds.length > 0
+		? { id: { notIn: existingIds } }
+		: {};
 
 	type ObjectWithId = T & { id: number };
+
 	const upsert = elements
-		.filter((c): c is ObjectWithId => 'id' in c && c.id != null)
+		.filter((c): c is ObjectWithId => "id" in c && c.id != null)
 		.map(({ id, ...payload }) => ({
 			where: { id },
 			create: payload,
@@ -41,12 +46,12 @@ const produceIncludeObj = <T extends {}>(elements: T[]) => {
 		}));
 
 	const create = elements
-		.filter(c => !('id' in c) || c.id == null)
+		.filter(c => !("id" in c) || c.id == null)
 		.map(c => !("id" in c) ?
 			c : (({ id, ...rest }) => ({ ...rest }))(c)
 		);
 
-	return { deleteMany, create, upsert };
+	return { deleteMany, create, upsert } as const;
 };
 
 const cleanTrade = ({ deleted, ...t }: any): TradeReturnType => ({
@@ -167,7 +172,7 @@ const tradeRepository = (db: PrismaClient) => {
 		const data = {
 			...trade,
 			deleted: false,
-			orders: { create: trade.orders, },
+			orders: { create: trade.orders },
 			charts: { create: trade.charts  },
 			labels: {
 				create: trade.labels.map((connect) => ({
@@ -189,10 +194,10 @@ const tradeRepository = (db: PrismaClient) => {
 		payload: TradeType,
 	) => {
 		const charts = payload.charts == null ?
-			undefined : produceIncludeObj(payload.charts);
+			undefined : produceOverwriteObj(payload.charts);
 
 		const orders = payload.orders == null ?
-			undefined : produceIncludeObj(payload.orders);
+			undefined : produceOverwriteObj(payload.orders);
 
 		const symbol = payload.symbolId == null ?
 			undefined : { connect: { id: payload.symbolId} };

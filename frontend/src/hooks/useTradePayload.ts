@@ -75,7 +75,9 @@ const useTradePayload = (tradeId?: number) => {
 
 	const validate = () => {
 		const sId = Number(symbolId);
-		if (!Number.isInteger(sId) || sId <= 0) throw new Error("Please select a valid symbol.");
+		if (!Number.isInteger(sId) || sId <= 0) {
+			throw new Error("Please select a valid symbol.");
+		}
 
 		if (orders.length === 0) throw new Error("Please add at least one order.");
 
@@ -150,9 +152,9 @@ const useTradePayload = (tradeId?: number) => {
 
 			await createTrade(trade);
 
-		} catch (e: any) {
-			console.error(e);
-			setFormError(e?.message ?? "Failed to create trade");
+		} catch (err: any) {
+			console.error(err);
+			setFormError(err?.message ?? "Failed to create trade");
 		} finally {
 			reload();
 			setSubmitting(false);

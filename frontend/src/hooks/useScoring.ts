@@ -68,7 +68,7 @@ const useScoring = () => {
 		if (data == null) return [];
 		return data.levels
 			.map(level => level
-				.filter(s => s.redundancy == null || s.redundancy != 1)
+				.filter(s => s.redundancy == null || Math.abs(s.redundancy - 1) > 0.05)
 				.map(s => ({
 					...s,
 					key: getKey(s.labelIds),

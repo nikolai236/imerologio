@@ -11,10 +11,11 @@ import tradesRouter  from "./routes/trades";
 import symbolsRouter from "./routes/symbols";
 import labelsRouter  from './routes/labels';
 import newsRouter    from "./routes/news";
+import journalRouter from "./routes/journal";
 
 import "dotenv/config";
 
-const buildApp = async (logger=true) => {
+export default async function buildApp(logger=true) {
 	const transport = {
 		target: 'pino-pretty',
 		options: { 
@@ -52,6 +53,7 @@ const buildApp = async (logger=true) => {
 	await app.register(labelsRouter,  { prefix: '/labels'  });
 	await app.register(candlesRouter, { prefix: '/candles' });
 	await app.register(newsRouter,    { prefix: '/news'    });
+	await app.register(journalRouter, { prefix: "/journal"  });
 
 	app.addSchema({
 		$id: "ErrorMessage",
@@ -79,5 +81,3 @@ const buildApp = async (logger=true) => {
 
 	return app;
 };
-
-export default buildApp;

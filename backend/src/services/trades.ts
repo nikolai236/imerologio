@@ -1,6 +1,7 @@
+import { JournalOrder } from "../../../shared/journal.types";
 import type { Order, } from "../../../shared/trades.types";
 
-const _mult = (o: Order<any>) => o.type == 'BUY' ? 1 : -1;
+const _mult = (o: Order<any>|JournalOrder<any>) => o.type == 'BUY' ? 1 : -1;
 
 export const parseOrders = (orders: (Order<number> & { id?: number; })[]) => orders.map(o => ({
 	...o,
@@ -16,7 +17,7 @@ export const calculatePnL = (orders: Order<Date>[]) => {
 	}, 0);
 };
 
-export const validateOrderQuantities = (orders: Order[]) => {
+export const validateOrderQuantities = (orders: (Order|JournalOrder<any>)[]) => {
 	return orders.reduce((prev, o) => {
 		return prev + _mult(o) * o.quantity;
 	}, 0) == 0;

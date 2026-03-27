@@ -37,6 +37,9 @@ model Symbol {
 
 	trades Trade[]
 	label Label?
+
+	journalCharts JournalChart[]
+	journalTrades JournalTrade[]
 }
 
 model Trade {
@@ -130,4 +133,77 @@ model TradeLabel {
 
 	@@id([tradeId, labelId])
 	@@map("trade_labels")
+}
+
+model JournalEntry {
+	id Int @id @default(autoincrement())
+
+	title String @unique
+
+	from DateTime
+	to DateTime
+
+	content String @default("") @db.Text
+
+	createdAt DateTime @default(now())
+	updatedAt DateTime @updatedAt
+
+	charts JournalChart[]
+	trades JournalTrade[]
+}
+
+model JournalTrade {
+	id Int @id @default(autoincrement())
+
+	target Decimal?
+	stop Decimal
+
+	pnl Decimal
+
+	journalEntryId Int
+	symbolId Int
+
+	orders JournalOrder[]
+
+	journalEntry JournalEntry @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
+	symbol       Symbol       @relation(fields: [symbolId], references: [id], onDelete: Cascade)
+
+	createdAt DateTime @default(now())
+	updatedAt DateTime @updatedAt
+}
+
+model JournalOrder {
+	id Int @id @default(autoincrement())
+
+	quantity Int
+	date     DateTime
+	price    Decimal
+	type     OrderType
+
+	tradeId Int
+
+	trade   JournalTrade @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+
+	createdAt DateTime @default(now())
+	updatedAt DateTime @updatedAt
+}
+
+model JournalChart {
+	id Int @id @default(autoincrement())
+
+	timeframe Int
+
+	start BigInt
+	end   BigInt
+
+	objects Json @default("{}")
+
+	journalEntryId Int
+	journalEntry JournalEntry @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
+
+	symbolId Int
+	symbol Symbol @relation(fields: [symbolId], references: [id], onDelete: Cascade)
+
+	createdAt DateTime @default(now())
+	updatedAt DateTime @updatedAt
 }

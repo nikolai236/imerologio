@@ -29,6 +29,12 @@ export default function CreateTradePage() {
 		formError,
 		submitting,
 		submitNewTrade,
+
+		symbolId,
+		setSymbolId,
+
+		description,
+		setDescription,
 	} = useTradeContext();
 
 	const [labelsOpen, setLabelsOpen] = useState(false);
@@ -48,7 +54,12 @@ export default function CreateTradePage() {
 			<VStack align="stretch" gap={5}>
 				<Flex gap={4} wrap="wrap" align="flex-end">
 
-					<SymbolSelect symbols={symbols} loading={loadingSymbols} />
+					<SymbolSelect
+						symbols={symbols}
+						loading={loadingSymbols}
+						symbolId={symbolId}
+						setSymbolId={setSymbolId}
+					/>
 					<StopInput />
 					<TargetInput />
 
@@ -69,11 +80,11 @@ export default function CreateTradePage() {
 				<EntryCalendar />
 
 				<Box>
-					<Text fontSize="sm" color="fg.muted" mb={2}>
-						Description
-					</Text>
-
-					<DescriptionEditor placeholder="Write your trade notes…" />
+					<DescriptionEditor
+						description={description}
+						setDescription={setDescription}
+						placeholder="Write your trade notes…"
+					/>
 
 					<Text fontSize="xs" color="fg.muted" mt={2}>
 						Saves HTML to your description field.
