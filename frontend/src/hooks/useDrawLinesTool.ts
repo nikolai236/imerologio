@@ -69,11 +69,9 @@ const useDrawLinesTool = (
 	const attachPrimitives = () => {
 		if (!seriesRef.current) return;
 
-		// i think this is not necessary, but just in case it's broken
-		// for (const line of linePrimitivesRef.current) {
-		// 	seriesRef.current.detachPrimitive(line);
-		// }
-
+		for (const line of linePrimitivesRef.current) {
+			seriesRef.current.detachPrimitive(line);
+		}
 		linePrimitivesRef.current = [];
 
 		for (const [p1, p2] of serializedLinesRef.current) {

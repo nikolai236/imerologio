@@ -7,7 +7,7 @@ import TradePageOuter from "./TradePageOuter";
 import CreateTradePageOuter from "./CreateTradePageOuter";
 import Scoring from "./Scoring";
 import JournalTablePage from "./JournalTablePage";
-import CreateJournalEntryPage from "./CreateJournalEntryPage";
+import CreateJournalEntryPageOuter from "./CreateJournalEntryPageOuter";
 
 function RootLayout() {
 	return (<>
@@ -31,7 +31,7 @@ export default function App() {
 				<Route path="scoring" element={<Scoring />} />
 				<Route path="journal">
 					<Route index element={<JournalTablePage />} />
-					<Route path="create" element={<CreateJournalEntryPage />} />
+					<Route path="create" element={<CreateJournalEntryPageOuter />} />
 				</Route>
 			</Route>
 		</Routes>

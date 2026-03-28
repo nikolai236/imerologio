@@ -11,19 +11,12 @@ import DescriptionEditor from "./DescriptionEditor";
 import JournalCharts from "./JournalCharts";
 import useFetchSymbols from "../hooks/useFetchSymbols";
 import useCreateJournalEntry from "../hooks/useCreateJournalEntry";
-import useJournalCharts from "../hooks/useJournalCharts";
-import useJournalTrades from "../hooks/useJournalTrades";
+import useJournalContext from "../hooks/useJournalContext";
 
 export default function CreateJournalEntryPage() {
 	const { symbols, loadingSymbols } = useFetchSymbols();
 
-	const { trades, addTrade } = useJournalTrades();
-	const {
-		charts,
-		addChart,
-		updateChart,
-		removeChart
-	} = useJournalCharts();
+	const { charts, } = useJournalContext();
 
 	const {
 		formError,
@@ -73,8 +66,6 @@ export default function CreateJournalEntryPage() {
 				<Box borderBottomWidth="1px" />
 
 				<JournalCharts
-					addTrade={addTrade}
-					trades={trades}
 					symbols={symbols}
 					parentLoading={loadingSymbols}
 				/>

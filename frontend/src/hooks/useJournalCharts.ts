@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Timeframes, type Timeframe } from "../../../shared/candles.types";
 import type { DbJournalChart, JournalChart, UpdateJournalChart } from "../../../shared/journal.types";
-import type { TempJournalTrade } from "./useJournalTrades";
 
 export type TempJournalChart =
 	Omit<(

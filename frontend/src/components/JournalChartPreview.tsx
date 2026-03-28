@@ -22,10 +22,10 @@ import CopyMenu from './CopyMenu';
 import { getCandlesForRange } from "../api/candles";
 import SymbolSelect from './SymbolSelect';
 import useSymbolId from '../hooks/useSymbolId';
-import type { UpdateJournalChart } from '../../../shared/journal.types';
 import useJournalChartPreview from '../hooks/useJournalChartPreview';
-import type { Direction, AddTrade, TempJournalTrade } from '../hooks/useJournalTrades';
+import type { Direction } from '../hooks/useJournalTrades';
 import type { TempJournalChart } from '../hooks/useJournalCharts';
+import useJournalContext from '../hooks/useJournalContext';
 
 
 type Props = {
@@ -34,13 +34,7 @@ type Props = {
 
 	symbols: DbSymbol[];
 	parentLoading: boolean;
-
-	trades: TempJournalTrade[];
 	disabled?: boolean;
-
-	addTrade: AddTrade,
-	updateChart: (id: string, payload: UpdateJournalChart<Timeframe>) => void;
-	removeChart: (id: string) => void;
 };
 
 export default function JournalChartPreview({
@@ -49,11 +43,6 @@ export default function JournalChartPreview({
 	symbols,
 	parentLoading,
 	disabled = false,
-	trades,
-
-	addTrade,
-	updateChart,
-	removeChart,
 }: Props) {
 	const {
 		tempId,
@@ -67,6 +56,8 @@ export default function JournalChartPreview({
 	const [error, setError] = useState<string | null>(null);
 	const [draftTf, setDraftTf] = useDraft(timeframe);
 	const [drawingTrade, setDrawingTrade] = useState<Direction | null>(null);
+
+	const { trades, updateChart, removeChart } = useJournalContext();
 
 	const {
 		symbolId,
@@ -95,7 +86,7 @@ export default function JournalChartPreview({
 		relevantTrades,
 		timeframe,
 		drawingTrade,
-		addTrade,
+		setDrawingTrade,
 	);
 
 	const commitTimeframe = () => {

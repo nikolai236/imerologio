@@ -13,8 +13,8 @@ import type {
 
 // https://github.com/tradingview/lightweight-charts/blob/master/plugin-examples/src/plugins/plugin-base.ts
 export abstract class PluginBase implements ISeriesPrimitive<Time>{
-	private _chart?: IChartApi;
-	private _series?: ISeriesApi<keyof SeriesOptionsMap>;
+	protected _chart?: IChartApi;
+	protected _series?: ISeriesApi<keyof SeriesOptionsMap>;
 
 	public abstract updateAllViews(): void;
 	

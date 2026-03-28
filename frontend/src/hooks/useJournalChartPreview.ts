@@ -8,16 +8,17 @@ import {
 	type Time,
 	type UTCTimestamp,
 } from "lightweight-charts";
-import { useEffect, useRef, } from "react";
+import { useEffect, useRef, type Dispatch, } from "react";
 
 import type { Candle, Timeframe } from "../../../shared/candles.types";
+import type { TempJournalTrade, Direction } from "./useJournalTrades";
+import type { TempJournalChart } from "./useJournalCharts";
 
 import useOhlcLabel from "./useOhlcLabel";
 import useCopyMenu from "./useCopyMenu";
-import type { TempJournalTrade, Direction, AddTrade } from "./useJournalTrades";
 import TradePosition from "../chart-plugins/trade-position";
 import useTimeframe from "./useTimeframe";
-import type { TempJournalChart } from "./useJournalCharts";
+import useDrawJournalTrades from "./useDrawJournalTrades";
 
 const SECOND = 1000;
 
@@ -59,11 +60,12 @@ const displayTrade = (
 	tf: Timeframe,
 	normalizeEntry: NormalizeEntries
 ) => {
-	const { orders, stop, target } = trade;
+	const { orders, stop, target, tempId } = trade;
 
 	const [entry, ...rest] = [...orders]
 		.sort((a, b) => Number(a.date) - Number(b.date))
 		.map(order => ({
+			tempId: order.tempId,
 			type: order.type,
 			price: Number(order.price),
 			time: Math.floor(new Date(order.date).getTime() / 1000) as UTCTimestamp,
@@ -75,7 +77,7 @@ const displayTrade = (
 		.filter(e => e.type !== entry.type)
 		.map(({ quantity, ...o }) => ({ ...o, quantity: -quantity }));
 
-	return new TradePosition([entry], exits, stop, entry.type, target);
+	return new TradePosition([entry], exits, stop, entry.type, target, tempId);
 };
 
 const useJournalChartPreview = (
@@ -84,71 +86,43 @@ const useJournalChartPreview = (
 	trades: TempJournalTrade[],
 	tf: Timeframe,
 	drawingTrade: Direction | null,
-	addTrade: AddTrade,
+	setDrawingTrade: Dispatch<Direction | null>,
 ) => {
-	const { normalizeEntry } = useTimeframe();
-
 	const containerRef = useRef<HTMLDivElement | null>(null);
 	const chartRef = useRef<IChartApi | null>(null);
-
-	const tradePrimitivesRef = useRef<TradePosition[]>([]);
-	const tradeDrawingRef = useRef<Direction | null>(null);
-
 	const seriesRef = useRef<ReturnType<IChartApi["addSeries"]> | null>(null);
 
 	const { ohlcLabel, ohlcMouseMoveHandler } = useOhlcLabel(seriesRef);
 	const { copyMenuContext, copyClickHandler, closeCopyMenu } = useCopyMenu(seriesRef);
 
+	const {
+		drawingTradeRef,
+		dragStateRef,
+		onClickTradeHandler,
+		setupTradesResizeEventListeners,
+		clearTradesResizeEventListeners,
+	} = useDrawJournalTrades(
+		seriesRef,
+		chartRef,
+		containerRef,
+		chart,
+		trades,
+		drawingTrade,
+		setDrawingTrade,
+		tf
+	);
+
 	const clickHandler = (params: MouseEventParams<Time>) => {
-		const direction = tradeDrawingRef.current;
+		if (dragStateRef.current != null) return;
+
+		const direction = drawingTradeRef.current;
 
 		if (direction == null) {
 			copyClickHandler(params);
 			return;
 		}
 
-		if (!seriesRef.current || !chartRef.current || !containerRef.current) {
-			return;
-		}
-
-		if (params.point == null || params.time == null) {
-			return;
-		}
-
-		const entryPrice = seriesRef.current.coordinateToPrice(params.point.y);
-		if (entryPrice == null) return;
-
-		const chartHeight = containerRef.current.clientHeight;
-		const bufferPx = chartHeight / 4;
-
-		const targetY =
-			direction === "Long"
-				? params.point.y - bufferPx
-				: params.point.y + bufferPx;
-
-		const targetPrice = seriesRef.current.coordinateToPrice(targetY);
-		if (targetPrice == null) return;
-
-		const bufferPrice = Math.abs(targetPrice - entryPrice);
-		if (!Number.isFinite(bufferPrice) || bufferPrice <= 0) return;
-
-		const startS = Number(params.time);
-
-		const visibleRange = chartRef.current.timeScale().getVisibleRange();
-		const fromS = visibleRange?.from != null ? Number(visibleRange.from) : startS;
-		const toS = visibleRange?.to != null ? Number(visibleRange.to) : startS + 60;
-
-		const visibleSpanS = Math.max(1, toS - fromS);
-		const endS = Math.max(startS + 1, Math.floor(startS + visibleSpanS / 4));
-
-		addTrade(
-			chart,
-			startS,
-			endS,
-			entryPrice,
-			bufferPrice,
-			direction,
-		);
+		onClickTradeHandler(params);
 	};
 
 	const handleChartResize = () => {
@@ -173,10 +147,6 @@ const useJournalChartPreview = (
 		localization: { timeFormatter },
 		crosshair: { mode: CrosshairMode.Normal },
 	});
-
-	useEffect(() => {
-		tradeDrawingRef.current = drawingTrade;
-	}, [drawingTrade]);
 
 	useEffect(() => {
 		if (containerRef.current == null || candles.length === 0) {
@@ -212,9 +182,11 @@ const useJournalChartPreview = (
 		chartRef.current = chart;
 
 		window.addEventListener("resize", handleChartResize);
+		setupTradesResizeEventListeners();
 
 		return () => {
 			window.removeEventListener("resize", handleChartResize);
+			clearTradesResizeEventListeners();
 
 			chartRef.current?.unsubscribeClick(clickHandler);
 
@@ -227,18 +199,6 @@ const useJournalChartPreview = (
 			seriesRef.current = null;
 		};
 	}, [candles, tf]);
-
-	useEffect(() => {
-		if (!seriesRef.current || !chartRef.current) return;
-
-		tradePrimitivesRef.current = [];
-
-		for (const trade of trades) {
-			const pos = displayTrade(trade, tf, normalizeEntry);
-			seriesRef.current.attachPrimitive(pos);
-			tradePrimitivesRef.current.push(pos);
-		}
-	}, [trades, tf]);
 
 	return {
 		containerRef,

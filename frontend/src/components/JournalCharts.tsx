@@ -2,33 +2,23 @@ import { Box, Text, Button, Flex, VStack } from '@chakra-ui/react';
 
 import JournalChartPreview from './JournalChartPreview';
 import EditButton from './EditButton';
-import useJournalCharts from '../hooks/useJournalCharts';
 import type { DbSymbol } from '../../../shared/trades.types';
-import type { AddTrade, TempJournalTrade } from '../hooks/useJournalTrades';
+import useJournalContext from '../hooks/useJournalContext';
 
 type Props = {
-    parentLoading: boolean;
-    symbols: DbSymbol[];
+	parentLoading: boolean;
+	symbols: DbSymbol[];
 	disabled?: boolean;
-    trades: TempJournalTrade[],
-    addTrade: AddTrade;
 	handleEditClick?: () => void;
 };
 
 export default function JournalCharts({
-    parentLoading,
-    symbols,
+	parentLoading,
+	symbols,
 	disabled = false,
-    trades,
-    addTrade,
 	handleEditClick,
 }: Props) {
-    const {
-        charts,
-        addChart,
-        updateChart,
-        removeChart,
-    } = useJournalCharts();
+	const {charts, addChart } = useJournalContext();
 
 	return (
 		<Box>
@@ -67,16 +57,12 @@ export default function JournalCharts({
 			<VStack align="stretch" gap={4} mt={charts.length ? 2 : 0}>
 			{charts.map((chart, i) =>
 				<JournalChartPreview
-                    chart={chart}
-                    trades={trades}
-                    parentLoading={parentLoading}
-                    symbols={symbols}
+					chart={chart}
+					parentLoading={parentLoading}
+					symbols={symbols}
 					idx={i+1}
 					disabled={disabled}
 					key={chart.tempId}
-                    addTrade={addTrade}
-                    updateChart={updateChart}
-                    removeChart={removeChart}
 				/>
 			)}
 			</VStack>
