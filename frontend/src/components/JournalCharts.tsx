@@ -18,7 +18,7 @@ export default function JournalCharts({
 	disabled = false,
 	handleEditClick,
 }: Props) {
-	const {charts, addChart } = useJournalContext();
+	const { charts, addChart } = useJournalContext();
 
 	return (
 		<Box>
@@ -66,5 +66,6 @@ export default function JournalCharts({
 				/>
 			)}
 			</VStack>
-		</Box>);
+		</Box>
+	);
 }

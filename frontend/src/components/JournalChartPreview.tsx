@@ -84,7 +84,6 @@ export default function JournalChartPreview({
 		chart,
 		candles,
 		relevantTrades,
-		timeframe,
 		drawingTrade,
 		setDrawingTrade,
 	);
@@ -112,8 +111,12 @@ export default function JournalChartPreview({
 		setLoading(true);
 		setError(null);
 
-		const symbolName = symbol.name;
-		getCandlesForRange(symbolName, timeframe, Number(start), Number(end))
+		getCandlesForRange(
+			symbol.name,
+			chart.timeframe,
+			Number(chart.start),
+			Number(chart.end)
+		)
 			.then(setCandles)
 			.catch((e) => {
 				setError(e?.message ?? "Failed to load candles");
@@ -121,11 +124,11 @@ export default function JournalChartPreview({
 			})
 			.finally(() => setLoading(false));
 
-	}, [symbolId, tempId, start, end, timeframe]);
+	}, [chart, symbol, isSupported]);
 
 	useEffect(() => {
-		chart.symbolId = Number(symbolId);
-	}, [symbolId])
+		updateChart(tempId, { symbolId: Number(symbolId) });
+	}, [symbolId]);
 
 	return (
 		<Box
@@ -181,7 +184,7 @@ export default function JournalChartPreview({
 				<Flex justify="space-between" align="center" mb={2}>
 					<Text fontSize="sm" color="fg.muted">
 						Chart preview
-						{symbol ? `- ${symbol}` : ""}
+						{symbol ? `- ${symbol.name}` : ""}
 						{timeframe ? ` [${timeframe}]` : ""}
 					</Text>
 

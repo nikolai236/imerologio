@@ -501,10 +501,7 @@ export default class TradePosition extends PluginBase {
 
 		const tol = TradePosition.HANDLE_TOLERANCE_PX;
 
-		// const withinX = x >= box.left - tol && x <= box.right + tol;
-		// const withinY = y >= box.top - tol && y <= box.bottom + tol;
-
-		// if (!withinX || !withinY) return null;
+		if (!this.isPointInside(x, y)) return null;
 
 		const onTop = Math.abs(y - box.top) <= tol;
 		const onBottom = Math.abs(y - box.bottom) <= tol;
@@ -519,6 +516,33 @@ export default class TradePosition extends PluginBase {
 		if (onMid) return "mid";
 
 		return null;
+	}
+
+	public isPointInside(x: number, y: number) {
+		const chart = this._chart;
+		const series = this._series;
+
+		if (!series || !chart) return false;
+
+		const timeScale = chart.timeScale();
+
+		const entryTime = this._entry.time as UTCTimestamp;
+		const x1 = timeScale.timeToCoordinate(entryTime);
+
+		const exitTime = this._exits.at(-1)!.time as UTCTimestamp;
+		const x2 = timeScale.timeToCoordinate(exitTime);
+
+		if (x1 == null || x2 == null) return false;
+
+		const y1 = series.priceToCoordinate(this._stop);
+
+		const target = this._target ?? this.getBestExitPrice();
+		const y2 = series.priceToCoordinate(target);
+
+		if (y1 == null || y2 == null) return false;
+
+		const [z1, z2] = [y1, y2].sort((a, b) => a - b);
+		return x >= x1 && x <= x2 && y >= z1 && y <= z2;
 	}
 
 	public containsPoint(x: number, y: number) {

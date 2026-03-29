@@ -1,4 +1,4 @@
-import { useEffect, useRef, type Dispatch, type RefObject } from "react";
+import { useCallback, useEffect, useRef, type Dispatch, type RefObject } from "react";
 
 import type { ResizeHandle } from "../chart-plugins/trade-position";
 import type { Direction, TempJournalTrade } from "./useJournalTrades";
@@ -13,7 +13,7 @@ import useJournalContext from "./useJournalContext";
 const SECOND = 1000;
 
 type DragState = {
-	trade: TradePosition;
+	tradeId: string;
 	handle: ResizeHandle;
 };
 
@@ -66,13 +66,17 @@ const useDrawJournalTrades = (
 	chartRef: RefObject<IChartApi | null>,
 	containerRef: RefObject<HTMLDivElement | null>,
 	chart: TempJournalChart,
-	trades: TempJournalTrade[],
+	serializedTrades: TempJournalTrade[],
 	drawingTrade: Direction | null,
 	setDrawingTrade: Dispatch<Direction | null>,
-	tf: Timeframe,
 ) => {
 	const { normalizeEntry } = useTimeframe();
-	const { addTrade, updateOrder, updateTrade } = useJournalContext();
+	const {
+		addTrade,
+		updateOrder,
+		updateTrade,
+		removeTrade
+	} = useJournalContext();
 
 	const dragStateRef = useRef<DragState | null>(null);
 	const hoveredHandleRef = useRef<ResizeHandle | null>(null);
@@ -80,24 +84,88 @@ const useDrawJournalTrades = (
 	const tradePrimitivesRef = useRef<TradePosition[]>([]);
 	const drawingTradeRef = useRef<Direction | null>(drawingTrade);
 
+	const selectedTradeRef = useRef<TradePosition | null>(null);
+
+	const deleteTrade = (id: string) => {
+		if (!seriesRef.current) return;
+
+		const trade = tradePrimitivesRef.current
+			.find(t => t.getTempId() === id);
+
+		if (!trade) return;
+
+		seriesRef.current.detachPrimitive(trade);
+
+		tradePrimitivesRef.current = tradePrimitivesRef.current
+			.filter(t => t.getTempId() !== id);
+
+		removeTrade(id);
+	};
+
+	const deleteSelectedTrade = () => {
+		if (!selectedTradeRef.current) return;
+
+		deleteTrade(selectedTradeRef.current.getTempId());
+		selectedTradeRef.current = null;
+	};
+
+	const findTradeNearPoint = (x: number, y: number) => {
+		const n = tradePrimitivesRef.current.length;
+
+		for (let i = n - 1; i >= 0; i--) {
+			const trade = tradePrimitivesRef.current[i];
+			if (trade.isPointInside(x, y)) return trade;
+		}
+		return null;
+	};
+
+	const tradeSelectionHandler = (x: number, y: number) => {
+		const clicked = findTradeNearPoint(x, y);
+		const selected = selectedTradeRef.current;
+
+		if (selected != null) {
+			if (selected === clicked) return true;
+
+			selected.deselect();
+			selectedTradeRef.current = null;
+		}
+
+		if (clicked == null) return selected != null;
+
+		clicked.select();
+		selectedTradeRef.current = clicked;
+
+		return true;
+	};
+
+	const attachPrimitives = useCallback(() => {
+		for (const primitive of tradePrimitivesRef.current) {
+			seriesRef.current?.detachPrimitive(primitive);
+		}
+		tradePrimitivesRef.current = [];
+
+		const selected = selectedTradeRef.current?.getTempId();
+
+		for (const trade of serializedTrades) {
+			const pos = displayTrade(trade, chart.timeframe, normalizeEntry);
+
+			seriesRef.current?.attachPrimitive(pos);
+			tradePrimitivesRef.current.push(pos);
+
+			if (trade.tempId === selected) {
+				pos.select();
+				selectedTradeRef.current = pos;
+			}
+		}
+	}, [serializedTrades]);
+
 	useEffect(() => {
 		drawingTradeRef.current = drawingTrade;
 	}, [drawingTrade]);
 
 	useEffect(() => {
-		if (!seriesRef.current || !chartRef.current) return;
-
-		for (const primitive of tradePrimitivesRef.current) {
-			seriesRef.current.detachPrimitive?.(primitive);
-		}
-		tradePrimitivesRef.current = [];
-
-		for (const trade of trades) {
-			const pos = displayTrade(trade, tf, normalizeEntry);
-			seriesRef.current.attachPrimitive(pos);
-			tradePrimitivesRef.current.push(pos);
-		}
-	}, [trades, tf]);
+		attachPrimitives();
+	}, [serializedTrades, chart]);
 
 
 	const setCursor = (cursor: string) => {
@@ -113,14 +181,13 @@ const useDrawJournalTrades = (
 	};
 
 	const findHoveredHandle = (x: number, y: number) => {
-		for (let i = tradePrimitivesRef.current.length - 1; i >= 0; i--) {
-			const trade = tradePrimitivesRef.current[i];
-			const handle = trade.hitTestResizeHandle(x, y);
-			if (handle) {
-				return { trade, handle };
-			}
-		}
-		return null;
+		const trade = selectedTradeRef.current;
+		if(trade == null) return null;
+
+		const handle = trade.hitTestResizeHandle(x, y);
+		if (!handle) return null;
+
+		return { tradeId: trade.getTempId(), handle };
 	};
 
 	const onClickTradeHandler = (params: MouseEventParams<Time>) => {
@@ -186,7 +253,12 @@ const useDrawJournalTrades = (
 	};
 
 	const onPointerMove = (e: PointerEvent) => {
-		if (!containerRef.current || !seriesRef.current || !chartRef.current) return;
+		if (
+			!containerRef.current ||
+			!seriesRef.current ||
+			!chartRef.current ||
+			!selectedTradeRef.current
+		) return;
 
 		const rect = containerRef.current.getBoundingClientRect();
 		const x = e.clientX - rect.left;
@@ -195,20 +267,21 @@ const useDrawJournalTrades = (
 		const dragState = dragStateRef.current;
 		if (!dragState) {
 			const hovered = findHoveredHandle(x, y);
-			hoveredHandleRef.current = hovered?.handle!;
+			hoveredHandleRef.current = hovered?.handle ?? null;
 
-			if (hovered) {
-				setCursor(getHandleCursor(hovered.handle));
-			} else {
-				setCursor("default");
-			}
+			setCursor(
+				hovered
+					? getHandleCursor(hovered.handle)
+					: "default"
+			);
 
 			return;
 		}
 
-		const { trade, handle } = dragState;
+		const { tradeId, handle } = dragState;
 
-		const tradeId = trade.getTempId();
+		const trade = selectedTradeRef.current;
+		if (trade.getTempId() !== tradeId) return;
 
 		if (handle === "top" || handle === "bottom" || handle === "mid") {
 			const price = seriesRef.current.coordinateToPrice(y);
@@ -283,7 +356,10 @@ const useDrawJournalTrades = (
 	};
 
 	const onPointerDown = (e: PointerEvent) => {
-		if (!containerRef.current) return;
+		if (
+			!containerRef.current ||
+			!selectedTradeRef.current
+		) return;
 
 		const rect = containerRef.current.getBoundingClientRect();
 		const x = e.clientX - rect.left;
@@ -299,6 +375,8 @@ const useDrawJournalTrades = (
 	};
 
 	const onPointerUp = () => {
+		if (!selectedTradeRef.current) return;
+
 		dragStateRef.current = null;
 
 		const hovered = hoveredHandleRef.current;
@@ -325,7 +403,11 @@ const useDrawJournalTrades = (
 	return {
 		drawingTradeRef,
 		dragStateRef,
+		selectedTradeRef,
+		attachPrimitives,
 		onClickTradeHandler,
+		deleteSelectedTrade,
+		tradeSelectionHandler,
 		setupTradesResizeEventListeners,
 		clearTradesResizeEventListeners,
 	} as const;

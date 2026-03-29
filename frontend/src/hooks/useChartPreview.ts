@@ -102,7 +102,7 @@ const useChartPreview = (
 	// combine click handlers
 	const clickHandler = (params: MouseEventParams<Time>) => {
 		if (params.point != null) {
-			const { point: { x, y } } = params;
+			const { x, y } = params.point;
 
 			const halt = lineSelectionHandler(x, y);
 			if (halt) return;

@@ -10,14 +10,12 @@ import {
 } from "lightweight-charts";
 import { useEffect, useRef, type Dispatch, } from "react";
 
-import type { Candle, Timeframe } from "../../../shared/candles.types";
+import type { Candle } from "../../../shared/candles.types";
 import type { TempJournalTrade, Direction } from "./useJournalTrades";
 import type { TempJournalChart } from "./useJournalCharts";
 
 import useOhlcLabel from "./useOhlcLabel";
 import useCopyMenu from "./useCopyMenu";
-import TradePosition from "../chart-plugins/trade-position";
-import useTimeframe from "./useTimeframe";
 import useDrawJournalTrades from "./useDrawJournalTrades";
 
 const SECOND = 1000;
@@ -51,40 +49,10 @@ const getCandleOptions = () => ({
 	wickDownColor: "#000000",
 });
 
-type NormalizeEntries = ReturnType<
-	typeof useTimeframe
->["normalizeEntry"];
-
-const displayTrade = (
-	trade: TempJournalTrade,
-	tf: Timeframe,
-	normalizeEntry: NormalizeEntries
-) => {
-	const { orders, stop, target, tempId } = trade;
-
-	const [entry, ...rest] = [...orders]
-		.sort((a, b) => Number(a.date) - Number(b.date))
-		.map(order => ({
-			tempId: order.tempId,
-			type: order.type,
-			price: Number(order.price),
-			time: Math.floor(new Date(order.date).getTime() / 1000) as UTCTimestamp,
-			quantity: Number(order.quantity),
-		}))
-		.map(order => normalizeEntry(order, tf));
-
-	const exits = rest
-		.filter(e => e.type !== entry.type)
-		.map(({ quantity, ...o }) => ({ ...o, quantity: -quantity }));
-
-	return new TradePosition([entry], exits, stop, entry.type, target, tempId);
-};
-
 const useJournalChartPreview = (
 	chart: TempJournalChart,
 	candles: Candle[],
 	trades: TempJournalTrade[],
-	tf: Timeframe,
 	drawingTrade: Direction | null,
 	setDrawingTrade: Dispatch<Direction | null>,
 ) => {
@@ -98,9 +66,13 @@ const useJournalChartPreview = (
 	const {
 		drawingTradeRef,
 		dragStateRef,
+		tradeSelectionHandler,
 		onClickTradeHandler,
+		attachPrimitives,
 		setupTradesResizeEventListeners,
 		clearTradesResizeEventListeners,
+		selectedTradeRef,
+		deleteSelectedTrade,
 	} = useDrawJournalTrades(
 		seriesRef,
 		chartRef,
@@ -109,11 +81,32 @@ const useJournalChartPreview = (
 		trades,
 		drawingTrade,
 		setDrawingTrade,
-		tf
 	);
+
+	const onKeyDown = (e: KeyboardEvent) => {
+		if (e.key !== "Backspace") return;
+
+		const target = e.target as HTMLElement | null;
+		const tag = target?.tagName;
+		const editable =
+			tag === "INPUT" ||
+			tag === "TEXTAREA" ||
+			target?.isContentEditable;
+
+		if (editable || !selectedTradeRef.current) return;
+
+		deleteSelectedTrade();
+	};
 
 	const clickHandler = (params: MouseEventParams<Time>) => {
 		if (dragStateRef.current != null) return;
+
+		if (params.point != null) {
+			const { point: { x, y } } = params;
+
+			const halt = tradeSelectionHandler(x, y);
+			if (halt) return;
+		}
 
 		const direction = drawingTradeRef.current;
 
@@ -181,11 +174,17 @@ const useJournalChartPreview = (
 
 		chartRef.current = chart;
 
+		attachPrimitives();
+
 		window.addEventListener("resize", handleChartResize);
+		window.addEventListener("keydown", onKeyDown);
+
 		setupTradesResizeEventListeners();
 
 		return () => {
 			window.removeEventListener("resize", handleChartResize);
+			window.removeEventListener("keydown", onKeyDown);
+
 			clearTradesResizeEventListeners();
 
 			chartRef.current?.unsubscribeClick(clickHandler);
@@ -198,7 +197,7 @@ const useJournalChartPreview = (
 			chartRef.current = null;
 			seriesRef.current = null;
 		};
-	}, [candles, tf]);
+	}, [candles, chart]);
 
 	return {
 		containerRef,
