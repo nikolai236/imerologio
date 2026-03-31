@@ -1,18 +1,20 @@
 import { Box, Text, Input, Flex } from "@chakra-ui/react"
 import EditButton from "./EditButton";
-import useTradeContext from "../hooks/useTradeContext";
-import { usePriceDraft } from "../hooks/useDraft";
+import { usePriceDraft, type Price } from "../hooks/useDraft";
 
 type Props = {
+	target: number | null,
+	setTarget: (target: Price) => void;
 	disabled?: boolean;
 	handleEditClick?: () => void;
 }
 
 export default function TargetInput({
+	target,
+	setTarget,
 	disabled = false,
 	handleEditClick,
 }: Props) {
-	const { target, setTarget } = useTradeContext();
 	const {
 		draft,
 		setDraft,
@@ -31,7 +33,7 @@ export default function TargetInput({
 					onClick={handleEditClick ?? (()=>{})}
 				/>
 				<Input
-					value={draft}
+					value={Number(draft).toFixed(3)}
 					disabled={disabled}
 					onBlur={() => saveDraft()}
 					onChange={e => setDraft(e.target.value)}

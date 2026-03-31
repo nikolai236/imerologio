@@ -35,6 +35,12 @@ export default function CreateTradePage() {
 
 		description,
 		setDescription,
+
+		target,
+		setTarget,
+
+		stop,
+		setStop,
 	} = useTradeContext();
 
 	const [labelsOpen, setLabelsOpen] = useState(false);
@@ -60,8 +66,8 @@ export default function CreateTradePage() {
 						symbolId={symbolId}
 						setSymbolId={setSymbolId}
 					/>
-					<StopInput />
-					<TargetInput />
+					<StopInput stop={stop} setStop={setStop} />
+					<TargetInput target={target} setTarget={setTarget}/>
 
 				</Flex>
 

@@ -147,14 +147,18 @@ const useDrawJournalTrades = (
 		const selected = selectedTradeRef.current?.getTempId();
 
 		for (const trade of serializedTrades) {
-			const pos = displayTrade(trade, chart.timeframe, normalizeEntry);
+			try {
+				const pos = displayTrade(trade, chart.timeframe, normalizeEntry);
 
-			seriesRef.current?.attachPrimitive(pos);
-			tradePrimitivesRef.current.push(pos);
+				seriesRef.current?.attachPrimitive(pos);
+				tradePrimitivesRef.current.push(pos);
 
-			if (trade.tempId === selected) {
-				pos.select();
-				selectedTradeRef.current = pos;
+				if (trade.tempId === selected) {
+					pos.select();
+					selectedTradeRef.current = pos;
+				}
+			} catch (err) {
+				console.error(trade.id, err);
 			}
 		}
 	}, [serializedTrades]);
@@ -404,6 +408,7 @@ const useDrawJournalTrades = (
 		drawingTradeRef,
 		dragStateRef,
 		selectedTradeRef,
+		tradePrimitivesRef,
 		attachPrimitives,
 		onClickTradeHandler,
 		deleteSelectedTrade,

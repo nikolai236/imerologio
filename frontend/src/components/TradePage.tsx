@@ -53,6 +53,12 @@ export default function TradePage() {
 		description,
 		setDescription,
 
+		target,
+		setTarget,
+
+		stop,
+		setStop,
+
 	} = useTradeContext();
 
 	const { isActive, setActive, lockAll } = useEditLock();
@@ -108,11 +114,11 @@ export default function TradePage() {
 					</SectionWrapper>
 
 					<SectionWrapper section={Sections.stop}>
-						<StopInput />
+						<StopInput stop={stop} setStop={setStop} />
 					</SectionWrapper>
 
 					<SectionWrapper section={Sections.target}>
-						<TargetInput />
+						<TargetInput target={target} setTarget={setTarget}/>
 					</SectionWrapper>
 
 				</Flex>

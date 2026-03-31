@@ -13,7 +13,7 @@ const useDraft = <T>(variable: T): [string, React.Dispatch<React.SetStateAction<
 
 export default useDraft;
 
-type Price = number | null;
+export type Price = number | null;
 
 const PRICE_RE = /^(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?$/;
 const isValidPriceDraft = (s: string) => s === "" || PRICE_RE.test(s);

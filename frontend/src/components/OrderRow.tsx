@@ -80,7 +80,7 @@ export default function OrderRow({
 					</Text>
 				<Input
 					disabled={disabled}
-					value={draftPrice}
+					value={Number(draftPrice).toFixed(3)}
 					onChange={e => setDraftPrice(e.target.value)}
 					onBlur={saveDraftPrice}
 					placeholder="e.g. 19280.50"

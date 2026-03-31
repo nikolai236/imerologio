@@ -6,6 +6,7 @@ import {
 	IconButton,
 	VStack,
 	Button,
+	HStack,
 } from '@chakra-ui/react';
 import { useState, useEffect, useMemo } from 'react';
 
@@ -26,7 +27,16 @@ import useJournalChartPreview from '../hooks/useJournalChartPreview';
 import type { Direction } from '../hooks/useJournalTrades';
 import type { TempJournalChart } from '../hooks/useJournalCharts';
 import useJournalContext from '../hooks/useJournalContext';
+import EditJournalTrade from './EditJournalTrade';
 
+const formatDateTime = (value: string | Date) =>
+	new Date(value).toLocaleString("en-US", {
+		year: "numeric",
+		month: "short",
+		day: "numeric",
+		hour: "2-digit",
+		minute: "2-digit",
+	});
 
 type Props = {
 	idx: number;
@@ -58,6 +68,15 @@ export default function JournalChartPreview({
 	const [drawingTrade, setDrawingTrade] = useState<Direction | null>(null);
 
 	const { trades, updateChart, removeChart } = useJournalContext();
+	const [openTradeId, setOpenTradeId] = useState<string | null>(null);
+
+	const openTrade = useMemo(
+		() =>
+			openTradeId
+				? trades.find(t => t.tempId === openTradeId) ?? null
+				: null,
+		[openTradeId, trades]
+	);
 
 	const {
 		symbolId,
@@ -71,7 +90,13 @@ export default function JournalChartPreview({
 	);
 
 	const relevantTrades = useMemo(
-		() => trades.filter(t => t.symbolId === Number(symbolId)),
+		() => trades
+			.filter(t => t.symbolId === Number(symbolId))
+			.sort((a, b) => {
+				const aTime = a.orders[0].date.getTime();
+				const bTime = b.orders[0].date.getTime();
+				return bTime - aTime;
+			}),
 		[symbolId, trades]
 	);
 
@@ -85,6 +110,8 @@ export default function JournalChartPreview({
 		candles,
 		relevantTrades,
 		drawingTrade,
+		openTrade,
+		setOpenTradeId,
 		setDrawingTrade,
 	);
 
@@ -230,6 +257,7 @@ export default function JournalChartPreview({
 					borderRadius="md"
 					overflow="hidden"
 					bg="bg.subtle"
+					mb={5}
 				>
 					<Box
 						position="absolute"
@@ -293,6 +321,11 @@ export default function JournalChartPreview({
 						onClose={closeCopyMenu}
 					/>
 
+					<EditJournalTrade
+						closeDialog={() => setOpenTradeId(null)}
+						trade={openTrade}
+					/>
+
 					{!loading && !error && candles.length === 0 && (
 						<Flex
 							h="100%"
@@ -305,6 +338,35 @@ export default function JournalChartPreview({
 						</Flex>
 					)}
 				</Box>
+
+				<VStack align="stretch" gap={2}>
+					{relevantTrades.map((trade) => {
+
+						const first = formatDateTime(trade.orders[0].date);
+						const last = formatDateTime(trade.orders.at(-1)!.date);
+						const pnl = trade.pnl;
+
+						return (
+							<Box
+								key={trade.tempId}
+								p={2}
+								borderWidth="1px"
+								borderRadius="md"
+								onClick={() => setOpenTradeId(trade.tempId)}
+							>
+								<Flex justify="space-between" gap={3} align="center" w="100%">
+									<HStack gap={2} flex="1" minW={0}>
+										<Text fontSize="sm" whiteSpace="nowrap"> from: {first};</Text>
+										<Text fontSize="sm" lineClamp={1}> to: {last} </Text>
+										<Text fontSize="xs" color={pnl >= 0 ? "green.600" : "red.400"}>
+											pnl: {pnl.toFixed(2)}
+										</Text>
+									</HStack>
+								</Flex>
+							</Box>
+						);
+					})}
+				</VStack>
 			</Box>
 		</Box>
 	);

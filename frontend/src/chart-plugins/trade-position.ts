@@ -367,8 +367,12 @@ export default class TradePosition extends PluginBase {
 				e.price = target;
 			});
 
-		const best = this.getBestExit();
-		best.price = target;
+		const bestPrice = this.getBestExitPrice();
+		this._exits
+			.filter(e => e.price === bestPrice)
+			.forEach(e => {
+				e.price = target;
+			});
 
 		return this._exits;
 	}
@@ -384,7 +388,12 @@ export default class TradePosition extends PluginBase {
 				e.time = exitTime;
 			});
 
-		this._exits.at(-1)!.time = exitTime;
+		const maxTime = this._exits.at(-1)!.time;
+		this._exits
+			.filter(e => e.time === maxTime)
+			.forEach(e => {
+				e.time = exitTime;
+			})
 
 		return this._exits;
 	}

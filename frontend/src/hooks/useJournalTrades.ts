@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { Timeframe } from "../../../shared/candles.types";
 import type {
 	DbJournalOrder,
@@ -25,6 +25,12 @@ export type TempJournalTrade = Omit<(
 	orders: TempJournalOrder[];
 	id?: number;
 };
+
+type EpochOrder = (
+	Omit<TempJournalOrder, "date"> & {
+		date: number;
+	}
+) | TempJournalOrder;
 
 type UpdateOrdersPayload = {
 	orders:
@@ -142,15 +148,22 @@ const useJournalTrades = () => {
 			return { ...t, ...rest };
 		}
 
-		const nextOrders =
+		const next =
 			typeof orders === "function"
 				? orders(t.orders)
 				: orders;
 
+		const sorted = next
+			.slice()
+			.sort((a, b) =>
+				new Date(a.date).getTime() -
+				new Date(b.date).getTime()
+			);
+
 		const nextTrade = {
 			...t,
 			...rest,
-			orders: nextOrders,
+			orders: sorted,
 		};
 
 		return {
@@ -163,28 +176,36 @@ const useJournalTrades = () => {
 		prev => prev.filter(t => t.tempId != id)
 	);
 
-	const addOrder = (tradeId: string) => setTrades(prev =>
-		prev.map(t => {
-			if (t.tempId === tradeId && t.orders.length != 0) {
-				const { id, ...rest } = t.orders.at(-1)!;
-				return {
-					...t,
-					orders: [...t.orders, { ...rest, tempId: uid() }],
-				};
-			}
-			return t;
-		})
-	);
+
+	const addOrder = (tradeId: string) => updateTrade(tradeId, {
+		orders: (orders) => {
+			if (orders.length === 0) return orders;
+			const { id, ...rest } = orders.at(-1)!;
+			return [
+				...orders,
+				{ ...rest, tempId: uid() }
+			];
+		}
+	});
 
 	const updateOrder = (
 		tradeId: string,
 		orderId: string,
-		payload: Partial<TempJournalOrder>
+		{ date, ...payload } : Partial<TempJournalOrder | EpochOrder>
 	) => updateTrade(tradeId, {
-		orders: (orders) => orders.map(order => {
-			if (order.tempId !== orderId) return order;
-			return { ...order, ...payload };
-		}),
+		orders: (orders) => orders
+			.map(order => {
+				if (order.tempId !== orderId) {
+					return order;
+				}
+				return {
+					...order,
+					...payload,
+					...(date != null && {
+						date: new Date(date)
+					}),
+				};
+			})
 	});
 
 	const removeOrder = (
@@ -197,7 +218,7 @@ const useJournalTrades = () => {
 	});
 
 	const getOrders = useCallback(
-		(tradeId: string) => trades.find(t => t.tempId == tradeId)!.orders,
+		(tradeId: string) => trades.find(t => t.tempId == tradeId)?.orders ?? null,
 		[trades]
 	);
 

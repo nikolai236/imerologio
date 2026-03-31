@@ -54,11 +54,19 @@ const useJournalChartPreview = (
 	candles: Candle[],
 	trades: TempJournalTrade[],
 	drawingTrade: Direction | null,
+	openTrade: TempJournalTrade | null,
+	setOpenTradeId: (id: string | null) => void,
 	setDrawingTrade: Dispatch<Direction | null>,
 ) => {
 	const containerRef = useRef<HTMLDivElement | null>(null);
 	const chartRef = useRef<IChartApi | null>(null);
 	const seriesRef = useRef<ReturnType<IChartApi["addSeries"]> | null>(null);
+
+	const openTradeRef = useRef<typeof openTrade>(openTrade);
+
+	useEffect(() => {
+		openTradeRef.current = openTrade
+	}, [openTrade]);
 
 	const { ohlcLabel, ohlcMouseMoveHandler } = useOhlcLabel(seriesRef);
 	const { copyMenuContext, copyClickHandler, closeCopyMenu } = useCopyMenu(seriesRef);
@@ -69,6 +77,7 @@ const useJournalChartPreview = (
 		tradeSelectionHandler,
 		onClickTradeHandler,
 		attachPrimitives,
+		tradePrimitivesRef,
 		setupTradesResizeEventListeners,
 		clearTradesResizeEventListeners,
 		selectedTradeRef,
@@ -96,6 +105,25 @@ const useJournalChartPreview = (
 		if (editable || !selectedTradeRef.current) return;
 
 		deleteSelectedTrade();
+	};
+
+	const doubleClickHandler = (params: MouseEventParams) => {
+		if (openTradeRef.current != null || !params.point) return;
+
+		const { x, y } = params.point;
+
+		let t: string | null = null;
+		const n = tradePrimitivesRef.current.length; 
+
+		for (let i = n - 1; i >= 0; i--) {
+			const trade = tradePrimitivesRef.current[i];
+			if (trade.isPointInside(x, y)) {
+				t = trade.getTempId();
+				break;
+			}
+		}
+
+		setOpenTradeId(t);
 	};
 
 	const clickHandler = (params: MouseEventParams<Time>) => {
@@ -168,6 +196,7 @@ const useJournalChartPreview = (
 
 		chart.subscribeCrosshairMove(ohlcMouseMoveHandler);
 		chart.subscribeClick(clickHandler);
+		chart.subscribeDblClick(doubleClickHandler);
 
 		const preventContext = (e: Event) => e.preventDefault();
 		containerRef.current.addEventListener("contextmenu", preventContext);
@@ -189,6 +218,7 @@ const useJournalChartPreview = (
 
 			chartRef.current?.unsubscribeClick(clickHandler);
 
+			chartRef.current?.unsubscribeDblClick(doubleClickHandler);
 			chartRef.current?.unsubscribeCrosshairMove(ohlcMouseMoveHandler);
 			containerRef.current?.removeEventListener("contextmenu",preventContext);
 
