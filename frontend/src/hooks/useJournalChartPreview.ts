@@ -3,20 +3,18 @@ import {
 	ColorType,
 	createChart,
 	CrosshairMode,
-	type IChartApi,
 	type MouseEventParams,
 	type Time,
 	type UTCTimestamp,
 } from "lightweight-charts";
-import { useEffect, useRef, type Dispatch, } from "react";
+import { useEffect, } from "react";
 
 import type { Candle } from "../../../shared/candles.types";
-import type { TempJournalTrade, Direction } from "./useJournalTrades";
-import type { TempJournalChart } from "./useJournalCharts";
 
 import useOhlcLabel from "./useOhlcLabel";
 import useCopyMenu from "./useCopyMenu";
 import useDrawJournalTrades from "./useDrawJournalTrades";
+import useJournalChartContext from "./useJournalChartContext";
 
 const SECOND = 1000;
 
@@ -49,24 +47,23 @@ const getCandleOptions = () => ({
 	wickDownColor: "#000000",
 });
 
-const useJournalChartPreview = (
-	chart: TempJournalChart,
-	candles: Candle[],
-	trades: TempJournalTrade[],
-	drawingTrade: Direction | null,
-	openTrade: TempJournalTrade | null,
-	setOpenTradeId: (id: string | null) => void,
-	setDrawingTrade: Dispatch<Direction | null>,
-) => {
-	const containerRef = useRef<HTMLDivElement | null>(null);
-	const chartRef = useRef<IChartApi | null>(null);
-	const seriesRef = useRef<ReturnType<IChartApi["addSeries"]> | null>(null);
+const useJournalChartPreview = () => {
+	const {
+		chart,
+		trades,
 
-	const openTradeRef = useRef<typeof openTrade>(openTrade);
+		candles,
 
-	useEffect(() => {
-		openTradeRef.current = openTrade
-	}, [openTrade]);
+		openTrade,
+		setOpenTradeId,
+
+		drawingTrade,
+		setDrawingTrade,
+
+		seriesRef,
+		chartRef,
+		containerRef,
+	} = useJournalChartContext();
 
 	const { ohlcLabel, ohlcMouseMoveHandler } = useOhlcLabel(seriesRef);
 	const { copyMenuContext, copyClickHandler, closeCopyMenu } = useCopyMenu(seriesRef);
@@ -77,7 +74,7 @@ const useJournalChartPreview = (
 		tradeSelectionHandler,
 		onClickTradeHandler,
 		attachPrimitives,
-		tradePrimitivesRef,
+		doubleClickHandler,
 		setupTradesResizeEventListeners,
 		clearTradesResizeEventListeners,
 		selectedTradeRef,
@@ -90,6 +87,8 @@ const useJournalChartPreview = (
 		trades,
 		drawingTrade,
 		setDrawingTrade,
+		openTrade,
+		setOpenTradeId,
 	);
 
 	const onKeyDown = (e: KeyboardEvent) => {
@@ -105,25 +104,6 @@ const useJournalChartPreview = (
 		if (editable || !selectedTradeRef.current) return;
 
 		deleteSelectedTrade();
-	};
-
-	const doubleClickHandler = (params: MouseEventParams) => {
-		if (openTradeRef.current != null || !params.point) return;
-
-		const { x, y } = params.point;
-
-		let t: string | null = null;
-		const n = tradePrimitivesRef.current.length; 
-
-		for (let i = n - 1; i >= 0; i--) {
-			const trade = tradePrimitivesRef.current[i];
-			if (trade.isPointInside(x, y)) {
-				t = trade.getTempId();
-				break;
-			}
-		}
-
-		setOpenTradeId(t);
 	};
 
 	const clickHandler = (params: MouseEventParams<Time>) => {

@@ -1,14 +1,14 @@
-import { useCallback, useEffect, useRef, type Dispatch, type RefObject } from "react";
+import { useCallback, useEffect, useRef, type RefObject } from "react";
 
 import type { ResizeHandle } from "../chart-plugins/trade-position";
 import type { Direction, TempJournalTrade } from "./useJournalTrades";
 import type { Timeframe } from "../../../shared/candles.types";
 import type { IChartApi, MouseEventParams, Time, UTCTimestamp } from "lightweight-charts";
-import type { TempJournalChart } from "./useJournalCharts";
 
 import TradePosition from "../chart-plugins/trade-position";
 import useTimeframe from "./useTimeframe";
 import useJournalContext from "./useJournalContext";
+import useJournalChartContext from "./useJournalChartContext";
 
 const SECOND = 1000;
 
@@ -61,15 +61,22 @@ const getTimeExtremes = (chartRef: RefObject<IChartApi | null>) => {
 	return { minTime, maxTime };
 }
 
-const useDrawJournalTrades = (
-	seriesRef: RefObject<ReturnType<IChartApi["addSeries"]> | null>,
-	chartRef: RefObject<IChartApi | null>,
-	containerRef: RefObject<HTMLDivElement | null>,
-	chart: TempJournalChart,
-	serializedTrades: TempJournalTrade[],
-	drawingTrade: Direction | null,
-	setDrawingTrade: Dispatch<Direction | null>,
-) => {
+const useDrawJournalTrades = () => {
+	const {
+		chart,
+		trades: serializedTrades,
+
+		openTrade,
+		setOpenTradeId,
+
+		drawingTrade,
+		setDrawingTrade,
+
+		seriesRef,
+		chartRef,
+		containerRef,
+	} = useJournalChartContext();
+
 	const { normalizeEntry } = useTimeframe();
 	const {
 		addTrade,
@@ -85,6 +92,11 @@ const useDrawJournalTrades = (
 	const drawingTradeRef = useRef<Direction | null>(drawingTrade);
 
 	const selectedTradeRef = useRef<TradePosition | null>(null);
+	const openTradeRef = useRef<typeof openTrade>(openTrade);
+
+	useEffect(() => {
+		openTradeRef.current = openTrade
+	}, [openTrade]);
 
 	const deleteTrade = (id: string) => {
 		if (!seriesRef.current) return;
@@ -404,17 +416,28 @@ const useDrawJournalTrades = (
 		window.removeEventListener("pointerup", onPointerUp);
 	};
 
+	const doubleClickHandler = (params: MouseEventParams) => {
+		if (openTradeRef.current != null || !params.point) return;
+
+		const { x, y } = params.point;
+
+		const tradeId = findTradeNearPoint(x, y)?.getTempId();
+		if (!tradeId) return;
+
+		setOpenTradeId(tradeId);
+	};
+
 	return {
 		drawingTradeRef,
 		dragStateRef,
 		selectedTradeRef,
-		tradePrimitivesRef,
 		attachPrimitives,
 		onClickTradeHandler,
 		deleteSelectedTrade,
 		tradeSelectionHandler,
 		setupTradesResizeEventListeners,
 		clearTradesResizeEventListeners,
+		doubleClickHandler,
 	} as const;
 };
 

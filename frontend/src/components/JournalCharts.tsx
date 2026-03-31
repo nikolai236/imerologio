@@ -1,9 +1,9 @@
 import { Box, Text, Button, Flex, VStack } from '@chakra-ui/react';
 
-import JournalChartPreview from './JournalChartPreview';
 import EditButton from './EditButton';
 import type { DbSymbol } from '../../../shared/trades.types';
 import useJournalContext from '../hooks/useJournalContext';
+import JournalChartPreviewOuter from './JournalChartPreviewOuter';
 
 type Props = {
 	parentLoading: boolean;
@@ -56,7 +56,7 @@ export default function JournalCharts({
 
 			<VStack align="stretch" gap={4} mt={charts.length ? 2 : 0}>
 			{charts.map((chart, i) =>
-				<JournalChartPreview
+				<JournalChartPreviewOuter
 					chart={chart}
 					parentLoading={parentLoading}
 					symbols={symbols}

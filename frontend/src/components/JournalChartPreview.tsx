@@ -8,10 +8,9 @@ import {
 	Button,
 	HStack,
 } from '@chakra-ui/react';
-import { useState, useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 
-import type { Candle, Timeframe } from '../../../shared/candles.types';
-import type { DbSymbol } from '../../../shared/trades.types';
+import type { Timeframe } from '../../../shared/candles.types';
 
 import { isTimeframeValid } from '../hooks/useTradeCharts';
 import useDraft from '../hooks/useDraft';
@@ -22,12 +21,10 @@ import CopyMenu from './CopyMenu';
 
 import { getCandlesForRange } from "../api/candles";
 import SymbolSelect from './SymbolSelect';
-import useSymbolId from '../hooks/useSymbolId';
 import useJournalChartPreview from '../hooks/useJournalChartPreview';
-import type { Direction } from '../hooks/useJournalTrades';
-import type { TempJournalChart } from '../hooks/useJournalCharts';
 import useJournalContext from '../hooks/useJournalContext';
 import EditJournalTrade from './EditJournalTrade';
+import useJournalChartContext from '../hooks/useJournalChartContext';
 
 const formatDateTime = (value: string | Date) =>
 	new Date(value).toLocaleString("en-US", {
@@ -40,20 +37,41 @@ const formatDateTime = (value: string | Date) =>
 
 type Props = {
 	idx: number;
-	chart: TempJournalChart,
-
-	symbols: DbSymbol[];
 	parentLoading: boolean;
 	disabled?: boolean;
 };
 
 export default function JournalChartPreview({
 	idx,
-	chart,
-	symbols,
 	parentLoading,
 	disabled = false,
 }: Props) {
+	const {
+		chart,
+		trades: relevantTrades,
+		symbols,
+
+		candles,
+		setCandles,
+
+		openTrade,
+		setOpenTradeId,
+
+		drawingTrade,
+		setDrawingTrade,
+
+		containerRef,
+
+		loading,
+		setLoading,
+
+		error,
+		setError,
+
+		isSupported,
+		setSymbolId,
+	} = useJournalChartContext();
+
 	const {
 		tempId,
 		start,
@@ -61,59 +79,20 @@ export default function JournalChartPreview({
 		timeframe,
 	} = chart;
 
-	const [candles, setCandles] = useState<Candle[]>([]);
-	const [loading, setLoading] = useState(false);
-	const [error, setError] = useState<string | null>(null);
 	const [draftTf, setDraftTf] = useDraft(timeframe);
-	const [drawingTrade, setDrawingTrade] = useState<Direction | null>(null);
 
-	const { trades, updateChart, removeChart } = useJournalContext();
-	const [openTradeId, setOpenTradeId] = useState<string | null>(null);
-
-	const openTrade = useMemo(
-		() =>
-			openTradeId
-				? trades.find(t => t.tempId === openTradeId) ?? null
-				: null,
-		[openTradeId, trades]
-	);
-
-	const {
-		symbolId,
-		setSymbolId,
-		isSupported
-	} = useSymbolId();
+	const { updateChart, removeChart } = useJournalContext();
 
 	const symbol = useMemo(
-		() => symbols.find(s => s.id == Number(symbolId)) ?? null,
-		[symbols, symbolId],
-	);
-
-	const relevantTrades = useMemo(
-		() => trades
-			.filter(t => t.symbolId === Number(symbolId))
-			.sort((a, b) => {
-				const aTime = a.orders[0].date.getTime();
-				const bTime = b.orders[0].date.getTime();
-				return bTime - aTime;
-			}),
-		[symbolId, trades]
+		() => symbols.find(s => s.id == Number(chart.symbolId)) ?? null,
+		[symbols, chart],
 	);
 
 	const {
-		containerRef,
 		ohlcLabel,
 		copyMenuContext,
 		closeCopyMenu,
-	} = useJournalChartPreview(
-		chart,
-		candles,
-		relevantTrades,
-		drawingTrade,
-		openTrade,
-		setOpenTradeId,
-		setDrawingTrade,
-	);
+	} = useJournalChartPreview();
 
 	const commitTimeframe = () => {
 		updateChart(tempId, { timeframe: draftTf as Timeframe });
@@ -130,7 +109,7 @@ export default function JournalChartPreview({
 		!loading &&
 		!error &&
 		candles.length > 0 &&
-		Number(symbolId) > 0;
+		Number(chart.symbolId) > 0;
 
 	useEffect(() => {
 		if (!isSupported || symbol == null) return;
@@ -152,10 +131,6 @@ export default function JournalChartPreview({
 			.finally(() => setLoading(false));
 
 	}, [chart, symbol, isSupported]);
-
-	useEffect(() => {
-		updateChart(tempId, { symbolId: Number(symbolId) });
-	}, [symbolId]);
 
 	return (
 		<Box
@@ -187,7 +162,7 @@ export default function JournalChartPreview({
 				<SymbolSelect
 					symbols={symbols}
 					loading={parentLoading}
-					symbolId={symbolId}
+					symbolId={String(chart.symbolId ?? "")}
 					setSymbolId={setSymbolId}
 				/>
 
