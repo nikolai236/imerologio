@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import type { Timeframe } from "../../../shared/candles.types";
 import type {
 	DbJournalOrder,
@@ -218,7 +218,8 @@ const useJournalTrades = () => {
 	});
 
 	const getOrders = useCallback(
-		(tradeId: string) => trades.find(t => t.tempId == tradeId)?.orders ?? null,
+		(tradeId: string) =>
+			trades.find(t => t.tempId == tradeId)?.orders ?? null,
 		[trades]
 	);
 
@@ -236,11 +237,15 @@ const useJournalTrades = () => {
 				symbolId,
 			} = trade;
 
-			const orders = trade.orders.map(order => ({
-				...order,
-				date: new Date(order.date),
-				tempId: uid(),
-			}));
+			const orders = trade.orders
+				.map(({ date, ...order }) => ({
+					...order,
+					date: new Date(date),
+					tempId: uid(),
+				}))
+				.sort((a , b) =>
+					a.date.getTime() - b.date.getTime()
+				);
 
 			return {
 				id,

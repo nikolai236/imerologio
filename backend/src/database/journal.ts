@@ -1,6 +1,5 @@
 import { PrismaClient } from "@prisma/client";
 import { DbJournalEntry, JournalEntry, JournalOrder, JournalTrade, UpdateJournalEntry, UpdateJournalOrder, UpdateJournalTrade } from "../../../shared/journal.types";
-import { Timeframe } from "../../../shared/candles.types";
 
 const include = {
 	trades: {
