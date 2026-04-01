@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
-import { DbJournalEntry, JournalEntry, UpdateJournalEntry } from "../../../shared/journal.types";
+import { DbJournalEntry, JournalEntry, JournalOrder, JournalTrade, UpdateJournalEntry, UpdateJournalOrder, UpdateJournalTrade } from "../../../shared/journal.types";
+import { Timeframe } from "../../../shared/candles.types";
 
 const include = {
 	trades: {
@@ -12,7 +13,7 @@ const include = {
 
 const produceOverwriteObj = <T extends {}>(elements: T[]) => {
 	const existingIds = elements
-		.map(c => 'id' in c ? c.id : null)
+		.map(c => "id" in c ? c.id : null)
 		.filter((id): id is number => id != null);
 
 	const deleteMany = existingIds.length > 0
@@ -36,6 +37,49 @@ const produceOverwriteObj = <T extends {}>(elements: T[]) => {
 		);
 
 	return { deleteMany, create, upsert } as const;
+};
+
+const buildOrdersCreate = (
+	orders: ((UpdateJournalOrder<string> | JournalOrder<string>) & { id?: number })[]
+) => ({
+  create: orders.map(({ id, ...rest }) => rest),
+});
+
+const buildOrdersUpdate = (
+	orders: (UpdateJournalOrder<string> | JournalOrder<string>)[]
+) => produceOverwriteObj(orders);
+
+const buildTradesUpdate = (trades: (UpdateJournalTrade<string> | JournalTrade<string>)[]) => {
+	trades = trades.filter(t => t != null) ;
+
+	const existingIds = trades
+		.map(t => ("id" in t ? t.id : null))
+		.filter((id): id is number => id != null);
+
+	return {
+		deleteMany: existingIds.length > 0
+			? { id: { notIn: existingIds } }
+			: {},
+		create: trades
+			.filter(t => !("id" in t) || t.id == null)
+			.map(({ orders, ...trade }) => ({
+				...trade,
+				...(orders && { orders: buildOrdersCreate(orders) }),
+			})),
+		upsert: trades
+			.filter((t): t is typeof t & { id: number } => "id" in t && t.id != null)
+			.map(({ id, orders, ...trade }) => ({
+				where: { id },
+				create: {
+					...trade,
+					...(orders && { orders: buildOrdersCreate(orders) }),
+				},
+				update: {
+					...trade,
+					...(orders && { orders: buildOrdersUpdate(orders) }),
+				},
+			})),
+	};
 };
 
 export default function journalRepository(db: PrismaClient) {
@@ -144,21 +188,8 @@ export default function journalRepository(db: PrismaClient) {
 				}),
 			}));
 
-		const modifiedTrades = payload.trades
-			?.map(({ orders, symbolId, ...rest }) => ({
-				...rest,
-				...(symbolId != undefined && {
-					symbol: {
-						connect: { id: symbolId }
-					}
-				}),
-				...(orders != undefined && {
-					orders: produceOverwriteObj(orders)
-				})
-			}));
-
-		const tradesObj = modifiedTrades
-			? { trades: produceOverwriteObj(modifiedTrades) }
+		const tradesObj = payload.trades
+			? { trades: buildTradesUpdate(payload.trades) }
 			: undefined;
 
 		const chartsObj = modifiedCharts

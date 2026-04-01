@@ -50,16 +50,7 @@ const getCandleOptions = () => ({
 const useJournalChartPreview = () => {
 	const {
 		chart,
-		trades,
-
 		candles,
-
-		openTrade,
-		setOpenTradeId,
-
-		drawingTrade,
-		setDrawingTrade,
-
 		seriesRef,
 		chartRef,
 		containerRef,
@@ -79,17 +70,7 @@ const useJournalChartPreview = () => {
 		clearTradesResizeEventListeners,
 		selectedTradeRef,
 		deleteSelectedTrade,
-	} = useDrawJournalTrades(
-		seriesRef,
-		chartRef,
-		containerRef,
-		chart,
-		trades,
-		drawingTrade,
-		setDrawingTrade,
-		openTrade,
-		setOpenTradeId,
-	);
+	} = useDrawJournalTrades();
 
 	const onKeyDown = (e: KeyboardEvent) => {
 		if (e.key !== "Backspace") return;

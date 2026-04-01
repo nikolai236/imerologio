@@ -5,7 +5,7 @@ const path = "/candles";
 
 export async function isSupported(id: number) {
 	try {
-		await api.get(path + '/supported/' + id);
+		await api.get(path + "/supported/" + id);
 		return true
 	} catch (err) {
 		return false;

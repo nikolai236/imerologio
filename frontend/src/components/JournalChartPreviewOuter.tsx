@@ -21,11 +21,10 @@ export default function JournalChartPreviewOuter({
 	disabled = false,
 }: Props) {
 	return (
-		<JournalChartContextProvider chart={chart}>
+		<JournalChartContextProvider chart={chart} symbols={symbols}>
 			<JournalChartPreview
 				disabled={disabled}
 				parentLoading={parentLoading}
-				symbols={symbols}
 				idx={idx}
 			/>
 		</JournalChartContextProvider>

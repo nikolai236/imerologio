@@ -55,11 +55,35 @@ const useJournalCharts = () => {
 		charts.filter(c => c.tempId != id)
 	);
 
+	type ApiChart =
+		DbJournalChart<Date, Timeframe> |
+		DbJournalChart<string, Timeframe>;
+
+	const overwriteCharts = (charts: ApiChart[]) => setCharts(
+		charts.map(({
+			timeframe,
+			id,
+			objects,
+			start,
+			end,
+			symbolId,
+		}) => ({
+			id,
+			timeframe,
+			symbolId,
+			tempId: uid(),
+			objects,
+			start,
+			end,
+		}))
+	);
+
 	return {
 		charts,
 		addChart,
 		removeChart,
 		updateChart,
+		setCharts: overwriteCharts,
 	} as const;
 };
 

@@ -1,13 +1,21 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-import type { JournalChart, JournalEntry } from "../../../shared/journal.types";
+import type { DbJournalChart, DbJournalTrade, JournalChart, JournalEntry } from "../../../shared/journal.types";
 import type { Timeframe } from "../../../shared/candles.types";
 import type { DbSymbol } from "../../../shared/trades.types";
 
 import type { TempJournalChart } from "./useJournalCharts";
-import { createJounrnalEntry } from "../api/journal";
+import { createJounrnalEntry, getJournalEntry, updateJournalEntry } from "../api/journal";
+import type { TempJournalTrade } from "./useJournalTrades";
 
-const useCreateJournalEntry = (charts: TempJournalChart[], allSymbols: DbSymbol[]) => {
+const useJournalEntry = (
+	charts: TempJournalChart[],
+	trades: TempJournalTrade[],
+	allSymbols: DbSymbol[],
+	setCharts: (charts: DbJournalChart<any, Timeframe>[]) => void,
+	setTrades: (trades: DbJournalTrade<any, Timeframe>[]) => void,
+	id?: number,
+) => {
 	const [formError, setFormError] = useState<string | null>(null);
 	const [submitting, setSubmitting] = useState(false);
 
@@ -16,6 +24,24 @@ const useCreateJournalEntry = (charts: TempJournalChart[], allSymbols: DbSymbol[
 
 	const [fromDate, setFromDate] = useState(Date.now());
 	const [toDate, setToDate] = useState(Date.now());
+
+	useEffect(() => {
+		if (!id) return;
+
+		getJournalEntry(id)
+			.then((e) => {
+
+				setTitle(e.title);
+				setContent(e.content);
+
+				setFromDate(new Date(e.from).getTime());
+				setToDate(new Date(e.to).getTime());
+
+				setCharts(e.charts);
+				setTrades(e.trades);
+
+			}).catch(console.error);
+	}, [id]);
 
 	const validate = () => {
 		if (!title) {
@@ -51,7 +77,7 @@ const useCreateJournalEntry = (charts: TempJournalChart[], allSymbols: DbSymbol[
 			to,
 
 			charts: charts as JournalChart<Timeframe>[],
-			trades: [],
+			trades,
 		};
 
 		return entry;
@@ -79,6 +105,30 @@ const useCreateJournalEntry = (charts: TempJournalChart[], allSymbols: DbSymbol[
 		}
 	};
 
+	const submitUpdate = async () => {
+		if (!id) return;
+
+		let entry: JournalEntry<Date, Timeframe>;
+		try {
+			entry = validate();
+		} catch (err: any) {
+			console.error(err);
+			return setFormError(err.message);
+		}
+
+		setSubmitting(true);
+		setFormError(null);
+
+		try {
+			await updateJournalEntry(id, entry);
+		} catch (err: any) {
+			console.error(err);
+			setFormError(err?.message ?? "Failed to create trade");
+		} finally {
+			setSubmitting(false);
+		}
+	};
+
 	return {
 		formError,
 		submitting,
@@ -96,7 +146,8 @@ const useCreateJournalEntry = (charts: TempJournalChart[], allSymbols: DbSymbol[
 		setToDate,
 
 		submitNewEntry,
+		submitUpdate,
 	} as const;
 };
 
-export default useCreateJournalEntry;
+export default useJournalEntry;

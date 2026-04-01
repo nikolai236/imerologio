@@ -2,13 +2,13 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import JournalChartContext from "../context/JournalChartContext";
 import type { IChartApi } from "lightweight-charts";
 
-import type { Candle } from "../../../shared/candles.types";
 import type { TempJournalChart } from "../hooks/useJournalCharts";
-import useSymbolId from "../hooks/useSymbolId";
 import useJournalContext from "../hooks/useJournalContext";
 import type { DbSymbol } from "../../../shared/trades.types";
 import type { Direction } from "../hooks/useJournalTrades";
 
+import useSymbolId from "../hooks/useSymbolId";
+import useCandles from "../hooks/useCandles";
 
 type Props = {
 	chart: TempJournalChart;
@@ -27,7 +27,6 @@ export default function JournalChartContextProvider({
 	type Series = ReturnType<IChartApi["addSeries"]> | null;
 	const seriesRef = useRef<Series>(null);
 
-	const [candles, setCandles] = useState<Candle[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [drawingTrade, setDrawingTrade] = useState<Direction | null>(null);
@@ -39,9 +38,27 @@ export default function JournalChartContextProvider({
 		isSupported
 	} = useSymbolId();
 
+	const symbol = useMemo(
+		() => symbols.find(s => s.id == Number(symbolId)) ?? null,
+		[symbols, symbolId],
+	);
+
+	const { candles, setCandles } = useCandles(
+		chart,
+		symbol,
+		isSupported,
+		setLoading,
+		setError
+	);
+
 	const { trades, updateChart } = useJournalContext();
 
 	useEffect(() => {
+		if (symbolId === "") {
+			setSymbolId(String(chart.symbolId ?? ""));
+			return;
+		}
+
 		const { tempId } = chart;
 		updateChart(tempId, { symbolId: Number(symbolId) });
 	}, [symbolId]);
@@ -69,6 +86,7 @@ export default function JournalChartContextProvider({
 		chart,
 		trades: relevantTrades,
 		symbols,
+		symbol,
 
 		candles,
 		setCandles,

@@ -7,7 +7,7 @@ import {
 	Text,
 } from "@chakra-ui/react";
 import { getJournalEntries, type ApiJournalEntry } from "../api/journal";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import PlusButton from "./PlusButton";
 
 const formatDateTime = (value: string | Date) =>
@@ -23,6 +23,8 @@ export default function JournalTablePage() {
 	const [entries, setEntries] = useState<ApiJournalEntry[]>([]);
 	const [loading, setLoading] = useState(true);
 
+	const navigate = useNavigate();
+
 	useEffect(() => {
 		setLoading(true);
 
@@ -32,6 +34,10 @@ export default function JournalTablePage() {
 			.finally(() => setLoading(false));
 
 	}, []);
+
+	const goToEntryPage = (entry: ApiJournalEntry) => () => {
+		navigate(`/journal/${entry.id}`);
+	};
 
 	return (
 		<Box p={6}>
@@ -62,7 +68,7 @@ export default function JournalTablePage() {
 
 					<Table.Body>
 						{entries.map((entry) => (
-							<Table.Row key={entry.id}>
+							<Table.Row key={entry.id} onClick={goToEntryPage(entry)}>
 								<Table.Cell>
 									<Text fontWeight="bold">
 										{entry.title}

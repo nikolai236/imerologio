@@ -9,6 +9,7 @@ import type { DbSymbol } from "../../../shared/trades.types";
 type ContextType = {
 	chart: TempJournalChart,
 	symbols: DbSymbol[];
+	symbol: DbSymbol | null;
 
 	candles: Candle[]
 	setCandles: Dispatch<Candle[]>;

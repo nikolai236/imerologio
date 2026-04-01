@@ -222,6 +222,38 @@ const useJournalTrades = () => {
 		[trades]
 	);
 
+	type ApiTrade = 
+		DbJournalTrade<Date, Timeframe> |
+		DbJournalTrade<string, Timeframe>;
+
+	const overwriteTrades = (trades: ApiTrade[]) => setTrades(
+		trades.map(trade => {
+			const {
+				id,
+				pnl,
+				target,
+				stop,
+				symbolId,
+			} = trade;
+
+			const orders = trade.orders.map(order => ({
+				...order,
+				date: new Date(order.date),
+				tempId: uid(),
+			}));
+
+			return {
+				id,
+				tempId: uid(),
+				pnl,
+				target,
+				stop,
+				symbolId,
+				orders,
+			};
+		})
+	);
+
 	return {
 		trades,
 		addTrade,
@@ -232,6 +264,8 @@ const useJournalTrades = () => {
 		addOrder,
 		updateOrder,
 		removeOrder,
+
+		setTrades: overwriteTrades,
 	} as const;
 };
 

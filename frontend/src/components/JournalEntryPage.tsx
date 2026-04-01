@@ -14,7 +14,7 @@ import JournalCharts from "./JournalCharts";
 import useJournalContext from "../hooks/useJournalContext";
 import DatePicker from "./DatePicker";
 
-export default function CreateJournalEntryPage() {
+export default function JournalEntryPage() {
 	const {
 		symbols,
 		loadingSymbols,
@@ -34,13 +34,13 @@ export default function CreateJournalEntryPage() {
 		toDate,
 		setToDate,
 
-		submitNewEntry,
+		submitUpdate,
 	} = useJournalContext();
 
 	return (
 		<Box p={6} maxW="1000px" mx="auto">
 			<Text fontSize="2xl" fontWeight="bold" mb={4}>
-				Create JournalEntry
+				Edit Journal Entry
 			</Text>
 
 			{formError ? (
@@ -101,8 +101,8 @@ export default function CreateJournalEntryPage() {
 					<Button variant="outline" onClick={() => window.history.back()}>
 						Cancel
 					</Button>
-					<Button onClick={submitNewEntry} loading={submitting} disabled={submitting}>
-						Create Trade
+					<Button onClick={submitUpdate} loading={submitting} disabled={submitting}>
+						Submit Update
 					</Button>
 				</Flex>
 			</VStack>

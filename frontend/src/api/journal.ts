@@ -1,5 +1,5 @@
 import type { Timeframe } from "../../../shared/candles.types";
-import type { DbJournalEntry, JournalEntry } from "../../../shared/journal.types";
+import type { DbJournalEntry, JournalEntry, UpdateJournalEntry } from "../../../shared/journal.types";
 
 import api from "./api";
 
@@ -30,5 +30,13 @@ export async function createJounrnalEntry(
 	payload: JournalEntry<Date, Timeframe>
 ) {
 	const entry = await api.post(path, payload);
+	return sanitizeDates(entry) as ApiJournalEntry;
+}
+
+export async function updateJournalEntry(
+	id: number,
+	payload:  UpdateJournalEntry<Date, Timeframe>
+) {
+	const entry = await api.patch(`${path}/${id}`, payload);
 	return sanitizeDates(entry) as ApiJournalEntry;
 }

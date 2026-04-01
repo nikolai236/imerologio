@@ -8,6 +8,7 @@ import CreateTradePageOuter from "./CreateTradePageOuter";
 import Scoring from "./Scoring";
 import JournalTablePage from "./JournalTablePage";
 import CreateJournalEntryPageOuter from "./CreateJournalEntryPageOuter";
+import JournalEntryPageOuter from "./JournalEntryPageOuter";
 
 function RootLayout() {
 	return (<>
@@ -20,18 +21,19 @@ export default function App() {
 	return (
 		<Routes>
 			<Route element={<RootLayout />}>
-				<Route path='/' element={<Navigate to='/trades' replace />} />
-				<Route path='trades'>
+				<Route path="/" element={<Navigate to="/trades" replace />} />
+				<Route path="trades">
 					<Route index element={<TradesPage />} />
-					<Route path='create' element={<CreateTradePageOuter />} />
-					<Route path="/trades/:id" element={<TradePageOuter />} />
+					<Route path="create" element={<CreateTradePageOuter />} />
+					<Route path=":id" element={<TradePageOuter />} />
 				</Route>
-				<Route path='symbols' element={<Symbols />} />
-				<Route path='labels' element={<Labels />} />
+				<Route path="symbols" element={<Symbols />} />
+				<Route path="labels" element={<Labels />} />
 				<Route path="scoring" element={<Scoring />} />
 				<Route path="journal">
 					<Route index element={<JournalTablePage />} />
 					<Route path="create" element={<CreateJournalEntryPageOuter />} />
+					<Route path=":id" element={<JournalEntryPageOuter />} />
 				</Route>
 			</Route>
 		</Routes>

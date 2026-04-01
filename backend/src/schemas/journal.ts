@@ -83,7 +83,7 @@ const UpdateJournalChart = Type.Composite([
 ]);
 
 const JournalEntry = Type.Object({
-	title: DateString,
+	title: Type.String(),
 	from: DateString,
 	to: DateString,
 	content: Type.String(),

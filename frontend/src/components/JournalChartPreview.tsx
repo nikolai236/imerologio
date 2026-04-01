@@ -8,22 +8,19 @@ import {
 	Button,
 	HStack,
 } from '@chakra-ui/react';
-import { useEffect, useMemo } from 'react';
 
 import type { Timeframe } from '../../../shared/candles.types';
-
-import { isTimeframeValid } from '../hooks/useTradeCharts';
-import useDraft from '../hooks/useDraft';
 
 import DatePicker from './DatePicker';
 import OhlcLabel from './OhlcLabel';
 import CopyMenu from './CopyMenu';
-
-import { getCandlesForRange } from "../api/candles";
 import SymbolSelect from './SymbolSelect';
+import EditJournalTrade from './EditJournalTrade';
+
+import { isTimeframeValid } from '../hooks/useTradeCharts';
+import useDraft from '../hooks/useDraft';
 import useJournalChartPreview from '../hooks/useJournalChartPreview';
 import useJournalContext from '../hooks/useJournalContext';
-import EditJournalTrade from './EditJournalTrade';
 import useJournalChartContext from '../hooks/useJournalChartContext';
 
 const formatDateTime = (value: string | Date) =>
@@ -51,8 +48,8 @@ export default function JournalChartPreview({
 		trades: relevantTrades,
 		symbols,
 
+		symbol,
 		candles,
-		setCandles,
 
 		openTrade,
 		setOpenTradeId,
@@ -63,12 +60,10 @@ export default function JournalChartPreview({
 		containerRef,
 
 		loading,
-		setLoading,
 
 		error,
 		setError,
 
-		isSupported,
 		setSymbolId,
 	} = useJournalChartContext();
 
@@ -82,11 +77,6 @@ export default function JournalChartPreview({
 	const [draftTf, setDraftTf] = useDraft(timeframe);
 
 	const { updateChart, removeChart } = useJournalContext();
-
-	const symbol = useMemo(
-		() => symbols.find(s => s.id == Number(chart.symbolId)) ?? null,
-		[symbols, chart],
-	);
 
 	const {
 		ohlcLabel,
@@ -110,27 +100,6 @@ export default function JournalChartPreview({
 		!error &&
 		candles.length > 0 &&
 		Number(chart.symbolId) > 0;
-
-	useEffect(() => {
-		if (!isSupported || symbol == null) return;
-
-		setLoading(true);
-		setError(null);
-
-		getCandlesForRange(
-			symbol.name,
-			chart.timeframe,
-			Number(chart.start),
-			Number(chart.end)
-		)
-			.then(setCandles)
-			.catch((e) => {
-				setError(e?.message ?? "Failed to load candles");
-				setCandles([]);
-			})
-			.finally(() => setLoading(false));
-
-	}, [chart, symbol, isSupported]);
 
 	return (
 		<Box
