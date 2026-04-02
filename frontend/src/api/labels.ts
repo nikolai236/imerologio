@@ -2,6 +2,7 @@ import type {
 	ApiScoringResponse,
 	DbLabelEntry,
 	Label,
+	PerformanceReport,
 	UpdateLabel
 } from "../../../shared/trades.types";
 
@@ -15,6 +16,16 @@ export async function getLabels(symbols=false) {
 	const { labels } = await api.get(path, query);
 	return labels as DbLabelEntry[];
 };
+
+export async function getPerformance(
+	includeIds: number[], excludeIds: number[]
+) {
+	const report = await api.get(`${path}/performance`, {
+		includeIds: includeIds.join(","),
+		excludeIds: excludeIds.join(","),
+	});
+	return report as PerformanceReport;
+}
 
 export async function getScoring(filterBe: boolean, beThreshold: number) {
 	if (filterBe && isNaN(beThreshold)) {

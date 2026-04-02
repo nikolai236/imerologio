@@ -124,7 +124,7 @@ export const NewsEvent = Type.Object({
 
 export const NewsEvents = Type.Array(NewsEvent);
 
-const NullableNumber = Type.Union([
+export const NullableNumber = Type.Union([
 	Type.Null(),
 	Type.Number(),
 ]);

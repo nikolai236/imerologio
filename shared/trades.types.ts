@@ -123,6 +123,12 @@ export interface DbLabel extends Label {
 
 export type LabelUnion = Label | DbLabelEntry | LabelEntry;
 
+export interface PerformanceReport {
+	profitFactor: number | null;
+	winRate: number;
+	trades: ApiTrade[];
+}
+
 export interface ScoreSet {
 	labelIds: number[];
 	support: number;

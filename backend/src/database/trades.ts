@@ -254,12 +254,45 @@ const tradeRepository = (db: PrismaClient) => {
 		return cleanOrder(order);
 	};
 
+	const getTradesForLabels = async (
+		includeIds: number[],
+		excludeIds: number[]
+	) => {
+		const trades = await db.trade.findMany({
+			where: {
+				AND: [
+					...includeIds.map(labelId => ({
+						labels: { some: { labelId } },
+					})),
+					...(excludeIds.length > 0
+						? [{
+							labels: {
+								none: {
+									labelId: {
+										in: excludeIds
+									}
+								}
+							}
+						}]
+						: []
+					)
+				],
+			},
+			include
+		});
+
+		return trades.map(cleanTrade) as DbTrade<
+			DbChart<number>, DbOrder<Date>
+		>[];
+	};
+
 	return {
 		getAllTrades,
 		getTradeById,
 		createTrade,
 		deleteTrade,
 		updateTrade,
+		getTradesForLabels,
 		getOrderById,
 		getTradeScoringData,
 	} as const;

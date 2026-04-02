@@ -44,6 +44,7 @@ export default async function buildApp(logger=true) {
 	await app.register(uploadsPlugin);
 
 	// app.addHook("onRequest", async (req) => {
+	// 	console.log("RAW QUERY:", req.query)
 	// 	console.log("RAW BODY:", req.id, req.body);
 	// 	console.log("HEADERS:", req.headers["content-type"]);
 	// });

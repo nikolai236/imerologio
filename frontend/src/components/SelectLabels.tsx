@@ -24,7 +24,9 @@ import { createLabel } from "../api/labels";
 type Props = {
 	labels: DbLabelEntry[];
 	open: boolean;
+	allowCreate?: boolean;
 	disabled?: boolean;
+
 	handleEditClick?: () => void;
 	setOpen: (value: boolean) => void;
 	reloadLabels: () => void;
@@ -33,6 +35,8 @@ type Props = {
 export default function SelectLabels({
 	open,
 	labels,
+	allowCreate = true,
+
 	setOpen,
 	reloadLabels,
 }: Props) {
@@ -68,7 +72,7 @@ export default function SelectLabels({
 
 	const canCreate = useMemo(() => {
 		const q = query.trim();
-		return q.length > 0 && !exactMatch;
+		return allowCreate && q.length > 0 && !exactMatch;
 	}, [query, exactMatch]);
 
 	const onCreate = async () => {

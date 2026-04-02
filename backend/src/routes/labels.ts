@@ -8,7 +8,12 @@ import {
 	patchLabelSchema,
 	deleteLabelSchema,
 	getLabelScoringSchema,
+	getLabelPerformance,
 } from "../schemas/labels";
+import labelsPerformanceService from "../services/performance";
+
+const parseIdArray = (ids?: string) =>
+	ids?.split(",").map(Number) ?? [];
 
 const router: FastifyPluginAsync = async (server) => {
 	const {
@@ -20,6 +25,7 @@ const router: FastifyPluginAsync = async (server) => {
 	} = labelRepository(server.prisma);
 
 	const getScores = scoringService(server.prisma);
+	const getPerformance = labelsPerformanceService(server.prisma);
 
 	interface Get { Querystring: { symbols?: boolean; } }
 	server.get<Get>("/", getLabelsSchema, async (req, reply) => {
@@ -28,11 +34,39 @@ const router: FastifyPluginAsync = async (server) => {
 		return reply.code(200).send({ labels });
 	});
 
+	interface GetPerformance {
+		Querystring: {
+			includeIds?: string;
+			excludeIds?: string;
+		}
+	}
+	server.get<GetPerformance>(
+		"/performance",
+		getLabelPerformance,
+		async (req, reply) => {
+			const includeIds = parseIdArray(req.query.includeIds);
+			const excludeIds = parseIdArray(req.query.excludeIds);
+
+			if (includeIds.some(id => excludeIds.includes(id))) {
+				const message = "Ids both included and excluded exist.";
+				return reply.code(400).send({ message });
+			}
+
+			if ([...includeIds, ...excludeIds].some(isNaN)) {
+				const message = "Invalid ids provided.";
+				return reply.code(400).send({ message });
+			}
+
+			const performance = await getPerformance(includeIds, excludeIds);
+			return reply.code(200).send(performance);
+		}
+	);
+
 	interface GetScoring {
 		Querystring: {
 			filterBe?: boolean;
 			beThreshold?: number;
-		};
+		}
 	}
 	server.get<GetScoring>("/scoring", getLabelScoringSchema, async (req, reply) => {
 		const filterBe = req.query.filterBe ?? false;

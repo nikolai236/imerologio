@@ -1,19 +1,39 @@
 import { Type } from "@sinclair/typebox";
-import { IdParams, ErrorMessage, Labels, Label, ScoringResponse } from "./common";
+import { IdParams, ErrorMessage, Labels, Label, ScoringResponse, NullableNumber, Trade } from "./common";
+
+const PerformanceReport = Type.Object({
+	profitFactor: NullableNumber,
+	winRate: Type.Number(),
+	trades: Type.Array(Trade),
+});
 
 export const getLabelsSchema = {
 	schema: {
 		querystring: Type.Optional(Type.Object({
 			symbols: Type.Optional(Type.Boolean()),
-		}, { additionalProperties: false })),
+		})),
 		response: {
 			200: Type.Object({
 				labels: Labels
-			}, { additionalProperties: false }),
+			}),
 			400: ErrorMessage,
 			500: ErrorMessage,
 		},
 	},
+} as const;
+
+export const getLabelPerformance = {
+	schema: {
+		querystring: Type.Optional(Type.Object({
+			includeIds: Type.Optional(Type.String()),
+			excludeIds: Type.Optional(Type.String()),
+		})),
+		resposnse: {
+			200: PerformanceReport,
+			400: ErrorMessage,
+			500: ErrorMessage,
+		}
+	}
 } as const;
 
 export const getLabelScoringSchema = {
@@ -38,7 +58,7 @@ export const postLabelSchema = {
 		response: {
 			201: Type.Object({
 				label: Label
-			}, { additionalProperties: false }),
+			}),
 			400: ErrorMessage,
 			500: ErrorMessage,
 		}
@@ -54,7 +74,7 @@ export const patchLabelSchema = {
 		response: {
 			200: Type.Object({
 				label: Label
-			}, { additionalProperties: false }),
+			}),
 			400: ErrorMessage,
 			404: ErrorMessage,
 			500: ErrorMessage,
@@ -68,7 +88,7 @@ export const deleteLabelSchema = {
 		response: {
 			200: Type.Object({
 				message: Type.String()
-			}, { additionalProperties: false }),
+			}),
 			404: ErrorMessage,
 			400: ErrorMessage,
 			500: ErrorMessage,
