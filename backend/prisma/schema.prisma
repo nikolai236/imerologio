@@ -80,6 +80,7 @@ model Label {
 
 	name   String @unique
 	trades TradeLabel[]
+	journalTrades JournalTradeLabel[]
 
 	symbolId Int?  @unique
 	symbol Symbol? @relation(fields: [symbolId], references: [id], onDelete: Cascade)
@@ -135,6 +136,17 @@ model TradeLabel {
 	@@map("trade_labels")
 }
 
+model JournalTradeLabel {
+	tradeId Int
+	labelId Int
+
+	trade JournalTrade @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+	label Label @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+	@@id([tradeId, labelId])
+	@@map("JournalTradeLabel")
+}
+
 model JournalEntry {
 	id Int @id @default(autoincrement())
 
@@ -164,6 +176,7 @@ model JournalTrade {
 	symbolId Int
 
 	orders JournalOrder[]
+	labels JournalTradeLabel[]
 
 	journalEntry JournalEntry @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
 	symbol       Symbol       @relation(fields: [symbolId], references: [id], onDelete: Cascade)

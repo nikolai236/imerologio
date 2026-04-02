@@ -39,10 +39,14 @@ const Sections = {
 } as const;
 
 export default function TradePage() {
-	const { labels, loadingLabels, reload: reloadLabels } = useFetchLabels();
+	const { labels, loadingLabels, reloadLabels: reloadLabels } = useFetchLabels();
 	const { symbols, loadingSymbols } = useFetchSymbols();
 
 	const {
+		tradeId,
+		setSelectedLabelIds,
+		selectedLabelIds,
+
 		formError,
 		submitting,
 		submitTradeEdit,
@@ -125,6 +129,8 @@ export default function TradePage() {
 
 				<SectionWrapper section={Sections.labels}>
 					<SelectLabelButton
+						selectedIds={selectedLabelIds}
+						setLabelIds={setSelectedLabelIds}
 						loading={loadingLabels}
 						setOpen={setLabelsOpen}
 						labels={labels} />
@@ -171,6 +177,9 @@ export default function TradePage() {
 			</VStack>
 
 			<SelectLabels
+				tradeId={tradeId}
+				selectedIds={selectedLabelIds}
+				setSelectedIds={setSelectedLabelIds}
 				labels={labels}
 				open={labelsOpen}
 				setOpen={setLabelsOpen}

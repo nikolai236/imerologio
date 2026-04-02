@@ -1,7 +1,6 @@
-import { Box, Flex, Text, Button, HStack, Tag, CloseButton } from "@chakra-ui/react"
+import { Box, Flex, Text, Button, HStack, Badge } from "@chakra-ui/react"
 import EditButton from "./EditButton"
 import type { DbLabelEntry } from "../../../shared/trades.types";
-import useTradeContext from "../hooks/useTradeContext";
 import { useMemo } from "react";
 
 type Props = {
@@ -9,23 +8,23 @@ type Props = {
 	disabled?: boolean;
 	labels: DbLabelEntry[];
 
+	selectedIds: number[];
+	setLabelIds: (update: ((ids: number[]) => number[]) | number[]) => void;
+
 	handleEditClick?: ()=>void;
 	setOpen: (val: boolean) => void;
 }
 
 export default function SelectLabelButton({
+	selectedIds,
 	loading,
 	disabled=false,
 	labels,
 
+	setLabelIds,
 	setOpen,
 	handleEditClick,
 }: Props) {
-	const {
-		selectedLabelIds: selectedIds,
-		setSelectedLabelIds: setLabelIds,
-	} = useTradeContext();
-
 	const removeLabel = (id: number) => setLabelIds(
 		(prev) => prev.filter((x) => x !== id)
 	);
@@ -68,17 +67,18 @@ export default function SelectLabelButton({
 			{selected.length ? (
 				<HStack mt={3} wrap="wrap" gap={2}>
 					{selected.map((l) => (
-						<Tag.Root key={l.id} borderRadius="full">
-							<Tag.Label>{l.name}</Tag.Label>
-							{disabled ? null : (
-								<CloseButton
-									size="sm"
-									ml={1}
-									onClick={() => removeLabel(l.id)}
-									aria-label={`Remove ${l.name}`}
-								/>
-							)}
-						</Tag.Root>
+						<Badge
+							key={l.id}
+							colorPalette="gray"
+							px={2}
+							py={1}
+							borderRadius="md"
+							cursor="pointer"
+							aria-label={`Remove ${l.name}`}
+							onClick={() => removeLabel(l.id)}
+						>
+							{l.name} ×
+					</Badge>
 					))}
 				</HStack>
 			) : (

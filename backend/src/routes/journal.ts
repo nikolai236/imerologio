@@ -47,7 +47,7 @@ const router: FastifyPluginAsync = async (server) => {
 	const {
 		getJournalEntries,
 		getJournalEntry,
-		createJounrnalEntry,
+		createJournalEntry,
 		updateJournalEntry,
 	} = journalRepository(server.prisma);
 
@@ -110,7 +110,7 @@ const router: FastifyPluginAsync = async (server) => {
 		}
 
 		try {
-			const created = await createJounrnalEntry(entry);
+			const created = await createJournalEntry(entry);
 			const serialized = serialize(created);
 			return reply.code(200).send(serialized);
 

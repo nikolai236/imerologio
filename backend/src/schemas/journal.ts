@@ -34,6 +34,9 @@ const JournalTrade = Type.Object({
 	stop: Type.Number(),
 	pnl: Type.Number(),
 	symbolId: Type.Integer(),
+	labels: Type.Array(Type.Object({
+		id: Type.Integer(),
+	})),
 	orders: Type.Array(JournalOrder, {
 		minItems: 2,
 	}),

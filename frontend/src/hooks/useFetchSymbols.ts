@@ -21,7 +21,7 @@ const useFetchSymbols = () => {
 	return {
 		symbols,
 		loadingSymbols: loading,
-		reload,
+		reloadSymbols: reload,
 	};
 }
 

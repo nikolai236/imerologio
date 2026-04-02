@@ -17,7 +17,7 @@ import { deleteLabel, updateLabel, createLabel } from "../api/labels";
 
 export default function Labels() {
 	const { rowErrorById, setRowError, clearRowError } = useRowErrors();
-	const { labels, reload } = useFetchLabels();
+	const { labels, reloadLabels: reload } = useFetchLabels();
 
 	const [draftName, setDraftName] = useState("");
 	const [editingId, setEditingId] = useState<number|null>(null);

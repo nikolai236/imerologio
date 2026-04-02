@@ -21,7 +21,7 @@ const useFetchLabels = (symbols=false) => {
 	return {
 		labels,
 		loadingLabels: loading,
-		reload,
+		reloadLabels: reload,
 	};
 }
 

@@ -4,6 +4,7 @@ import useJournalTrades from "../hooks/useJournalTrades";
 import useJournalCharts from "../hooks/useJournalCharts";
 import useFetchSymbols from "../hooks/useFetchSymbols";
 import useJournalEntry from "../hooks/useJournalEntry";
+import useFetchLabels from "../hooks/useFetchLabels";
 
 type Props = {
 	children: ReactNode;
@@ -25,9 +26,12 @@ export default function JournalContextProvider({
 		charts, trades, symbols, setCharts, setTrades, entryId
 	);
 
+	const labelsObj = useFetchLabels();
+
 	const value = {
 		symbols,
 		loadingSymbols,
+		...labelsObj,
 		...chartObj,
 		...tradeObj,
 		...createObj,

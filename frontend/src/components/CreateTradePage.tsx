@@ -22,10 +22,14 @@ import TargetInput from "./TargetInput";
 import EntryCalendar from "./EntryCalendar";
 
 export default function CreateTradePage() {
-	const { labels, loadingLabels, reload: reloadLabels } = useFetchLabels();
+	const { labels, loadingLabels, reloadLabels: reloadLabels } = useFetchLabels();
 	const { symbols, loadingSymbols } = useFetchSymbols();
 
 	const {
+		tradeId,
+		selectedLabelIds,
+		setSelectedLabelIds,
+
 		formError,
 		submitting,
 		submitNewTrade,
@@ -72,6 +76,8 @@ export default function CreateTradePage() {
 				</Flex>
 
 				<SelectLabelButton
+					selectedIds={selectedLabelIds}
+					setLabelIds={setSelectedLabelIds}
 					labels={labels}
 					loading={loadingLabels}
 					setOpen={setLabelsOpen}
@@ -114,6 +120,9 @@ export default function CreateTradePage() {
 			</VStack>
 
 			<SelectLabels
+				tradeId={tradeId}
+				selectedIds={selectedLabelIds}
+				setSelectedIds={setSelectedLabelIds}
 				labels={labels}
 				open={labelsOpen}
 				setOpen={setLabelsOpen}

@@ -17,7 +17,7 @@ import { updateSymbol, createSymbol } from "../api/symbols";
 
 export default function Symbols() {
 	const { rowErrorById, setRowError, clearRowError } = useRowErrors();
-	const { symbols: unsorted, reload } = useFetchSymbols();
+	const { symbols: unsorted, reloadSymbols: reload } = useFetchSymbols();
 
 	const symbols = useMemo(() => {
 		const cmp = (a: Symbol, b: Symbol) => a.name.localeCompare(

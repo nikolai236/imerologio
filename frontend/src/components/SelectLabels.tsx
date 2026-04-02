@@ -18,15 +18,17 @@ import {
 } from '@chakra-ui/react';
 import { useState, useMemo } from 'react';
 import type { DbLabelEntry } from '../../../shared/trades.types';
-import useTradeContext from '../hooks/useTradeContext';
 import { createLabel } from "../api/labels";
 
 type Props = {
 	labels: DbLabelEntry[];
 	open: boolean;
+	tradeId?: number;
 	allowCreate?: boolean;
 	disabled?: boolean;
+	selectedIds: number[];
 
+	setSelectedIds: (update: ((ids: number[]) => number[]) | number[]) => void;
 	handleEditClick?: () => void;
 	setOpen: (value: boolean) => void;
 	reloadLabels: () => void;
@@ -36,16 +38,13 @@ export default function SelectLabels({
 	open,
 	labels,
 	allowCreate = true,
+	tradeId,
+	selectedIds,
 
+	setSelectedIds,
 	setOpen,
 	reloadLabels,
-}: Props) {
-	const {
-		tradeId,
-		selectedLabelIds: selectedIds,
-		setSelectedLabelIds: setSelectedIds,
-	} = useTradeContext();
-	
+}: Props) {	
 	const [query, setQuery] = useState("");
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);

@@ -26,9 +26,9 @@ const cleanOrder = (o: any): DbOrder<number> => ({
 	date: new Date(o.date).getTime(),
 });
 
-const produceOverwriteObj = <T extends {}>(elements: T[]) => {
+const produceOverwriteObj = <T extends object>(elements: T[]) => {
 	const existingIds = elements
-		.map(c => 'id' in c ? c.id : null)
+		.map(c => "id" in c ? c.id : null)
 		.filter((id): id is number => id != null);
 
 	const deleteMany = existingIds.length > 0
@@ -220,7 +220,7 @@ const tradeRepository = (db: PrismaClient) => {
 			...(symbol && { symbol }),
 
 			...(payload.labels && {
-				labels: payload.labels && {
+				labels: {
 					deleteMany: { tradeId: id },
 					create: payload.labels.map(
 						(connect) => ({ label: { connect }, })

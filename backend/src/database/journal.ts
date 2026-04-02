@@ -1,16 +1,31 @@
-import { PrismaClient } from "@prisma/client";
-import { DbJournalEntry, JournalEntry, JournalOrder, JournalTrade, UpdateJournalEntry, UpdateJournalOrder, UpdateJournalTrade } from "../../../shared/journal.types";
+import type { PrismaClient, JournalEntry as PrismaJournalEntry } from "@prisma/client";
+import type { DbJournalEntry, JournalEntry, JournalOrder, JournalTrade, UpdateJournalEntry, UpdateJournalOrder, UpdateJournalTrade } from "../../../shared/journal.types";
 
 const include = {
 	trades: {
 		include: {
 			orders: true,
+			labels: {
+				include: {
+					label: true
+				}
+			},
 		}
 	},
 	charts: true,
 } as const;
 
-const produceOverwriteObj = <T extends {}>(elements: T[]) => {
+const sanitizeTradeLabels = (
+	{ trades, ...entry }: any
+) => ({
+	...entry,
+	trades: trades.map(({ labels , ...trade }: any) => ({
+		...trade,
+		labels: labels.map(({ label }: any) => label)
+	}))
+})
+
+const produceOverwriteObj = <T extends object>(elements: T[]) => {
 	const existingIds = elements
 		.map(c => "id" in c ? c.id : null)
 		.filter((id): id is number => id != null);
@@ -38,10 +53,10 @@ const produceOverwriteObj = <T extends {}>(elements: T[]) => {
 	return { deleteMany, create, upsert } as const;
 };
 
-const buildOrdersCreate = (
-	orders: ((UpdateJournalOrder<string> | JournalOrder<string>) & { id?: number })[]
+const buildCreate = <T>(
+	elements: (T & { id?: number })[]
 ) => ({
-  create: orders.map(({ id, ...rest }) => rest),
+	create: elements.map(({ id, ...rest }) => rest),
 });
 
 const buildOrdersUpdate = (
@@ -61,21 +76,40 @@ const buildTradesUpdate = (trades: (UpdateJournalTrade<string> | JournalTrade<st
 			: {},
 		create: trades
 			.filter(t => !("id" in t) || t.id == null)
-			.map(({ orders, ...trade }) => ({
+			.map(({ orders, labels, ...trade }) => ({
 				...trade,
-				...(orders && { orders: buildOrdersCreate(orders) }),
+				...(orders && { orders: buildCreate(orders) }),
+				...(labels && { labels: {
+						create: labels.map(({ id }) => ({
+							label: { connect: { id } }
+						})) 
+					}
+				}),
 			})),
 		upsert: trades
 			.filter((t): t is typeof t & { id: number } => "id" in t && t.id != null)
-			.map(({ id, orders, ...trade }) => ({
+			.map(({ id, orders, labels, ...trade }) => ({
 				where: { id },
 				create: {
 					...trade,
-					...(orders && { orders: buildOrdersCreate(orders) }),
+					...(orders && { orders: buildCreate(orders) }),
+					...(labels && { labels: {
+							create: labels.map(({ id }) => ({
+								label: { connect: { id } }
+							})) 
+						}
+					}),
 				},
 				update: {
 					...trade,
 					...(orders && { orders: buildOrdersUpdate(orders) }),
+					...(labels && { labels: {
+							deleteMany: { tradeId: id },
+							create: labels.map(({ id }) => ({
+								label: { connect: { id } }
+							})) 
+						}
+					}),
 				},
 			})),
 	};
@@ -88,8 +122,9 @@ export default function journalRepository(db: PrismaClient) {
 			include,
 		});
 
+		const sanitized = entries.map(sanitizeTradeLabels);
 		// @ts-ignore
-		return entries as DbJournalEntry<Date, number>[];
+		return sanitized as DbJournalEntry<Date, number>[];
 	};
 
 	const getJournalEntry = async (id: number) => {
@@ -98,10 +133,11 @@ export default function journalRepository(db: PrismaClient) {
 			include,
 		});
 
-		return entry as DbJournalEntry<Date, number> | null;
+		const sanitized = sanitizeTradeLabels(entry);
+		return sanitized as DbJournalEntry<Date, number> | null;
 	};
 
-	const createJounrnalEntry = async (
+	const createJournalEntry = async (
 		payload: JournalEntry<string, number>
 	) => {
 		const charts = payload.charts ? {
@@ -132,6 +168,11 @@ export default function journalRepository(db: PrismaClient) {
 						type: o.type,
 					})),
 				},
+				labels: {
+					create: t.labels.map(({ id }) => ({
+						label: { connect: { id } },
+					}))
+				}
 			}))
 		} : undefined;
 
@@ -147,7 +188,8 @@ export default function journalRepository(db: PrismaClient) {
 			},
 		});
 
-		return entry as unknown as DbJournalEntry<Date, number>;
+		const sanitized = sanitizeTradeLabels(entry);
+		return sanitized as unknown as DbJournalEntry<Date, number>;
 	};
 
 	const updateJournalEntry = async (
@@ -155,12 +197,15 @@ export default function journalRepository(db: PrismaClient) {
 		payload: UpdateJournalEntry<string, number>
 	) => {
 		payload.trades = payload.trades
-			?.map(({target, stop, pnl, orders, symbolId, ...rest}) => ({
+			?.map(({target, stop, pnl, orders, symbolId, labels, ...rest}) => ({
 				...("id" in rest && { id: rest.id }),
 				...(target != undefined && { target }),
 				...(stop != undefined && { stop }),
 				...(pnl != undefined && { pnl }),
 				...(symbolId != undefined && { symbolId }),
+				...(labels != undefined && {
+					labels: labels.map(({ id }) => ({ id })),
+				}),
 				...(orders != undefined && {
 					orders: orders
 						.map(({ quantity, date, price, type, ...rest }) => ({
@@ -213,13 +258,14 @@ export default function journalRepository(db: PrismaClient) {
 			where: { id },
 		});
 
-		return entry as DbJournalEntry<Date, number>;
+		const sanitized = sanitizeTradeLabels(entry);
+		return sanitized as DbJournalEntry<Date, number>;
 	};
 
 	return {
 		getJournalEntries,
 		getJournalEntry,
-		createJounrnalEntry,
+		createJournalEntry,
 		updateJournalEntry,
 	} as const;
 }

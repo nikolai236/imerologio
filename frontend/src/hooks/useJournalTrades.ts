@@ -103,6 +103,7 @@ const generateNewTrade = (
 		stop,
 		symbolId,
 		orders,
+		labels: [],
 	};
 };
 
@@ -235,6 +236,7 @@ const useJournalTrades = () => {
 				target,
 				stop,
 				symbolId,
+				labels,
 			} = trade;
 
 			const orders = trade.orders
@@ -255,6 +257,7 @@ const useJournalTrades = () => {
 				stop,
 				symbolId,
 				orders,
+				labels,
 			};
 		})
 	);

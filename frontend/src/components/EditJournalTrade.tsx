@@ -15,7 +15,7 @@ import {
 	Flex,
 } from "@chakra-ui/react";
 import type { TempJournalTrade } from "../hooks/useJournalTrades";
-import { useCallback, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import OrderRow from "./OrderRow";
 import useJournalContext from "../hooks/useJournalContext";
 import StopInput from "./StopInput";
@@ -24,6 +24,8 @@ import TargetInput from "./TargetInput";
 import { Timeframes } from "../../../shared/candles.types";
 import useTimeframe from "../hooks/useTimeframe";
 import type { UTCTimestamp } from "lightweight-charts";
+import SelectLabelButton from "./SelectLabelButton";
+import SelectLabels from "./SelectLabels";
 
 type Props = {
 	trade: TempJournalTrade | null;
@@ -36,8 +38,21 @@ export default function EditJournalTrade({
 }: Props) {
 	if (trade == null) return null;
 
+	const [labelsOpen, setLabelsOpen] = useState(false);
+	const [selectedLabelIds, setSelectedLabelIds] = useState(
+		trade.labels.map(label => label.id)
+	);
+	useEffect(() => {
+		updateTrade(trade.tempId, {
+			labels: selectedLabelIds.map(id => ({ id }))
+		});	
+	}, [selectedLabelIds]);
+
 	const { normalizeEntry } = useTimeframe();
 	const {
+		labels,
+		loadingLabels,
+		reloadLabels,
 		getOrders,
 		addOrder,
 		updateOrder,
@@ -141,6 +156,14 @@ export default function EditJournalTrade({
 							</VStack>
 						</Box>
 
+						<SelectLabelButton
+							selectedIds={selectedLabelIds}
+							setLabelIds={setSelectedLabelIds}
+							labels={labels}
+							loading={loadingLabels}
+							setOpen={setLabelsOpen}
+						/>
+
 						<Box>
 							<Flex align="center" justify="space-between" wrap="wrap" gap={3} mb={3}>
 								<Box>
@@ -191,6 +214,15 @@ export default function EditJournalTrade({
 							))}
 							</VStack>
 						</Box>
+						<SelectLabels
+							tradeId={trade.id}
+							selectedIds={selectedLabelIds}
+							setSelectedIds={setSelectedLabelIds}
+							labels={labels}
+							open={labelsOpen}
+							setOpen={setLabelsOpen}
+							reloadLabels={reloadLabels}
+						/>
 					</DialogBody>
 
 					<DialogFooter>
