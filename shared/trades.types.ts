@@ -135,13 +135,14 @@ export interface ScoreSet {
 	muIn: number;
 	redundancy: number | null;
 	profitFactor: number | null;
-	upliftPnl: number;
+	totalPnl: number;
 	score: number;
 }
 
 export type Level = ScoreSet[];
 
 export interface ApiScoringResponse {
+	total: number;
 	mean: number;
 	tradeCount: number;
 	levels: Level[];

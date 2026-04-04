@@ -49,7 +49,7 @@ function TradeRow({ trade }: { trade: TempJournalTrade }) {
 	const last = formatDateTime(trade.orders.at(-1)!.date);
 	const pnl = trade.pnl;
 
-	const [show, setShow] = useState(trade.show);
+	const [show, setShow] = useState(true);
 	const toggleShow = (show: boolean) => {
 		if (!shouldShow(trade, chart)) {
 			setShow(false);

@@ -27,7 +27,7 @@ import {
 	Tooltip,
 	CartesianGrid,
 } from "recharts";
-import useScoring from "../hooks/useScoring";
+import useScoring, { type SortBy } from "../hooks/useScoring";
 import { useMemo } from "react";
 
 const fmt = (x: number) =>
@@ -35,8 +35,6 @@ const fmt = (x: number) =>
 
 const fmtInt = (x: number) =>
 	new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(x);
-
-type SortBy = "upliftPnl" | "upliftPerSupport" | "muIn" | "score" | "profitFactor";
 
 const ColoredBar = (props: any) => {
 	const { x, y, width, height, value } = props;
@@ -253,10 +251,8 @@ export default function Scoring() {
 												onChange={(e) => setSortBy(e.target.value as SortBy)}
 												bg="bg.canvas"
 											>
-												<option value="upliftPerSupport">
-													upliftPnl / support (normalized)
-												</option>
-												<option value="profitFactor">Profit Factor</option>
+												<option value="totalPnl">total pnl</option>
+												<option value="profitFactor">profit factor</option>
 												<option value="muIn">mean</option>
 												<option value="score">score</option>
 											</NativeSelect.Field>
@@ -439,8 +435,8 @@ export default function Scoring() {
 								<Table.Row>
 									<Table.ColumnHeader>labels</Table.ColumnHeader>
 									<Table.ColumnHeader textAlign="end">support</Table.ColumnHeader>
-									<Table.ColumnHeader textAlign="end">upliftPnl per trade</Table.ColumnHeader>
-									<Table.ColumnHeader textAlign="end">mean PNL</Table.ColumnHeader>
+									<Table.ColumnHeader textAlign="end">total</Table.ColumnHeader>
+									<Table.ColumnHeader textAlign="end">mean</Table.ColumnHeader>
 									<Table.ColumnHeader textAlign="end">PF</Table.ColumnHeader>
 									<Table.ColumnHeader textAlign="end">best mean / batch mean</Table.ColumnHeader>
 									<Table.ColumnHeader textAlign="end">score</Table.ColumnHeader>
@@ -448,13 +444,12 @@ export default function Scoring() {
 							</Table.Header>
 
 							<Table.Body>
-								{filtered.map((r) => {
-									const pos = r.upliftPnl >= 0;
+								{filtered.map((row) => {
 									return (
-										<Table.Row key={r.key}>
+										<Table.Row key={row.key}>
 											<Table.Cell>
 												<Wrap>
-													{r.labelIds.map((id) => (
+													{row.labelIds.map((id) => (
 														<WrapItem key={id}>
 															<Badge
 																variant="subtle"
@@ -469,33 +464,33 @@ export default function Scoring() {
 												</Wrap>
 											</Table.Cell>
 
-											<Table.Cell textAlign="end">{fmtInt(r.support)}</Table.Cell>
+											<Table.Cell textAlign="end">{fmtInt(row.support)}</Table.Cell>
 
 											<Table.Cell textAlign="end">
-												<Badge variant={pos ? "solid" : "subtle"}>
-													{pos ? "+" : ""}
-													{fmt(r.upliftPerSupport)}
+												<Badge variant="subtle">
+													{row.totalPnl >= 0 ? "+" : ""}
+													{fmt(row.totalPnl)}%
 												</Badge>
 											</Table.Cell>
 
 											<Table.Cell textAlign="end">
-												<Badge variant={data?.mean && r.muIn > data.mean ? "solid" : "subtle"}>
-													{fmt(r.muIn)}
+												<Badge variant={data?.mean && row.muIn > data.mean ? "solid" : "subtle"}>
+													{fmt(row.muIn)}
 												</Badge>
 											</Table.Cell>
 
 											<Table.Cell textAlign="end">
-												<Badge variant={(r.profitFactor == null || data?.profitFactor == null || r.profitFactor > data.profitFactor) ? "solid" : "subtle"}>
-													{r.profitFactor != null ? fmt(r.profitFactor) : "∞"}
+												<Badge variant={(row.profitFactor == null || data?.profitFactor == null || row.profitFactor > data.profitFactor) ? "solid" : "subtle"}>
+													{row.profitFactor != null ? fmt(row.profitFactor) : "∞"}
 												</Badge>
 											</Table.Cell>
 
 											<Table.Cell textAlign="end">
-												{r.redundancy != null ? fmt(r.redundancy) : "-"}
+												{row.redundancy != null ? fmt(row.redundancy) : "-"}
 											</Table.Cell>
 
 											<Table.Cell textAlign="end">
-												{fmt(r.score)}
+												{fmt(row.score)}
 											</Table.Cell>
 										</Table.Row>
 									);

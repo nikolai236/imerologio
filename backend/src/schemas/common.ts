@@ -135,7 +135,7 @@ const ScoreSet = Type.Object({
 	support: Type.Integer(),
 	muIn: Type.Number(),
 	redundancy: NullableNumber,
-	upliftPnl: Type.Number(),
+	totalPnl: Type.Number(),
 	score: Type.Number(),
 	profitFactor: NullableNumber,
 
@@ -143,6 +143,7 @@ const ScoreSet = Type.Object({
 
 export const ScoringResponse = Type.Object({
 
+	total: Type.Number(),
 	mean: Type.Number(),
 	minSupport: Type.Integer(),
 	profitFactor: NullableNumber,

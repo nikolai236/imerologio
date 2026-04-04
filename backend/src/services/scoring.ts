@@ -5,6 +5,7 @@ import labelRepository from "../database/labels";
 import Bitset, { and, countTrailingZeros, popcount } from "../../lib/bitset";
 
 type Means = {
+	total: number;
 	muAll: number;
 	profitFactor: number | null;
 	avgAbsPnl: number;
@@ -42,6 +43,7 @@ const computeMeans = (trades: TradeScoringData[]): Means => {
 
 	const count = trades.length;
 	return {
+		total: sum,
 		muAll: count ? sum / count : 0,
 		profitFactor: loss  ? profit / loss : null,
 		avgAbsPnl: count ? absSum / count : 1,
@@ -61,9 +63,9 @@ const computeRedundancyIndex = (
 			key += (key ? "," : "") + candIds[h]; 
 		}
 
-		const subsetUplift = prevKeysMeans.get(key);
-		if (subsetUplift == null) continue;
-		if (subsetUplift > bestMean) bestMean = subsetUplift!;
+		const subsetMean = prevKeysMeans.get(key);
+		if (subsetMean == null) continue;
+		if (subsetMean > bestMean) bestMean = subsetMean!;
 	}
 
 	if (bestMean == -Infinity) return null;
@@ -74,8 +76,8 @@ const computeRedundancyIndex = (
 	return redundancy;
 }
 
-const getCombinedScore = (support: number, upliftPnl: number | null, means: Means) => {
-	const normal = (upliftPnl ?? 0) / (means.avgAbsPnl + EPS);
+const getCombinedScore = (support: number, totalPnl: number, means: Means) => {
+	const normal = totalPnl / (means.avgAbsPnl + EPS);
 	const supportWeight = Math.log1p(support);
 
 	return supportWeight * (Math.abs(normal));
@@ -109,6 +111,7 @@ const scoreBitset = (set: Bitset, pnls: number[]) => {
 
 	return {
 		support,
+		totalPnl: sum,
 		profitFactor: profit ? loss ? profit / loss : null : profit,
 		muIn: support ? sum / support : null,
 	};
@@ -142,12 +145,10 @@ const buildFirstLevel = (
 		const bitset = labelIdsBitsets.get(id);
 		if (bitset == null) return prev;
 
-		const { support, muIn, profitFactor } = scoreBitset(bitset, pnls);
+		const { support, muIn, profitFactor, totalPnl } = scoreBitset(bitset, pnls);
 		if (support < minSupport) return prev;
 
-		const upliftPnl = muIn != null ? muIn - means.muAll : null;
-
-		const combined = getCombinedScore(support, upliftPnl, means);
+		const combined = getCombinedScore(support, totalPnl, means);
 
 		prev.push({
 			labelIds: [id],
@@ -156,7 +157,7 @@ const buildFirstLevel = (
 			redundancy: null,
 			muIn: muIn ?? 0,
 			profitFactor,
-			upliftPnl: upliftPnl ?? 0,
+			totalPnl,
 			score: combined,
 		});
 
@@ -244,12 +245,10 @@ const buildNextLevel = (
 
 				and(a.bitset, b.bitset, tempBitset);
 
-				const { support, profitFactor, muIn } = scoreBitset(tempBitset, pnls);
+				const { support, profitFactor, muIn, totalPnl } = scoreBitset(tempBitset, pnls);
 				if (support < minSupport) continue;
 
-				const upliftPnl = muIn != null ? muIn - means.muAll : null;
-
-				const combined = getCombinedScore(support, upliftPnl, means);
+				const combined = getCombinedScore(support, totalPnl, means);
 
 				const redundancy = computeRedundancyIndex(
 					muIn, prevKeysMeans, candIds
@@ -262,7 +261,7 @@ const buildNextLevel = (
 					redundancy,
 					profitFactor,
 					muIn: muIn ?? 0,
-					upliftPnl: upliftPnl ?? 0,
+					totalPnl,
 					score: combined,
 				});
 			}
@@ -325,7 +324,7 @@ const scoringService = (db: PrismaClient) => {
 			profitFactor: set.profitFactor,
 			redundancy: null,
 			muIn: set.muIn,
-			upliftPnl: set.upliftPnl,
+			totalPnl: set.totalPnl,
 			score: set.score,
 		}));
 
@@ -346,7 +345,7 @@ const scoringService = (db: PrismaClient) => {
 				muIn: set.muIn,
 				profitFactor: set.profitFactor,
 				redundancy: set.redundancy,
-				upliftPnl: set.upliftPnl,
+				totalPnl: set.totalPnl,
 				score: set.score,
 			}));
 
