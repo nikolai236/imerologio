@@ -4,7 +4,12 @@ const useDraft = <T>(variable: T): [string, React.Dispatch<React.SetStateAction<
 	const [draft, setDraft] = useState(`${variable}`);
 
 	useEffect(
-		() => setDraft(`${variable}`),
+		() => {
+			if (typeof variable === "number" && variable % 1 !== 0) {
+				return setDraft(variable.toFixed(3));
+			}
+			setDraft(`${variable}`);
+		},
 		[variable]
 	);
 

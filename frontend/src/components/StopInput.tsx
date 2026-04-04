@@ -33,7 +33,7 @@ export default function StopInput({
 					onClick={handleEditClick ?? (()=>{})}
 				/>
 				<Input
-					value={Number(draft).toFixed(3)}
+					value={draft}
 					disabled={disabled}
 					onBlur={() => saveDraft()}
 					onChange={e => setDraft(e.target.value)}

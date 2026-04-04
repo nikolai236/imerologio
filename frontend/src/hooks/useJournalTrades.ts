@@ -8,6 +8,7 @@ import type {
 } from "../../../shared/journal.types";
 import type { OrderEnum } from "../../../shared/trades.types";
 import type { TempJournalChart } from "./useJournalCharts";
+import { createTrade } from "../api/trades";
 
 export type TempJournalOrder = (
 	DbJournalOrder<Date> |
@@ -177,7 +178,6 @@ const useJournalTrades = () => {
 		prev => prev.filter(t => t.tempId != id)
 	);
 
-
 	const addOrder = (tradeId: string) => updateTrade(tradeId, {
 		orders: (orders) => {
 			if (orders.length === 0) return orders;
@@ -262,6 +262,45 @@ const useJournalTrades = () => {
 		})
 	);
 
+	const saveAsTableTrade = async (
+		{ orders, ...trade }: TempJournalTrade
+	) => {
+		const tableTrade = await createTrade({
+			...trade,
+			charts: [],
+			description: "",
+			orders: orders.map(({ date, ...order }) => ({
+				...order,
+				date: new Date(date).getTime(),
+			})),
+		});
+		return tableTrade;
+	};
+
+	const getOrderSum = (orders: TempJournalOrder[]) =>
+		orders.reduce(
+			(sum, { type, quantity }) =>
+				sum +
+				(type === "BUY" ? 1 : -1) *
+				Number(quantity),
+			0
+		);
+
+	const shouldShow = (
+		trade: TempJournalTrade,
+		chart: TempJournalChart
+	) => {
+		if (
+			trade.orders.length < 2 ||
+			getOrderSum(trade.orders) !== 0
+		) return false;
+
+		const first = new Date(trade.orders[0].date).getTime();
+		const last  = new Date(trade.orders.at(-1)!.date).getTime();
+
+		return first >= chart.start && last <= chart.end;
+	};
+
 	return {
 		trades,
 		addTrade,
@@ -274,6 +313,9 @@ const useJournalTrades = () => {
 		removeOrder,
 
 		setTrades: overwriteTrades,
+		saveAsTableTrade,
+
+		shouldShow,
 	} as const;
 };
 

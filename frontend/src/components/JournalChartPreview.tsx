@@ -7,9 +7,11 @@ import {
 	VStack,
 	Button,
 	HStack,
+	Checkbox,
 } from '@chakra-ui/react';
 
 import type { Timeframe } from '../../../shared/candles.types';
+import type { TempJournalTrade } from '../hooks/useJournalTrades';
 
 import DatePicker from './DatePicker';
 import OhlcLabel from './OhlcLabel';
@@ -22,6 +24,7 @@ import useDraft from '../hooks/useDraft';
 import useJournalChartPreview from '../hooks/useJournalChartPreview';
 import useJournalContext from '../hooks/useJournalContext';
 import useJournalChartContext from '../hooks/useJournalChartContext';
+import { useState } from 'react';
 
 const formatDateTime = (value: string | Date) =>
 	new Date(value).toLocaleString("en-US", {
@@ -37,6 +40,62 @@ type Props = {
 	parentLoading: boolean;
 	disabled?: boolean;
 };
+
+function TradeRow({ trade }: { trade: TempJournalTrade }) {
+	const { shouldShow, } = useJournalContext();
+	const { chart, setOpenTradeId } = useJournalChartContext();
+
+	const first = formatDateTime(trade.orders[0].date);
+	const last = formatDateTime(trade.orders.at(-1)!.date);
+	const pnl = trade.pnl;
+
+	const [show, setShow] = useState(trade.show);
+	const toggleShow = (show: boolean) => {
+		if (!shouldShow(trade, chart)) {
+			setShow(false);
+			return;
+		}
+
+		setShow(show);
+	};
+
+	return (
+		<Box
+			key={trade.tempId}
+			p={2}
+			borderWidth="1px"
+			borderRadius="md"
+			onClick={() => setOpenTradeId(trade.tempId)}
+		>
+			<Flex
+				justify="space-between"
+				gap={3}
+				align="center"
+				w="100%"
+			>
+				<HStack gap={2} flex="1" minW={0}>
+					<Text fontSize="sm" whiteSpace="nowrap"> from: {first};</Text>
+					<Text fontSize="sm" lineClamp={1}> to: {last} </Text>
+					<Text fontSize="xs" color={pnl >= 0 ? "green.600" : "red.400"}>
+					pnl: {pnl.toFixed(2)}
+					</Text>
+				</HStack>
+
+				<Checkbox.Root
+					checked={show}
+					onClick={e => e.stopPropagation()}
+					onCheckedChange={({ checked }) => toggleShow(!!checked)}
+				>
+					<Checkbox.HiddenInput />
+					<Checkbox.Control>
+						<Checkbox.Indicator />
+					</Checkbox.Control>
+					<Checkbox.Label />
+				</Checkbox.Root>
+			</Flex>
+		</Box>
+	);
+}
 
 export default function JournalChartPreview({
 	idx,
@@ -284,32 +343,9 @@ export default function JournalChartPreview({
 				</Box>
 
 				<VStack align="stretch" gap={2}>
-					{relevantTrades.map((trade) => {
-
-						const first = formatDateTime(trade.orders[0].date);
-						const last = formatDateTime(trade.orders.at(-1)!.date);
-						const pnl = trade.pnl;
-
-						return (
-							<Box
-								key={trade.tempId}
-								p={2}
-								borderWidth="1px"
-								borderRadius="md"
-								onClick={() => setOpenTradeId(trade.tempId)}
-							>
-								<Flex justify="space-between" gap={3} align="center" w="100%">
-									<HStack gap={2} flex="1" minW={0}>
-										<Text fontSize="sm" whiteSpace="nowrap"> from: {first};</Text>
-										<Text fontSize="sm" lineClamp={1}> to: {last} </Text>
-										<Text fontSize="xs" color={pnl >= 0 ? "green.600" : "red.400"}>
-											pnl: {pnl.toFixed(2)}
-										</Text>
-									</HStack>
-								</Flex>
-							</Box>
-						);
-					})}
+				{relevantTrades.map((trade, i) =>
+					<TradeRow trade={trade} key={i} />
+				)}
 				</VStack>
 			</Box>
 		</Box>
