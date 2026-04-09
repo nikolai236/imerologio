@@ -1,5 +1,8 @@
 import type { FastifyPluginAsync } from "fastify";
-import { Label, UpdateLabel } from "../../../shared/trades.types";
+import type {
+	Label,
+	UpdateLabel,
+} from "../../../shared/trades.types";
 import labelRepository from "../database/labels";
 import scoringService from "../services/scoring";
 import {
@@ -74,7 +77,7 @@ const router: FastifyPluginAsync = async (server) => {
 
 		if (filterBe && req.query.beThreshold == null) {
 			return reply.code(400).send({
-				message: "Please prvide breakeven threshold",
+				message: "Please provide breakeven threshold",
 			});
 		}
 

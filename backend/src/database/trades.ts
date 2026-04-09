@@ -127,29 +127,48 @@ const tradeRepository = (db: PrismaClient) => {
 	};
 
 	const getTradeScoringData = async () => {
-		const data = await db.$queryRaw<TradeScoringData[]>`
-			SELECT
-				t.id,
-				COALESCE(
-					SUM(
-						CASE
-							WHEN o.type = 'SELL' THEN  o.quantity * o.price
-							WHEN o.type = 'BUY'  THEN -o.quantity * o.price
-							ELSE 0
-						END
-					),
-					0
-				) AS pnl
-			FROM "Trade" t
-			LEFT JOIN "Order" o
-				ON o."tradeId" = t.id
-			WHERE t.deleted = false
-			GROUP BY t.id
-			ORDER BY t.id
+		const data = await db.$queryRaw<any[]>`
+		SELECT
+			t.id,
+			t.stop,
+			COALESCE(
+				SUM(
+					CASE
+						WHEN o.type = 'SELL' THEN  o.quantity * o.price
+						WHEN o.type = 'BUY'  THEN -o.quantity * o.price
+						ELSE 0
+					END
+				),
+				0
+			) AS pnl,
+			entry.price AS "entryPrice",
+			entry.quantity AS "entryQuantity"
+		FROM "Trade" t
+
+		LEFT JOIN "Order" o
+			ON o."tradeId" = t.id
+
+		LEFT JOIN (
+			SELECT DISTINCT ON ("tradeId")
+				"tradeId",
+				quantity,
+				price
+			FROM "Order"
+			ORDER BY "tradeId", date ASC
+		) entry
+			ON entry."tradeId" = t.id
+
+		WHERE t.deleted = false
+
+		GROUP BY t.id, entry.price, entry.quantity
+		ORDER BY t.id;
 		`;
 
-		data.forEach(e => { e.pnl = Number(e.pnl); });
-		return data;
+		return data.map(({ id, stop, pnl, entryPrice, entryQuantity }) => ({
+			id,
+			pnl: Number(pnl),
+			risk: Math.abs(entryPrice - stop) * entryQuantity
+		} as TradeScoringData));
 	};
 
 	// gate to all CRUD operations

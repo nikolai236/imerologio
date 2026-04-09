@@ -21,6 +21,7 @@ type Options = {
 
 type WorkingScoreSet = ScoreSet & {
 	bitset: Bitset;
+	risk: number;
 };
 
 const EPS = 1e-9;
@@ -76,15 +77,17 @@ const computeRedundancyIndex = (
 	return redundancy;
 }
 
-const getCombinedScore = (support: number, totalPnl: number, means: Means) => {
-	const normal = totalPnl / (means.avgAbsPnl + EPS);
+const getCombinedScore = (support: number, totalPnl: number, risk: number) => {
 	const supportWeight = Math.log1p(support);
+	const edge = totalPnl >= 0
+		? totalPnl / risk
+		: totalPnl * risk;
 
-	return supportWeight * (Math.abs(normal));
+	return Math.log1p(Math.abs(edge)) * Math.sign(edge);
 };
 
-const scoreBitset = (set: Bitset, pnls: number[]) => {
-	let support = 0, sum = 0, profit = 0, loss = 0;
+const scoreBitset = (set: Bitset, pnls: number[], risks: number[]) => {
+	let support = 0, sum = 0, profit = 0, loss = 0, riskSum = 0;
 
 	for (let j = 0; j < set.array.length; j++) {
 		let word = set.array[j];
@@ -97,7 +100,9 @@ const scoreBitset = (set: Bitset, pnls: number[]) => {
 			const bit = countTrailingZeros(lsb);
 
 			const i = (j << 5) + bit;
+
 			sum += pnls[i];
+			riskSum += risks[i];
 
 			if (pnls[i] > 0) {
 				profit += pnls[i];
@@ -111,6 +116,7 @@ const scoreBitset = (set: Bitset, pnls: number[]) => {
 
 	return {
 		support,
+		averageRisk: riskSum / support,
 		totalPnl: sum,
 		profitFactor: profit ? loss ? profit / loss : null : profit,
 		muIn: support ? sum / support : null,
@@ -138,19 +144,26 @@ const buildFirstLevel = (
 	labelIds: number[],
 	labelIdsBitsets: Map<number, Bitset>,
 	pnls: number[],
-	means: Means,
+	risks: number[],
 	minSupport: number,
 ) => {
 	const out = labelIds.reduce<WorkingScoreSet[]>((prev, id) => {
 		const bitset = labelIdsBitsets.get(id);
 		if (bitset == null) return prev;
 
-		const { support, muIn, profitFactor, totalPnl } = scoreBitset(bitset, pnls);
+		const {
+			support,
+			muIn,
+			profitFactor,
+			totalPnl,
+			averageRisk
+		} = scoreBitset(bitset, pnls, risks);
 		if (support < minSupport) return prev;
 
-		const combined = getCombinedScore(support, totalPnl, means);
+		const combined = getCombinedScore(support, totalPnl, averageRisk);
 
 		prev.push({
+			risk: averageRisk,
 			labelIds: [id],
 			bitset,
 			support,
@@ -176,7 +189,7 @@ const buildNextLevel = (
 	prevLevel: WorkingScoreSet[],
 	k: number,
 	pnls: number[],
-	means: Means,
+	risks: number[],
 	minSupport: number,
 ) => {
 	const prefixLen = k - 2;
@@ -245,10 +258,16 @@ const buildNextLevel = (
 
 				and(a.bitset, b.bitset, tempBitset);
 
-				const { support, profitFactor, muIn, totalPnl } = scoreBitset(tempBitset, pnls);
+				const {
+					support,
+					profitFactor,
+					muIn,
+					totalPnl,
+					averageRisk
+				} = scoreBitset(tempBitset, pnls, risks);
 				if (support < minSupport) continue;
 
-				const combined = getCombinedScore(support, totalPnl, means);
+				const combined = getCombinedScore(support, totalPnl, averageRisk);
 
 				const redundancy = computeRedundancyIndex(
 					muIn, prevKeysMeans, candIds
@@ -258,6 +277,7 @@ const buildNextLevel = (
 					labelIds: candIds,
 					bitset: cloneBitset(tempBitset),
 					support,
+					risk: averageRisk,
 					redundancy,
 					profitFactor,
 					muIn: muIn ?? 0,
@@ -295,6 +315,8 @@ const scoringService = (db: PrismaClient) => {
 		}
 		
 		const pnls = trades.map(({ pnl }) => pnl);
+		const risks = trades.map(({ risk }) => risk);
+
 		const means = computeMeans(trades);
 
 		const minSupport = Math.max(
@@ -311,7 +333,7 @@ const scoringService = (db: PrismaClient) => {
 			labelIds,
 			labelIdsBitsets,
 			pnls,
-			means,
+			risks,
 			minSupport
 		);
 
@@ -333,7 +355,7 @@ const scoringService = (db: PrismaClient) => {
 		for (let k = 2; k <= options.maxLevels; k++) {
 			if (current.length <= 1) break;
 
-			let next = buildNextLevel(current, k, pnls, means, minSupport);
+			const next = buildNextLevel(current, k, pnls, risks, minSupport);
 			if (next.length == 0) break;
 
 			let sorted = [...next].sort((a, b) => b.score - a.score);

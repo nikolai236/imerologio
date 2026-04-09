@@ -6,7 +6,7 @@ import { usePriceDraft } from "./useDraft";
 
 import { getScoring } from "../api/labels";
 
-export type SortBy = "totalPnl" | "muIn" | "score" | "profitFactor";
+export type SortBy = "totalPnl" | "muIn" | "score" | "profitFactor" | "score";
 type SortDir = "desc" | "asc";
 
 type Row = ScoreSet & {
@@ -143,7 +143,7 @@ const useScoring = () => {
 
 				return a.labelIds.length - b.labelIds.length;
 			}),
-		[rows, queryLabels, minK, maxK, sortBy, sortDir]
+		[rows, queryLabels, minK, maxK, sortBy, sortDir, getName]
 	);
 
 	const chartData = useMemo(() => {

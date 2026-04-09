@@ -92,6 +92,7 @@ export interface DbTrade<
 export interface TradeScoringData {
 	id: number;
 	pnl: number;
+	risk: number;
 }
 
 export type ApiTrade = DbTrade<DbChart<Timeframe>, DbOrder<Date>>
