@@ -254,6 +254,7 @@ export default function Scoring() {
 												<option value="totalPnl">total pnl</option>
 												<option value="profitFactor">profit factor</option>
 												<option value="muIn">mean</option>
+												<option value="winRate">win rate</option>
 												<option value="score">score</option>
 											</NativeSelect.Field>
 										</NativeSelect.Root>
@@ -398,9 +399,11 @@ export default function Scoring() {
 													<strong>{label}</strong>
 													{payload.map((p) => (
 														<div key={String(p.dataKey)}>
-															{p.name == "sortPf" ?
-																<>PF: {p.payload.profitFactor != null ? fmt(p.value) : "∞"} </> :
-																<>{p.name}: {fmt(p.value as number)}</>
+															{p.name === "sortPf"
+																? <>PF: {p.payload.profitFactor != null ? fmt(p.value) : "∞"} </>
+																: p.name === "winRate" || p.name === "totalPnl"
+																	? <>{p.name}: {p.value}%</>
+																	: <>{p.name}: {fmt(p.value as number)}</>
 															}
 														</div>
 													))}
@@ -438,6 +441,7 @@ export default function Scoring() {
 									<Table.ColumnHeader textAlign="end">total</Table.ColumnHeader>
 									<Table.ColumnHeader textAlign="end">mean</Table.ColumnHeader>
 									<Table.ColumnHeader textAlign="end">PF</Table.ColumnHeader>
+									<Table.ColumnHeader textAlign="end">win rate</Table.ColumnHeader>
 									<Table.ColumnHeader textAlign="end">best mean / batch mean</Table.ColumnHeader>
 									<Table.ColumnHeader textAlign="end">score</Table.ColumnHeader>
 								</Table.Row>
@@ -483,6 +487,10 @@ export default function Scoring() {
 												<Badge variant={(row.profitFactor == null || data?.profitFactor == null || row.profitFactor > data.profitFactor) ? "solid" : "subtle"}>
 													{row.profitFactor != null ? fmt(row.profitFactor) : "∞"}
 												</Badge>
+											</Table.Cell>
+
+											<Table.Cell textAlign="end">
+												{row.winRate}%
 											</Table.Cell>
 
 											<Table.Cell textAlign="end">

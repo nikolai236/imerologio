@@ -131,6 +131,7 @@ export interface PerformanceReport {
 }
 
 export interface ScoreSet {
+	winRate: number;
 	labelIds: number[];
 	support: number;
 	muIn: number;

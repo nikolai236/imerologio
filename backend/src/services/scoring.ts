@@ -87,7 +87,7 @@ const getCombinedScore = (support: number, totalPnl: number, risk: number) => {
 };
 
 const scoreBitset = (set: Bitset, pnls: number[], risks: number[]) => {
-	let support = 0, sum = 0, profit = 0, loss = 0, riskSum = 0;
+	let support = 0, sum = 0, profit = 0, loss = 0, riskSum = 0, wins = 0;
 
 	for (let j = 0; j < set.array.length; j++) {
 		let word = set.array[j];
@@ -104,7 +104,8 @@ const scoreBitset = (set: Bitset, pnls: number[], risks: number[]) => {
 			sum += pnls[i];
 			riskSum += risks[i];
 
-			if (pnls[i] > 0) {
+			if (pnls[i] >= 0) {
+				wins++;
 				profit += pnls[i];
 			} else {
 				loss += Math.abs(pnls[i]);
@@ -116,6 +117,7 @@ const scoreBitset = (set: Bitset, pnls: number[], risks: number[]) => {
 
 	return {
 		support,
+		winRate: wins / support,
 		averageRisk: riskSum / support,
 		totalPnl: sum,
 		profitFactor: profit ? loss ? profit / loss : null : profit,
@@ -156,13 +158,15 @@ const buildFirstLevel = (
 			muIn,
 			profitFactor,
 			totalPnl,
-			averageRisk
+			averageRisk,
+			winRate
 		} = scoreBitset(bitset, pnls, risks);
 		if (support < minSupport) return prev;
 
 		const combined = getCombinedScore(support, totalPnl, averageRisk);
 
 		prev.push({
+			winRate,
 			risk: averageRisk,
 			labelIds: [id],
 			bitset,
@@ -263,7 +267,8 @@ const buildNextLevel = (
 					profitFactor,
 					muIn,
 					totalPnl,
-					averageRisk
+					averageRisk,
+					winRate,
 				} = scoreBitset(tempBitset, pnls, risks);
 				if (support < minSupport) continue;
 
@@ -274,6 +279,7 @@ const buildNextLevel = (
 				);
 
 				out.push({
+					winRate,
 					labelIds: candIds,
 					bitset: cloneBitset(tempBitset),
 					support,
@@ -341,6 +347,7 @@ const scoringService = (db: PrismaClient) => {
 		sorted = sorted.slice(0, options.maxItemsetsPerLevel);
 
 		const scoreSets = sorted.map<ScoreSet>((set) => ({
+			winRate: set.winRate,
 			labelIds: set.labelIds,
 			support: set.support,
 			profitFactor: set.profitFactor,
@@ -362,6 +369,7 @@ const scoringService = (db: PrismaClient) => {
 			sorted = sorted.slice(0, options.maxItemsetsPerLevel);
 
 			const scoreSets = sorted.map<ScoreSet>((set) => ({
+				winRate: set.winRate,
 				labelIds: set.labelIds,
 				support: set.support,
 				muIn: set.muIn,

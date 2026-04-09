@@ -6,7 +6,7 @@ import { usePriceDraft } from "./useDraft";
 
 import { getScoring } from "../api/labels";
 
-export type SortBy = "totalPnl" | "muIn" | "score" | "profitFactor" | "score";
+export type SortBy = "totalPnl" | "muIn" | "score" | "profitFactor" | "score" | "winRate";
 type SortDir = "desc" | "asc";
 
 type Row = ScoreSet & {
@@ -74,14 +74,17 @@ const useScoring = () => {
 				.filter(s => s.redundancy == null || Math.abs(s.redundancy - 1) > 0.05)
 				.map(s => ({
 					...s,
-					totalPnl: data?.total ? (100 * s.totalPnl / data?.total) : 0,
+					winRate: Math.floor(s.winRate * 100),
+					totalPnl: data?.total
+						? (Math.floor(100 * s.totalPnl / data?.total))
+						: 0,
 					key: getKey(s.labelIds),
 					k: s.labelIds.length,
 				}))
 			).flat();
 	}, [data, getKey]);
 
-	const fallbackpF = useMemo(() => 
+	const fallbackPf = useMemo(() => 
 		Math.max(
 			...rows
 				.map(e => e.profitFactor)
@@ -154,12 +157,13 @@ const useScoring = () => {
 			name: row.labelIds.map(getName).join("\n"),
 			totalPnl: row.totalPnl,
 			muIn: row.muIn,
+			winRate: row.winRate,
 			profitFactor: row.profitFactor,
-			sortPf: row.profitFactor == null ? fallbackpF : row.profitFactor,
+			sortPf: row.profitFactor == null ? fallbackPf : row.profitFactor,
 			support: row.support,
 			score: row.score,
 		}));
-	}, [filtered, chartCount, sortBy, getName, fallbackpF]);
+	}, [filtered, chartCount, sortBy, getName, fallbackPf]);
 
 	return {
 		data,
@@ -172,7 +176,7 @@ const useScoring = () => {
 		sortBy,
 		sortDir,
 		chartCount,
-		fallbackpF,
+		fallbackPf,
 
 		filterBreakeven: filterBe,
 		beThresholdDraft,
