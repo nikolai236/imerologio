@@ -5,6 +5,7 @@ import labelRepository from "../database/labels";
 import Bitset, { and, countTrailingZeros, popcount } from "../../lib/bitset";
 
 type Means = {
+	winRate: number;
 	total: number;
 	muAll: number;
 	profitFactor: number | null;
@@ -27,12 +28,13 @@ type WorkingScoreSet = ScoreSet & {
 const EPS = 1e-9;
 
 const computeMeans = (trades: TradeScoringData[]): Means => {
-	let sum = 0, absSum = 0, profit = 0, loss = 0;
+	let sum = 0, absSum = 0, profit = 0, loss = 0, wins = 0;
 	
 	for (const { pnl } of trades) {
 		if (isNaN(pnl)) throw new Error("NaN pnl");
 
-		if (pnl > 0) {
+		if (pnl >= 0) {
+			wins++;
 			profit += pnl;
 		} else {
 			loss += Math.abs(pnl);
@@ -44,6 +46,7 @@ const computeMeans = (trades: TradeScoringData[]): Means => {
 
 	const count = trades.length;
 	return {
+		winRate: count ? wins / count : 0,
 		total: sum,
 		muAll: count ? sum / count : 0,
 		profitFactor: loss  ? profit / loss : null,
@@ -117,8 +120,8 @@ const scoreBitset = (set: Bitset, pnls: number[], risks: number[]) => {
 
 	return {
 		support,
-		winRate: wins / support,
-		averageRisk: riskSum / support,
+		winRate: support ? wins / support : 0,
+		averageRisk: support ? riskSum / support : 0,
 		totalPnl: sum,
 		profitFactor: profit ? loss ? profit / loss : null : profit,
 		muIn: support ? sum / support : null,

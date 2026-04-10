@@ -82,13 +82,14 @@ const router: FastifyPluginAsync = async (server) => {
 		}
 
 		const {
-			means: { muAll: mean, profitFactor, total },
+			means: { muAll: mean, profitFactor, total, winRate },
 			minSupport,
 			tradeCount,
 			levels,
 		} = await getScores(filterBe, beThreshold);
 
 		return reply.code(200).send({
+			winRate,
 			total,
 			profitFactor,
 			mean,

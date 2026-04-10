@@ -144,6 +144,7 @@ const ScoreSet = Type.Object({
 
 export const ScoringResponse = Type.Object({
 
+	winRate: Type.Number(),
 	total: Type.Number(),
 	mean: Type.Number(),
 	minSupport: Type.Integer(),

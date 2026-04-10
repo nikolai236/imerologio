@@ -145,6 +145,7 @@ export type Level = ScoreSet[];
 
 export interface ApiScoringResponse {
 	total: number;
+	winRate: number;
 	mean: number;
 	tradeCount: number;
 	levels: Level[];

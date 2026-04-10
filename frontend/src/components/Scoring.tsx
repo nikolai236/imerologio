@@ -125,7 +125,7 @@ export default function Scoring() {
 					<Heading size="lg">Label Scoring</Heading>
 				</Box>
 
-				<SimpleGrid columns={{ base: 1, md: 3 }} gap={4}>
+				<SimpleGrid columns={{ base: 1, md: 4 }} gap={4}>
 					<Box
 						bg="bg.surface"
 						borderWidth="1px"
@@ -171,6 +171,20 @@ export default function Scoring() {
 							</Stat.HelpText>
 						</Stat.Root>
 					</Box>
+
+					<Box
+						bg="bg.surface"
+						borderWidth="1px"
+						borderColor="border.default"
+						borderRadius="lg"
+						p={4}
+					>
+						<Stat.Root>
+							<Stat.Label>Average Win Rate</Stat.Label>
+							<Stat.ValueText>{fmt(Math.floor((data?.winRate ?? 0) * 100))}%</Stat.ValueText>
+						</Stat.Root>
+					</Box>
+
 				</SimpleGrid>
 
 				<Box
@@ -400,7 +414,7 @@ export default function Scoring() {
 													{payload.map((p) => (
 														<div key={String(p.dataKey)}>
 															{p.name === "sortPf"
-																? <>PF: {p.payload.profitFactor != null ? fmt(p.value) : "∞"} </>
+																? <>profit factor: {p.payload.profitFactor != null ? fmt(p.value) : "∞"} </>
 																: p.name === "winRate" || p.name === "totalPnl"
 																	? <>{p.name}: {p.value}%</>
 																	: <>{p.name}: {fmt(p.value as number)}</>
@@ -440,7 +454,7 @@ export default function Scoring() {
 									<Table.ColumnHeader textAlign="end">support</Table.ColumnHeader>
 									<Table.ColumnHeader textAlign="end">total</Table.ColumnHeader>
 									<Table.ColumnHeader textAlign="end">mean</Table.ColumnHeader>
-									<Table.ColumnHeader textAlign="end">PF</Table.ColumnHeader>
+									<Table.ColumnHeader textAlign="end">profit factor</Table.ColumnHeader>
 									<Table.ColumnHeader textAlign="end">win rate</Table.ColumnHeader>
 									<Table.ColumnHeader textAlign="end">best mean / batch mean</Table.ColumnHeader>
 									<Table.ColumnHeader textAlign="end">score</Table.ColumnHeader>
