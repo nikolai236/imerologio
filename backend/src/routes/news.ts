@@ -2,10 +2,11 @@ import type { FastifyPluginAsync } from "fastify";
 import type { NewsEvent, DateString } from "../../../shared/news.types";
 import newsRepository from "../database/news";
 import {
-	getEntryCalendarSchema,
+	getSingleDayCalendarSchema,
 	getNewsEventsSchema,
 	postBulkNewsSchema,
-	postNewsSchema
+	postNewsSchema,
+	getNewsEventsRangeSchema
 } from "../schemas/news";
 import newsService from "../services/news";
 
@@ -16,36 +17,61 @@ const router: FastifyPluginAsync = async (server) => {
 	} = newsRepository(server.prisma);
 
 	const {
-		getEntryCalendar,
+		getNewsEventsForRange,
+		getSingleDayCalendar,
 		getNewsEventsForDate
 	} = newsService(server.prisma);
 
-	interface IGet { Querystring: { date?: DateString; types?: string[]; }; }
-	server.get<IGet>('/', getNewsEventsSchema, async (req, reply) => {
-
+	interface IGet {
+		Querystring: {
+			date?: DateString;
+			types?: string[];
+		}
+	}
+	server.get<IGet>("/", getNewsEventsSchema, async (req, reply) => {
 		const types = req.query.types;
-		const date = req.query.date ?
-			new Date(req.query.date) : undefined;
+		const date = req.query.date
+			? new Date(req.query.date)
+			: undefined;
 
 		const newsEvents = await getNewsEventsForDate(date, types);
 		return reply.code(200).send({ newsEvents });
 	});
 
-	interface IGetEntryCalendar { Querystring: { date: DateString; }, }
-	server.get<IGetEntryCalendar>(
-		'/entry-calendar',
-		getEntryCalendarSchema,
+	interface IGetRange {
+		Querystring: {
+			start: DateString;
+			end: DateString;
+		}
+	}
+	server.get<IGetRange>(
+		"/range",
+		getNewsEventsRangeSchema,
 		async (req, reply) => {
+			const { start, end } = req.query;
 
+			const startDate = new Date(start);
+			const endDate = new Date(end);
+
+			const calendar = await getNewsEventsForRange(startDate, endDate);
+			return reply.code(200).send(calendar);
+		}
+	);
+
+	interface IGetSingleDayCalendar { Querystring: { date: DateString; } }
+	server.get<IGetSingleDayCalendar>(
+		"/single-day-calendar",
+		getSingleDayCalendarSchema,
+		async (req, reply) => {
 			const { date } = req.query;
-			const calendar = await getEntryCalendar(date);
+			const calendar = await getSingleDayCalendar(date);
 
 			return reply.status(200).send(calendar);
 		},
 	);
 
 	interface IPost { Body: NewsEvent<DateString>; }
-	server.post<IPost>('/', postNewsSchema, async (req, reply) => {
+	server.post<IPost>("/", postNewsSchema, async (req, reply) => {
 		try {
 			const newsEvent = await createNewsEvent(req.body);
 			return reply.code(201).send({ newsEvent });
@@ -56,7 +82,7 @@ const router: FastifyPluginAsync = async (server) => {
 	});
 
 	interface IPostBulk { Body: NewsEvent<DateString>[]; }
-	server.post<IPostBulk>('/bulk', postBulkNewsSchema, async (req, reply) => {
+	server.post<IPostBulk>("/bulk", postBulkNewsSchema, async (req, reply) => {
 		try {
 			const updated = await createManyNewsEvents(req.body);
 			return reply.code(201).send({ updated });

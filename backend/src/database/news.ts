@@ -1,96 +1,104 @@
-import { Prisma, PrismaClient } from "@prisma/client";
-import type { DateString, FolderColor, NewsEvent, NewsEventWithId } from "../../../shared/news.types";
+import type { Prisma, PrismaClient } from "@prisma/client";
+import type {
+	DateString,
+	FolderColor,
+	NewsEvent,
+	DbNewsEvent
+} from "../../../shared/news.types";
 
-const newsRepository = (db: PrismaClient) => {
-	const _cleanNewsEvent = <T extends NewsEvent|NewsEventWithId>(ev: T): T => ({
-		...ev,
-		date: new Date(ev.date).toISOString(),
-	});
+const sanitize = <T extends  Date | DateString>(
+	event: NewsEvent<any>
+): NewsEvent<T> => {
+	event.currencies = event.currencies.map(
+		c => c.toLowerCase()
+	);
 
-	const _getDateClause = (start: Date, end: Date) => {
-		return { date: { gte: start, lt: end } };
+	const {
+		currencies,
+		source,
+		date,
+		allDay,
+		folderColor,
+		metadata,
+		name,
+	} = event;
+
+	return {
+		currencies,
+		source,
+		date,
+		allDay,
+		folderColor,
+		metadata,
+		name,
 	};
+};
 
-	const _getOrClause = (values: string[], key: keyof NewsEvent<DateString>) => {
-		if (values.length == 0) return undefined;
-		if (values.length == 1) return { [key]: values[0], };
+const cleanDate = <T extends NewsEvent|DbNewsEvent>(ev: T): T => ({
+	...ev,
+	date: new Date(ev.date).toISOString(),
+});
 
-		return {
-			OR: values.map(value => ({ [key]: value })),
-		};
-	};
+const getDateClause = (start: Date, end: Date) => {
+	return { date: { gte: start, lt: end } } as const;
+};
 
-	const _sanitizeNewsEvent = <T extends  Date | DateString>(
-		event: NewsEvent<any>
-	): NewsEvent<T> => {
-		event.currencies = event.currencies.map(
-			c => c.toLowerCase()
-		);
+const getOrClause = (values: string[], key: keyof NewsEvent<DateString>) => {
+	if (values.length == 0) return undefined;
+	if (values.length == 1) return { [key]: values[0], };
 
-		const {
-			currencies,
-			source,
-			date,
-			allDay,
-			folderColor,
-			metadata,
-			name,
-		} = event;
+	return {
+		OR: values.map(value => ({ [key]: value })),
+	} as const;
+};
 
-		return {
-			currencies,
-			source,
-			date,
-			allDay,
-			folderColor,
-			metadata,
-			name,
-		};
-	};
-
+export default function newsRepository(db: PrismaClient) {
 	const getNewsEvents = async (
 		range?: { from: Date, upTo: Date },
 		types?: string[],
 		folderColors?: FolderColor[]
 	) => {
-		let where: Prisma.NewsEventWhereInput|undefined = undefined;
+		let where: Prisma.NewsEventWhereInput | undefined = undefined;
 
-		const addClause = (obj: Prisma.NewsEventWhereInput|undefined) => {
+		const addClause = (obj: Prisma.NewsEventWhereInput | undefined) => {
 			where = { ...where, ...obj };
 		};
 
 		if (range != null) {
-			addClause(_getDateClause(range.from, range.upTo));
+			addClause(getDateClause(range.from, range.upTo));
 		}
 
 		if (types != null) {
-			addClause(_getOrClause(types, 'name'));
+			addClause(getOrClause(types, 'name'));
 		}
 
 		if (folderColors != null) {
-			addClause(_getOrClause(folderColors, 'folderColor'));
+			addClause(getOrClause(folderColors, 'folderColor'));
 		}
 
 		const events = await db.newsEvent.findMany({
-			where, orderBy: { date: 'asc', },
-		}) as NewsEventWithId<Date>[];
+			where,
+			orderBy: { date: 'asc', },
+		}) as DbNewsEvent<Date>[];
 
-		return events.map(_cleanNewsEvent);
+		return events
+			.map(cleanDate)
+			.filter(e => e.currencies.includes("usd"));
 	};
 
 	const createNewsEvent = async (data: NewsEvent<any>) => {
-		_sanitizeNewsEvent(data);
+		sanitize(data);
 
 		const res = await db.newsEvent.create({ data });
-		return _cleanNewsEvent(res as NewsEventWithId<Date>);
+		return cleanDate(res as DbNewsEvent<Date>);
 	};
 
 	const createManyNewsEvents = async (data: NewsEvent<any>[]) => {
-		data.forEach(_sanitizeNewsEvent);
+		data.forEach(sanitize);
 
-		const { count } = await db.$transaction(async (tx) => {
-			return tx.newsEvent.createMany({ data });
-		});
+		const { count } = await db.$transaction(
+			async (tx) => tx.newsEvent.createMany({ data })
+		);
 		return count;
 	};
 
@@ -99,6 +107,4 @@ const newsRepository = (db: PrismaClient) => {
 		createNewsEvent,
 		createManyNewsEvents,
 	} as const;
-};
-
-export default newsRepository;
+}

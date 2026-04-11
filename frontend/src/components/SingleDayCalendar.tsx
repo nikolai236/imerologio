@@ -1,15 +1,14 @@
 import { Box, Flex, Spinner, Text, VStack } from "@chakra-ui/react";
-import useTradeContext from "../hooks/useTradeContext";
-import type { DateString, NewsEventWithId } from "../../../shared/news.types";
+import type { DateString, DbNewsEvent } from "../../../shared/news.types";
 import CalendarRow from "./CalendarRow";
+import useSingleDayCalendar from "../hooks/useSingleDayCalendar";
+import type { TempOrder } from "../hooks/useTradeOrders";
 
 function EventSection({
 	title,
 	events
-}: { title: string; events: NewsEventWithId<Date | DateString>[] }) {
-	if (events.length == 0) return null;
-
-	return (
+}: { title: string; events: DbNewsEvent<Date | DateString>[] }) {
+	return events.length === 0 ? null : (
 		<Box>
 			<Text fontSize="sm" color="fg.muted" mb={2}>
 				{title}
@@ -30,12 +29,18 @@ function EventSection({
 	);
 }
 
-export default function EntryCalendar() {
+type Props = {
+	orders: TempOrder[];
+};
+
+export default function SingleDayCalendar({
+	orders,
+}: Props) {
 	const {
 		calendar,
-		calendarError: error,
-		calendarLoading: loading,
-	} = useTradeContext();
+		loading,
+		error,
+	} = useSingleDayCalendar(orders);
 
 	if (calendar == null ||
 		Object.keys(calendar).length == 0 ||

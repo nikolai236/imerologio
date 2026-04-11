@@ -1,6 +1,6 @@
 import { Badge, Flex, HStack, Text } from "@chakra-ui/react";
 import { getUTCDateString, getDateForET } from "../lib/timezones";
-import type { DateString, FolderColor, NewsEventWithId } from "../../../shared/news.types";
+import type { DateString, FolderColor, DbNewsEvent } from "../../../shared/news.types";
 
 const impactColorMap: Record<FolderColor, string> = {
 	Grey: "gray",
@@ -22,15 +22,15 @@ function ImpactBadge({ impact }: { impact: FolderColor }) {
 
 export default function CalendarRow({
 	newsEvent
-}: { newsEvent: NewsEventWithId<Date | DateString> }) {
+}: { newsEvent: DbNewsEvent<Date | DateString> }) {
 	const { allDay, date: d, metadata } = newsEvent;
 	const date = new Date(d);
 
-	const dateStr = allDay ?
-		`${getUTCDateString(date)}, All day` :
-		metadata.time != null ?
-			`${getUTCDateString(date)}, ${metadata.time}` :
-			getDateForET(date);
+	const dateStr = allDay
+		? `${getUTCDateString(date)}, All day`
+		: metadata.time != null
+			? `${getUTCDateString(date)}, ${metadata.time}`
+			: getDateForET(date);
 
 	return (
 		<Flex justify="space-between" gap={3} align="center" w="100%">

@@ -24,14 +24,14 @@ export interface NewsEvent<
 	metadata: Record<string, any>
 }
 
-export interface NewsEventWithId<
+export interface DbNewsEvent<
 	DateType extends Date | DateString = Date
 > extends NewsEvent<DateType> {
 	id: number;
 }
 
 export interface EntryCalendar {
-	prev: NewsEventWithId[],
-	current: NewsEventWithId[],
-	next: NewsEventWithId[],
+	prev: DbNewsEvent[],
+	current: DbNewsEvent[],
+	next: DbNewsEvent[],
 }

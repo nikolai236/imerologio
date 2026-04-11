@@ -175,7 +175,6 @@ export default function LabelsPerformancePage() {
 		setLoading(true);
 		setError(null);
 
-		console.log(includeIds, excludeIds);
 		try {
 			const data = await getPerformance(includeIds, excludeIds);
 			setReport(data);

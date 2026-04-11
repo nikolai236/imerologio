@@ -19,7 +19,7 @@ import Charts from "./Charts";
 import SymbolSelect from "./SymbolSelect";
 import StopInput from "./StopInput";
 import TargetInput from "./TargetInput";
-import EntryCalendar from "./EntryCalendar";
+import SingleDayCalendar from "./SingleDayCalendar";
 
 export default function CreateTradePage() {
 	const { labels, loadingLabels, reloadLabels: reloadLabels } = useFetchLabels();
@@ -29,6 +29,8 @@ export default function CreateTradePage() {
 		tradeId,
 		selectedLabelIds,
 		setSelectedLabelIds,
+
+		orders,
 
 		formError,
 		submitting,
@@ -89,7 +91,7 @@ export default function CreateTradePage() {
 
 				<Box borderBottomWidth="1px" />
 
-				<EntryCalendar />
+				<SingleDayCalendar orders={orders} />
 
 				<Box>
 					<DescriptionEditor

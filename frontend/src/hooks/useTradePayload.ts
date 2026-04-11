@@ -5,7 +5,6 @@ import type { Timeframe } from "../../../shared/candles.types";
 import useTradeCharts from "./useTradeCharts";
 import useReload from "./useReload";
 import useSymbolId from "./useSymbolId";
-import useEntryCalendar from "./useEntryCalendar";
 
 import { createTrade, editTrade, getTrade } from "../api/trades";
 
@@ -41,12 +40,6 @@ const useTradePayload = (tradeId?: number) => {
 		updateChart,
 	} = useTradeCharts(orders);
 
-	const {
-		calendar,
-		loading: calendarLoading,
-		error: calendarError,
-	} = useEntryCalendar(orders);
-
 	const setNull = () => {
 		setSymbolId("");
 		setStop(null);
@@ -79,7 +72,9 @@ const useTradePayload = (tradeId?: number) => {
 			throw new Error("Please select a valid symbol.");
 		}
 
-		if (orders.length === 0) throw new Error("Please add at least one order.");
+		if (orders.length === 0) {
+			throw new Error("Please add at least one order.");
+		}
 
 		if (orderSum !== 0) {
 			throw new Error(`Orders must net to 0. Current net quantity is ${orderSum} (BUY is +, SELL is -).`);
@@ -229,10 +224,6 @@ const useTradePayload = (tradeId?: number) => {
 
 	return {
 		tradeId,
-
-		calendar,
-		calendarError,
-		calendarLoading,
 
 		formError,
 		submitting,

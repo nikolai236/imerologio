@@ -25,7 +25,7 @@ import SymbolSelect from "./SymbolSelect";
 import StopInput from "./StopInput";
 import TargetInput from "./TargetInput";
 import Orders from "./Orders";
-import EntryCalendar from "./EntryCalendar";
+import SingleDayCalendar from "./SingleDayCalendar";
 import useAutosave from "../hooks/useAutosave";
 
 const Sections = {
@@ -46,6 +46,8 @@ export default function TradePage() {
 		tradeId,
 		setSelectedLabelIds,
 		selectedLabelIds,
+
+		orders,
 
 		formError,
 		submitting,
@@ -144,7 +146,7 @@ export default function TradePage() {
 
 				<Box borderBottomWidth="1px" />
 
-				<EntryCalendar />
+				<SingleDayCalendar orders={orders} />
 
 				<SectionWrapper section={Sections.description}>
 					<DescriptionEditor

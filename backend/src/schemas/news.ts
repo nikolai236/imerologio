@@ -17,17 +17,31 @@ export const getNewsEventsSchema = {
 	},
 } as const;
 
-export const getEntryCalendarSchema = {
+export const getNewsEventsRangeSchema = {
+	schema: {
+		querystring: Type.Object({
+			start: DateString,
+			end: DateString,
+		}),
+		response: {
+			200: NewsEvents,
+			400: ErrorMessage,
+			500: ErrorMessage,
+		},
+	},
+} as const;
+
+export const getSingleDayCalendarSchema = {
 	schema: {
 		querystring: Type.Object({
 			date: DateString
-		}, { additionalProperties: false }),
+		}),
 		respose: {
 			200: Type.Object({
 				prev:    NewsEvents,
 				current: NewsEvents,
 				next:    NewsEvents,
-			}, { additionalProperties: false }),
+			}),
 			400: ErrorMessage,
 			500: ErrorMessage,
 		}

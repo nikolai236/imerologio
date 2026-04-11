@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 
 import type { EntryCalendar } from "../../../shared/news.types";
 import type { TempOrder } from "./useTradeOrders";
-import { getEntryCalendarForDate } from "../api/news";
+import { getSingleDayCalendar } from "../api/news";
 
-const useEntryCalendar = (orders: TempOrder[]) => {
+const useSingleDayCalendar = (orders: TempOrder[]) => {
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [calendar, setCalendar] = useState<EntryCalendar|null>(null);
@@ -19,7 +19,7 @@ const useEntryCalendar = (orders: TempOrder[]) => {
 
 		setLoading(true);
 
-		getEntryCalendarForDate(date)
+		getSingleDayCalendar(date)
 			.then((c) => {
 				setCalendar(c);
 				setError(null);
@@ -34,4 +34,4 @@ const useEntryCalendar = (orders: TempOrder[]) => {
 	return { calendar, error, loading };
 };
 
-export default useEntryCalendar;
+export default useSingleDayCalendar;

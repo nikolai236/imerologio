@@ -4,7 +4,7 @@ import newsRepository from "../database/news";
 
 const BANK_HOLIDAY = "Bank Holiday";
 
-const _getStartOfDay = (d: Date) => {
+const getStartOfDay = (d: Date) => {
 	const date = new Date(Date.UTC(
 		d.getUTCFullYear(),
 		d.getUTCMonth(),
@@ -14,30 +14,39 @@ const _getStartOfDay = (d: Date) => {
 	return date;
 };
 
-const _getNextDay = (day: Date) => {
+const getNextDay = (day: Date) => {
 	const nextDay = new Date(day);
+	nextDay.setUTCHours(0, 0, 0, 0);
 	nextDay.setUTCDate(nextDay.getUTCDate() + 1);
 	return nextDay;
 };
 
-const _getPrevDay = (day: Date) => {
+const getPrevDay = (day: Date) => {
 	const prevDay = new Date(day);
+	prevDay.setUTCHours(0, 0, 0, 0);
 	prevDay.setUTCDate(prevDay.getUTCDate() - 1);
 	return prevDay;
-}
+};
 
-const _getDays = (date: Date | DateString) => {
+const getAdjacentDays = (date: Date | DateString) => {
 	if (typeof date == "string") date = new Date(date);
 
-	const day = _getStartOfDay(date);
-	const prevDay = _getPrevDay(day);
-	const nextDay = _getNextDay(day);
+	const day = getStartOfDay(date);
+	const prevDay = getPrevDay(day);
+	const nextDay = getNextDay(day);
 
 	return { prevDay, day, nextDay };
 };
 
-const newsService = (db: PrismaClient) => {
+export default function newsService(db: PrismaClient) {
 	const { getNewsEvents } = newsRepository(db);
+
+	const getNewsEventsForRange = async (start: Date, end: Date) => {
+		const from = getPrevDay(start);
+		const upTo = getNextDay(getNextDay(end));
+
+		return await getNewsEvents({ from, upTo });
+	};
 
 	const getNewsEventsForDate = async (
 		date?: Date,
@@ -46,16 +55,16 @@ const newsService = (db: PrismaClient) => {
 	) => {
 		let range: { from: Date, upTo: Date } | undefined;
 		if (date) {
-			const from = _getStartOfDay(date);
-			const upTo = _getNextDay(from);
+			const from = getStartOfDay(date);
+			const upTo = getNextDay(from);
 
 			range = { from, upTo };
 		}
 		return await getNewsEvents(range, types, folderColors);
 	};
 
-	const getEntryCalendar = async (date: Date | DateString): Promise<EntryCalendar> => {
-		const { prevDay, day, nextDay } = _getDays(date);
+	const getSingleDayCalendar = async (date: Date | DateString): Promise<EntryCalendar> => {
+		const { prevDay, day, nextDay } = getAdjacentDays(date);
 
 		const [prev, current, next] = await Promise.all([
 			getNewsEventsForDate(prevDay, [BANK_HOLIDAY], ["Grey"]),
@@ -74,9 +83,8 @@ const newsService = (db: PrismaClient) => {
 	};
 
 	return {
-		getEntryCalendar,
+		getNewsEventsForRange,
+		getSingleDayCalendar,
 		getNewsEventsForDate,
 	} as const;
-};
-
-export default newsService;
+}

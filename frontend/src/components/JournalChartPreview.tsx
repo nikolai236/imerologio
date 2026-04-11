@@ -25,6 +25,7 @@ import useJournalChartPreview from '../hooks/useJournalChartPreview';
 import useJournalContext from '../hooks/useJournalContext';
 import useJournalChartContext from '../hooks/useJournalChartContext';
 import { useState } from 'react';
+import RangeCalendar from './RangeCalendar';
 
 const formatDateTime = (value: string | Date) =>
 	new Date(value).toLocaleString("en-US", {
@@ -77,7 +78,7 @@ function TradeRow({ trade }: { trade: TempJournalTrade }) {
 					<Text fontSize="sm" whiteSpace="nowrap"> from: {first};</Text>
 					<Text fontSize="sm" lineClamp={1}> to: {last} </Text>
 					<Text fontSize="xs" color={pnl >= 0 ? "green.600" : "red.400"}>
-					pnl: {pnl.toFixed(2)}
+						pnl: {pnl.toFixed(2)}
 					</Text>
 				</HStack>
 
@@ -343,10 +344,12 @@ export default function JournalChartPreview({
 				</Box>
 
 				<VStack align="stretch" gap={2}>
-				{relevantTrades.map((trade, i) =>
-					<TradeRow trade={trade} key={i} />
-				)}
+					{relevantTrades.map((trade, i) =>
+						<TradeRow trade={trade} key={i} />
+					)}
 				</VStack>
+
+				<RangeCalendar start={start} end={end} />
 			</Box>
 		</Box>
 	);
