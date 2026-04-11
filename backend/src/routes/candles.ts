@@ -10,7 +10,9 @@ import {
 } from "../schemas/candles";
 import { fillBlanks, isCandleLengthValid, setTimeFrame, tfToNumber } from "../services/candles";
 
-const HOUR = 60 * 60 * 1000;
+const SECOND = 1000;
+const MINUTE = 60 * SECOND
+const HOUR = 60 * MINUTE;
 
 const router: FastifyPluginAsync = async (server) => {
 	const {
@@ -72,8 +74,10 @@ const router: FastifyPluginAsync = async (server) => {
 		}
 
 		let candles: Candle[] = [];
-		if (timeframe === "1w" || timeframe === "1d") {
+		if (["1w", "1d", "6h", "4h", "2h", "1h"].includes(timeframe)) {
 			candles = await getCandlesWithTf(start, end, symbol, HOUR);
+		} else if (["30m", "10m", "15m", "5m"].includes(timeframe)) {
+			candles = await getCandlesWithTf(start, end, symbol, 5 * MINUTE);
 		} else {
 			candles = await getCandles(start, end, symbol);;
 		}
