@@ -1,5 +1,5 @@
 import { FastifyPluginAsync } from "fastify";
-import { Timeframe } from "../../../shared/candles.types";
+import { Candle, Timeframe } from "../../../shared/candles.types";
 
 import candleRepositroy from "../database/candles";
 import symbolRepository from "../database/symbols";
@@ -10,10 +10,13 @@ import {
 } from "../schemas/candles";
 import { fillBlanks, isCandleLengthValid, setTimeFrame, tfToNumber } from "../services/candles";
 
+const HOUR = 60 * 60 * 1000;
+
 const router: FastifyPluginAsync = async (server) => {
 	const {
 		isSymbolSupported,
-		getCandlesInRange,
+		getCandles,
+		getCandlesWithTf,
 	} = candleRepositroy(server.duckdb);
 
 	const { getSymbolById } = symbolRepository(server.prisma);
@@ -67,8 +70,14 @@ const router: FastifyPluginAsync = async (server) => {
 			const message = 'More than 25 000 candles requested';
 			return reply.code(400).send({ message });
 		}
-		
-		let candles = await getCandlesInRange(start, end, symbol);
+
+		let candles: Candle[] = [];
+		if (timeframe === "1w" || timeframe === "1d") {
+			candles = await getCandlesWithTf(start, end, symbol, HOUR);
+		} else {
+			candles = await getCandles(start, end, symbol);;
+		}
+
 		candles = setTimeFrame(candles, timeframe as Timeframe);
 
 		const tf = tfToNumber(timeframe as Timeframe);

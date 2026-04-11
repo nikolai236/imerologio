@@ -1,5 +1,6 @@
 import type { FastifyPluginAsync } from "fastify";
 import type {
+	ApiScoringResponse,
 	Label,
 	UpdateLabel,
 } from "../../../shared/trades.types";
@@ -96,7 +97,7 @@ const router: FastifyPluginAsync = async (server) => {
 			levels,
 			minSupport,
 			tradeCount,
-		});
+		} as ApiScoringResponse);
 	});
 
 	interface Post { Body: Label }
