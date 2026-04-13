@@ -173,7 +173,7 @@ const useDrawJournalTrades = () => {
 				console.error(trade.id, err);
 			}
 		}
-	}, [serializedTrades]);
+	}, [serializedTrades, chart]);
 
 	useEffect(() => {
 		drawingTradeRef.current = drawingTrade;
@@ -181,7 +181,7 @@ const useDrawJournalTrades = () => {
 
 	useEffect(() => {
 		attachPrimitives();
-	}, [serializedTrades, chart]);
+	}, [attachPrimitives]);
 
 
 	const setCursor = (cursor: string) => {

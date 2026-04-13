@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import type { DbOrder, Order } from "../../../shared/trades.types";
 import type { Entry, Exit, Timeframe } from "../../../shared/candles.types";
 import useTimeframe from "./useTimeframe";
@@ -87,9 +87,13 @@ const useTradeOrders = (date: Date, stop: number | null) => {
 		normalizeEntries(exitOrders, tf) as Exit[]
 	, [exitOrders]);
 
-	const getEntryForTf = useMemo(() => (tf: Timeframe) => entryOrder != null ?
-		normalizeEntry(entryOrder, tf) as Entry : null,
-	[orders]);
+	const getEntryForTf = useCallback(
+		(tf: Timeframe) =>
+			entryOrder != null
+				? normalizeEntry(entryOrder, tf) as Entry
+				: null,
+		[orders]
+	);
 
 	return {
 		orders,

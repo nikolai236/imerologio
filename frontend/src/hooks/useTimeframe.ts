@@ -129,11 +129,9 @@ const useTimeframe = () => {
 		}
 
 		const frame = tfToNumber(tf);
-
-		return {
-			...entry,
-			time: Math.floor(entry.time / frame) * frame as UTCTimestamp,
-		};
+		const time = Math.floor(entry.time / frame) * frame as UTCTimestamp
+		
+		return { ...entry, time, };
 	};
 
 	const normalizeEntries = <T extends { time: UTCTimestamp }>(
