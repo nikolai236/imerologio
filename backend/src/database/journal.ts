@@ -27,15 +27,13 @@ const include = {
 	},
 } as const;
 
-const sanitize = (
-	{ trades, ...entry }: any
-) => ({
+const sanitize = ({ trades, ...entry }: any) => ({
 	...entry,
 	trades: trades.map(({ labels, ...trade }: any) => ({
 		...trade,
 		labels: labels.map(({ label }: any) => label),
-	}))
-})
+	})),
+});
 
 const produceOverwriteObj = <T extends object>(elements: T[]) => {
 	const existingIds = elements
@@ -46,13 +44,13 @@ const produceOverwriteObj = <T extends object>(elements: T[]) => {
 		? { id: { notIn: existingIds } }
 		: {};
 
-	type ObjectWithId = T & { id: number };
+	type ObjectWithId = T & { id: number, createdAt?: Date };
 
 	const upsert = elements
 		.filter((c): c is ObjectWithId => "id" in c && c.id != null)
-		.map(({ id, ...payload }) => ({
+		.map(({ id, createdAt, ...payload }) => ({
 			where: { id },
-			create: payload,
+			create: { createdAt, ...payload },
 			update: payload,
 		}));
 
@@ -145,6 +143,8 @@ export default function journalRepository(db: PrismaClient) {
 			include,
 		});
 
+		if (entry == null) return null;
+
 		const sanitized = sanitize(entry);
 		return sanitized as DbJournalEntry<Date, number> | null;
 	};
@@ -231,12 +231,13 @@ export default function journalRepository(db: PrismaClient) {
 			}));
 
 		const modifiedCharts = payload.charts
-			?.map(({ start, end, objects, timeframe, symbolId, ...rest }) => ({
+			?.map(({ start, end, objects, timeframe, symbolId, createdAt, ...rest }) => ({
 				...("id" in rest && { id: rest.id }),
 				...(start != undefined && { start }),
 				...(end != undefined && { end }),
 				...(objects != undefined && { objects }),
 				...(timeframe != undefined && { timeframe }),
+				...(createdAt != undefined && { createdAt }),
 				...(symbolId != undefined && {
 					symbol: {
 						connect: { id: symbolId }

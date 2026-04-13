@@ -36,10 +36,15 @@ const useJournalCharts = () => {
 			tempId: uid(),
 			symbolId: null,
 			objects: [],
+			createdAt: new Date(Date.now()),
 		};
 
 		const { id, ...payload } = charts.at(-1)!;
-		return { ...payload, tempId: uid() };
+		return {
+			...payload,
+			tempId: uid(),
+			createdAt: new Date(Date.now()),
+		};
 	};
 
 	const updateChart = (id: string, payload: UpdateJournalChart<Timeframe>) => setCharts(charts =>
@@ -60,22 +65,29 @@ const useJournalCharts = () => {
 		DbJournalChart<string, Timeframe>;
 
 	const overwriteCharts = (charts: ApiChart[]) => setCharts(
-		charts.map(({
-			timeframe,
-			id,
-			objects,
-			start,
-			end,
-			symbolId,
-		}) => ({
-			id,
-			timeframe,
-			symbolId,
-			tempId: uid(),
-			objects,
-			start,
-			end,
-		}))
+		charts
+			.map(({
+				timeframe,
+				id,
+				objects,
+				start,
+				end,
+				symbolId,
+				createdAt,
+			}) => ({
+				id,
+				timeframe,
+				symbolId,
+				tempId: uid(),
+				objects,
+				start,
+				end,
+				createdAt,
+			}))
+			.sort((a, b) => 
+				new Date(a.createdAt).getTime() -
+				new Date(b.createdAt).getTime()
+			)
 	);
 
 	return {

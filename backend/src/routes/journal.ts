@@ -143,19 +143,20 @@ const router: FastifyPluginAsync = async (server) => {
 				}));
 			}
 
-		const isFull = (order: UpdateJournalOrder<string>) =>
-			order.type != null && order.quantity != null;
+			const isFull = (order: UpdateJournalOrder<string>) =>
+				order.type != null && order.quantity != null;
 
-		const areTradesClosed = entry.trades == null || entry.trades.every(({ orders }) =>
-			orders == null ||
-			!orders.every(isFull) ||
-			validateOrderQuantities(orders as JournalOrder<string>[])
-		);
+			const areTradesClosed = entry.trades == null || entry.trades.every(
+				({ orders }) =>
+					orders == null ||
+					!orders.every(isFull) ||
+					validateOrderQuantities(orders as JournalOrder<string>[])
+			);
 
-		if (!areTradesClosed) {
-			const message = "Journal entry trades are open";
-			return reply.code(400).send({ message });
-		}
+			if (!areTradesClosed) {
+				const message = "Journal entry trades are open";
+				return reply.code(400).send({ message });
+			}
 
 			try {
 

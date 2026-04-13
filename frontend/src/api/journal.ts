@@ -9,11 +9,15 @@ export type ApiJournalEntry =
 	DbJournalEntry<Date, Timeframe> |
 	DbJournalEntry<string, Timeframe>;
 
-const sanitizeDates = (entry: any) => {
-	entry.from = new Date(entry.from);
-	entry.to = new Date(entry.to);
-	return entry;
-};
+const sanitizeDates = ({ from, to, charts, ...rest }: ApiJournalEntry) => ({
+	...rest,
+	from: new Date(from),
+	to: new Date(to),
+	charts: charts.map(({ createdAt, ...rest }) => ({
+		...rest,
+		createdAt: new Date(createdAt),
+	})),
+});
 
 export async function getJournalEntries() {
 	const data = await api.get(path);

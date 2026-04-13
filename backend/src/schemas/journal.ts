@@ -69,6 +69,8 @@ const JournalChart = Type.Object({
 	end: Type.Integer(),
 	objects: Type.Any(),
 	symbolId: Type.Integer(),
+
+	createdAt: DateString,
 });
 
 const DbJournalChart = Type.Composite([

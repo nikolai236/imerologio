@@ -5,8 +5,9 @@ import type { Timeframe } from "../../../shared/candles.types";
 import type { DbSymbol } from "../../../shared/trades.types";
 
 import type { TempJournalChart } from "./useJournalCharts";
-import { createJounrnalEntry, getJournalEntry, updateJournalEntry } from "../api/journal";
 import type { TempJournalTrade } from "./useJournalTrades";
+
+import { createJounrnalEntry, getJournalEntry, updateJournalEntry } from "../api/journal";
 
 const useJournalEntry = (
 	charts: TempJournalChart[],
