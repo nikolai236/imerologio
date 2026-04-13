@@ -100,6 +100,7 @@ const router: FastifyPluginAsync = async (server) => {
 			start: Number(c.start),
 			end: Number(c.end),
 			lines: c.lines,
+			createdAt: c.createdAt,
 			timeframe: tfToNumber(c.timeframe),
 		}));
 
@@ -155,6 +156,7 @@ const router: FastifyPluginAsync = async (server) => {
 			end: Number(c.end),
 			timeframe: tfToNumber(c.timeframe),
 			lines: c.lines,
+			createdAt: c.createdAt,
 			id: 'id' in c ? Number(c.id) : undefined,
 		})) : undefined;
 

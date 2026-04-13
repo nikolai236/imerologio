@@ -68,7 +68,6 @@ const router: FastifyPluginAsync = async (server) => {
 
 	server.get("/", getJournalEntriesSchema, async (_req, reply) => {
 		const entries = await getJournalEntries();
-		// console.log(JSON.stringify(entries, null, 2))
 		const serialized = entries.map(serialize);
 
 		return reply.code(200).send(serialized);

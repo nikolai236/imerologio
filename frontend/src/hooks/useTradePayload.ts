@@ -98,9 +98,10 @@ const useTradePayload = (tradeId?: number) => {
 			throw new Error("Invalid stop loss");
 		}
 
-		const validatedCharts: Chart<Timeframe>[] = charts.map(
-			({ tempId, ...c  }) => ({ ...c })
-		);
+		const validatedCharts = charts
+			.map(({ tempId, createdAt, ...rest }) => ({
+				...rest, createdAt: new Date(createdAt).toISOString()
+			})) as unknown as Chart<Timeframe>[];
 
 		const ret: Trade<Chart<Timeframe>> = {
 			stop,

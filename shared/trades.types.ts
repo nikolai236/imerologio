@@ -171,6 +171,8 @@ export interface Chart<
 	end:   number;
 
 	lines: ChartLine[];
+
+	createdAt: Date;
 }
 
 export interface DbChart<

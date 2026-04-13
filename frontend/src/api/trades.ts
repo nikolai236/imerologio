@@ -33,7 +33,6 @@ export async function getTrades(from?: number, to?: number) {
 export async function getTrade(id: number) {
 	const { trade } = await api.get(path + `/${id}`);
 	trade.orders.forEach(assureIsDate);
-
 	return trade as ApiTrade;
 };
 

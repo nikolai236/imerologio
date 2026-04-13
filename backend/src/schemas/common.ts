@@ -65,6 +65,7 @@ export const Chart = Type.Object({
 	end: Type.Integer(),
 
 	lines: Type.Array(Line),
+	createdAt: DateString,
 
 }, { additionalProperties: false });
 

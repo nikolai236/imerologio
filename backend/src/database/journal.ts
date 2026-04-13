@@ -50,7 +50,10 @@ const produceOverwriteObj = <T extends object>(elements: T[]) => {
 		.filter((c): c is ObjectWithId => "id" in c && c.id != null)
 		.map(({ id, createdAt, ...payload }) => ({
 			where: { id },
-			create: { createdAt, ...payload },
+			create: {
+				...(createdAt != null && { createdAt }),
+				...payload
+			},
 			update: payload,
 		}));
 

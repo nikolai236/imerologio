@@ -29,16 +29,27 @@ const useTradeCharts = (orders: TempOrder[]) => {
 		if (charts.length > 0) {
 			// @ts-ignore
 			const { id, lines, ...payload } = charts.at(-1)!;
-			return { ...payload, lines: [], tempId: uid() };
+			return {
+				...payload,
+				lines: [],
+				tempId: uid(),
+				createdAt: new Date(Date.now()),
+			};
 		}
 
-		const ret = { ...DEFAULTS, tempId: uid(), lines: [] };
-		if (orders.length == 0) return ret;
+		const chart = {
+			...DEFAULTS,
+			tempId: uid(),
+			lines: [],
+			createdAt: new Date(Date.now())
+		};
 
-		ret.start = Math.min(...orders.map(o => o.date));
-		ret.end   = Math.max(...orders.map(o => o.date));
+		if (orders.length == 0) return chart;
 
-		return ret;
+		chart.start = Math.min(...orders.map(o => o.date));
+		chart.end   = Math.max(...orders.map(o => o.date));
+
+		return chart;
 	};
 
 	const updateChart = (id: string, payload: Partial<Chart<Timeframe>>) => setCharts(charts =>
@@ -54,7 +65,13 @@ const useTradeCharts = (orders: TempOrder[]) => {
 	);
 
 	const overwriteCharts = (charts: DbChart<Timeframe>[]) =>
-		setCharts(charts.map(chart => ({ ...chart, tempId: uid(), })));
+		setCharts(charts
+			.map(chart => ({ ...chart, tempId: uid(), }))
+			.sort((a, b) =>
+				new Date(a.createdAt).getTime() -
+				new Date(b.createdAt).getTime()
+			)
+		);
 
 	return {
 		charts,

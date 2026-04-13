@@ -35,13 +35,16 @@ const produceOverwriteObj = <T extends object>(elements: T[]) => {
 		? { id: { notIn: existingIds } }
 		: {};
 
-	type ObjectWithId = T & { id: number };
+	type ObjectWithId = T & { id: number; createdAt?: Date };
 
 	const upsert = elements
 		.filter((c): c is ObjectWithId => "id" in c && c.id != null)
-		.map(({ id, ...payload }) => ({
+		.map(({ id, createdAt, ...payload }) => ({
 			where: { id },
-			create: payload,
+			create: {
+				...(createdAt != null && { createdAt }),
+				...payload,
+			},
 			update: payload,
 		}));
 
@@ -62,23 +65,27 @@ const cleanTrade = ({ deleted, ...t }: any): TradeReturnType => ({
 	orders: t.orders && t.orders.map(cleanOrder),
 });
 
-const tradeRepository = (db: PrismaClient) => {
-	const include = {
-		labels: {
-			where: {
-				label: {
-					is: { symbolId: null },
-				},
+const include = {
+	labels: {
+		where: {
+			label: {
+				is: { symbolId: null },
 			},
-			include: {
-				label: true,
-			}
 		},
-		charts: true,
-		orders: true,
-		symbol: true,
-	} as const;
+		include: {
+			label: true,
+		}
+	},
+	charts: {
+		orderBy: {
+			createdAt: "asc",
+		}
+	},
+	orders: true,
+	symbol: true,
+} as const;
 
+const tradeRepository = (db: PrismaClient) => {
 	const getAllTrades = async (
 		labelIds?: number[],
 		from?: number,
@@ -173,7 +180,11 @@ const tradeRepository = (db: PrismaClient) => {
 
 	// gate to all CRUD operations
 	const getTradeById = async (id: number) => {
-		const orders = { orderBy: { date: 'asc' as Prisma.SortOrder } };
+		const orders = {
+			orderBy: {
+				date: "asc" as Prisma.SortOrder,
+			}
+		};
 
 		const trade = await db.trade.findFirst({
 			include: { ...include, orders },
