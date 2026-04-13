@@ -1,5 +1,13 @@
-import type { PrismaClient, JournalEntry as PrismaJournalEntry } from "@prisma/client";
-import type { DbJournalEntry, JournalEntry, JournalOrder, JournalTrade, UpdateJournalEntry, UpdateJournalOrder, UpdateJournalTrade } from "../../../shared/journal.types";
+import type { PrismaClient } from "@prisma/client";
+import type {
+	DbJournalEntry,
+	JournalEntry,
+	JournalOrder,
+	JournalTrade,
+	UpdateJournalEntry,
+	UpdateJournalOrder,
+	UpdateJournalTrade
+} from "../../../shared/journal.types";
 
 const include = {
 	trades: {
@@ -9,19 +17,23 @@ const include = {
 				include: {
 					label: true
 				}
-			},
+			}
 		}
 	},
-	charts: true,
+	charts: {
+		orderBy: {
+			createdAt: "asc",
+		}
+	},
 } as const;
 
-const sanitizeTradeLabels = (
+const sanitize = (
 	{ trades, ...entry }: any
 ) => ({
 	...entry,
-	trades: trades.map(({ labels , ...trade }: any) => ({
+	trades: trades.map(({ labels, ...trade }: any) => ({
 		...trade,
-		labels: labels.map(({ label }: any) => label)
+		labels: labels.map(({ label }: any) => label),
 	}))
 })
 
@@ -122,7 +134,7 @@ export default function journalRepository(db: PrismaClient) {
 			include,
 		});
 
-		const sanitized = entries.map(sanitizeTradeLabels);
+		const sanitized = entries.map(sanitize);
 		// @ts-ignore
 		return sanitized as DbJournalEntry<Date, number>[];
 	};
@@ -133,7 +145,7 @@ export default function journalRepository(db: PrismaClient) {
 			include,
 		});
 
-		const sanitized = sanitizeTradeLabels(entry);
+		const sanitized = sanitize(entry);
 		return sanitized as DbJournalEntry<Date, number> | null;
 	};
 
@@ -188,7 +200,7 @@ export default function journalRepository(db: PrismaClient) {
 			},
 		});
 
-		const sanitized = sanitizeTradeLabels(entry);
+		const sanitized = sanitize(entry);
 		return sanitized as unknown as DbJournalEntry<Date, number>;
 	};
 
@@ -258,7 +270,7 @@ export default function journalRepository(db: PrismaClient) {
 			where: { id },
 		});
 
-		const sanitized = sanitizeTradeLabels(entry);
+		const sanitized = sanitize(entry);
 		return sanitized as DbJournalEntry<Date, number>;
 	};
 

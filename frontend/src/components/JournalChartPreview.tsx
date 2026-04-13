@@ -144,6 +144,8 @@ export default function JournalChartPreview({
 		closeCopyMenu,
 	} = useJournalChartPreview();
 
+	const [showCalendar, setShowCalendar] = useState(false);
+
 	const commitTimeframe = () => {
 		updateChart(tempId, { timeframe: draftTf as Timeframe });
 
@@ -343,13 +345,24 @@ export default function JournalChartPreview({
 					)}
 				</Box>
 
-				<VStack align="stretch" gap={2}>
+				<VStack align="stretch" gap={2} mb={5}>
 					{relevantTrades.map((trade, i) =>
 						<TradeRow trade={trade} key={i} />
 					)}
 				</VStack>
 
-				<RangeCalendar start={start} end={end} />
+				<Checkbox.Root
+					checked={showCalendar}
+					onCheckedChange={({ checked }) => setShowCalendar(!!checked)}
+				>
+					<Checkbox.HiddenInput />
+					<Checkbox.Control>
+						<Checkbox.Indicator />
+					</Checkbox.Control>
+					<Checkbox.Label>Show calendar</Checkbox.Label>
+				</Checkbox.Root>
+
+				{showCalendar && <RangeCalendar start={start} end={end} />}
 			</Box>
 		</Box>
 	);

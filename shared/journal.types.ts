@@ -37,8 +37,14 @@ export interface UpdateJournalEntry<
 		"trades" | "charts"
 	>
 > {
-	trades?: (UpdateJournalTrade<DateType> | JournalTrade<DateType>)[];
-	charts?: (UpdateJournalChart<TimeframeType> | JournalChart<TimeframeType>)[];
+	trades?: (
+		UpdateJournalTrade<DateType>
+		| JournalTrade<DateType>
+	)[];
+	charts?: (
+		UpdateJournalChart<TimeframeType>
+		| JournalChart<TimeframeType>
+	)[];
 }
 
 export interface JournalChart<
@@ -51,6 +57,8 @@ export interface JournalChart<
 
 	objects: any;
 	symbolId: number;
+
+	createdAt: Date;
 }
 
 export interface DbJournalChart<
@@ -108,7 +116,10 @@ export interface UpdateJournalTrade<
 	>
 > {
 	id?: number;
-	orders?: (UpdateJournalOrder<DateType> | JournalOrder<DateType>)[];
+	orders?: (
+		UpdateJournalOrder<DateType>
+		| JournalOrder<DateType>
+	)[];
 }
 
 export interface JournalOrder<

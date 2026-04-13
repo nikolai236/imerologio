@@ -1,15 +1,17 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react"
 
+const stringify = (variable: any) => {
+	if (typeof variable === "number" && variable % 1 !== 0) {
+		return variable.toFixed(3);
+	}
+	return `${variable}`;
+};
+
 const useDraft = <T>(variable: T): [string, React.Dispatch<React.SetStateAction<string>>] => {
-	const [draft, setDraft] = useState(`${variable}`);
+	const [draft, setDraft] = useState(stringify(variable));
 
 	useEffect(
-		() => {
-			if (typeof variable === "number" && variable % 1 !== 0) {
-				return setDraft(variable.toFixed(3));
-			}
-			setDraft(`${variable}`);
-		},
+		() => setDraft(stringify(variable)),
 		[variable]
 	);
 
@@ -25,7 +27,7 @@ const isValidPriceDraft = (s: string) => s === "" || PRICE_RE.test(s);
 
 export const usePriceDraft = (price: Price, save: (price: Price) => void) => {
 	const sanitized = useMemo(() =>
-		price == null ? "" : String(price),
+		price == null ? "" : stringify(price),
 	[price]);
 
 	const [draft, setDraft] = useState(sanitized);
