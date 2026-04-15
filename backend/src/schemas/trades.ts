@@ -3,16 +3,14 @@ import { ErrorMessage, IdParams, Trade } from "./common";
 
 export const getTradesSchema = {
 	schema: {
-		querystring: Type.Optional(Type.Object({
+		querystring: Type.Object({
 			from: Type.Optional(Type.Integer()),
 			to:   Type.Optional(Type.Integer()),
-		}, { additionalProperties: false })),
+		}),
 		response: {
-			200: Type.Object({
-				trades: Type.Array(Type.Omit(
-					Trade, ["charts", "labels"]
-				))
-			}, { additionalProperties: false }),
+			200: Type.Array(Type.Omit(
+				Trade, ["charts", "labels"]
+			)),
 			400: ErrorMessage,
 			500: ErrorMessage,
 		}
@@ -23,9 +21,7 @@ export const getTradeSchema = {
 	schema: {
 		params: IdParams,
 		response: {
-			200: Type.Object({
-				trade: Trade
-			}, { additionalProperties: false }),
+			200: Trade,
 			400: ErrorMessage,
 			404: ErrorMessage,
 			500: ErrorMessage,
@@ -46,9 +42,7 @@ export const postTradeSchema = {
 	schema: {
 		body: TradeInput,
 		response: {
-			201: Type.Object({
-				trade: Trade
-			}, { additionalProperties: false }),
+			201: Trade,
 			400: ErrorMessage,
 			500: ErrorMessage,
 		}
@@ -57,11 +51,10 @@ export const postTradeSchema = {
 
 export const patchTradeSchema = {
 	schema: {
+		params: IdParams,
 		body: Type.Partial(TradeInput),
 		response: {
-			200: Type.Object({
-				trade: Trade
-			}, { additionalProperties: false }),
+			200: Trade,
 			400: ErrorMessage,
 			404: ErrorMessage,
 			500: ErrorMessage,
@@ -75,24 +68,24 @@ export const deleteTradeSchema = {
 		response: {
 			200: Type.Object({
 				message: Type.String(),
-			}, { additionalProperties: false }),
+			}),
 			400: ErrorMessage,
 			404: ErrorMessage,
 			500: ErrorMessage,
 		}
 	}
-};
+} as const;
 
 export const deleteLabelFromTradeSchema = {
 	schema: {
 		params: Type.Object({
-			tradeId: Type.Integer(),
+			id: Type.Integer(),
 			labelId: Type.Integer()
-		}, { additionalProperties: false }),
+		}),
 		response: {
 			200: Type.Object({
 				message: Type.String(),
-			}, { additionalProperties: false }),
+			}),
 			400: ErrorMessage,
 			404: ErrorMessage,
 			500: ErrorMessage,

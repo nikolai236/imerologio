@@ -4,20 +4,10 @@ import type {
 	Trade,
 	DbTrade,
 	DbOrder,
-	Chart,
-	Order,
-	DbChart,
-	ChartUnion,
-	OrderUnion,
 	DbTradeEntry,
 	TradeScoringData,
+	UpdateTrade,
 } from '../../../shared/trades.types';
-
-
-type TradeReturnType = DbTrade<
-	ChartUnion<number>,
-	OrderUnion<Date>
->;
 
 const cleanOrder = (o: any): DbOrder<number> => ({
 	...o,
@@ -57,7 +47,7 @@ const produceOverwriteObj = <T extends object>(elements: T[]) => {
 	return { deleteMany, create, upsert } as const;
 };
 
-const cleanTrade = ({ deleted, ...t }: any): TradeReturnType => ({
+const cleanTrade = ({ deleted, ...t }: any): any => ({
 	...t,
 	stop: Number(t.stop),
 	pnl: t.pnl != null ? Number(t.pnl) : null,
@@ -105,7 +95,7 @@ const tradeRepository = (db: PrismaClient) => {
 				lt."tradeId" = t.id AND lt."labelId" IN (${Prisma.join(labelIds)})` :
 			Prisma.empty;
 
-		const trades = await db.$queryRaw<DbTrade<DbChart<number>, DbOrder<Date>>[]>`
+		const trades = await db.$queryRaw<DbTradeEntry<number>[]>`
 			SELECT
 				t.*,
 				MIN(o.date) AS "entryDate",
@@ -130,7 +120,7 @@ const tradeRepository = (db: PrismaClient) => {
 			GROUP BY t.id
 			ORDER BY "entryDate" DESC NULLS LAST, t.id ASC;
 		`;
-		return trades.map(cleanTrade) as unknown as DbTradeEntry<Order<Date>>[];
+		return trades.map(cleanTrade) as unknown as DbTradeEntry<number>[];
 	};
 
 	const getTradeScoringData = async () => {
@@ -178,7 +168,6 @@ const tradeRepository = (db: PrismaClient) => {
 		} as TradeScoringData));
 	};
 
-	// gate to all CRUD operations
 	const getTradeById = async (id: number) => {
 		const orders = {
 			orderBy: {
@@ -193,12 +182,10 @@ const tradeRepository = (db: PrismaClient) => {
 		if (trade == null) return null;
 
 		trade.labels = trade.labels.map((o: any) => o.label);
-		return cleanTrade(trade) as DbTrade<
-			DbChart<number>, DbOrder<Date>
-		>;
+		return cleanTrade(trade) as DbTrade<number, number>;
 	};
 
-	const createTrade = async (trade: Trade<Chart<number>, Order<Date>>) => {
+	const createTrade = async (trade: Trade<number, Date>) => {
 		const data = {
 			...trade,
 			deleted: false,
@@ -212,16 +199,11 @@ const tradeRepository = (db: PrismaClient) => {
 		};
 		const ret = await db.trade.create({ include, data });
 		ret.labels = ret.labels.map((o: any) => o.label);
-		return cleanTrade(ret) as DbTrade<DbChart<number>, DbOrder<Date>>;
+		return cleanTrade(ret) as DbTrade<number, number>;
 	};
 
-	type TradeType = Partial<
-		Trade<ChartUnion<number>, OrderUnion<Date>>
-	>;
-
 	const updateTrade = async (
-		id: number,
-		payload: TradeType,
+		id: number, payload: UpdateTrade<number, Date>,
 	) => {
 		const charts = payload.charts == null ?
 			undefined : produceOverwriteObj(payload.charts);
@@ -261,14 +243,14 @@ const tradeRepository = (db: PrismaClient) => {
 
 		const ret = await db.trade.update({
 			where: { id },
+			// @ts-ignore
 			data,
 			include,
 		});
+		//@ts-ignore
 		ret.labels = ret.labels.map((o: any) => o.label);
 
-		return cleanTrade(ret) as DbTrade<
-			DbChart<number>, DbOrder<Date>
-		>;
+		return cleanTrade(ret) as DbTrade<number, number>;
 	};
 
 	const deleteTrade = async (id: number) => {
@@ -311,9 +293,7 @@ const tradeRepository = (db: PrismaClient) => {
 			include
 		});
 
-		return trades.map(cleanTrade) as DbTrade<
-			DbChart<number>, DbOrder<Date>
-		>[];
+		return trades.map(cleanTrade) as DbTrade<number, number>[];
 	};
 
 	return {

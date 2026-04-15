@@ -5,7 +5,7 @@ import { FolderColorsValue } from "../../../shared/news.types";
 
 export const ErrorMessage = Type.Unsafe({
 	$ref: "ErrorMessage#",
-} as const);
+});
 
 export const DateString = Type.String({
 	format: "date-time"
@@ -13,7 +13,7 @@ export const DateString = Type.String({
 
 export const IdParams = Type.Object({
 	id: Type.Number(),
-}, { additionalProperties: false });
+});
 
 export const Label = Type.Object({
 	id: Type.Optional(Type.Integer()),

@@ -1,13 +1,13 @@
-import type { FastifyPluginAsync } from "fastify";
+import type {
+	FastifyPluginAsync,
+	FastifyReply,
+	FastifyRequest
+} from "fastify";
 
 import type {
-	ApiTrade,
-	Chart,
-	ChartUnion,
-	DbChart,
-	Order,
-	OrderUnion,
-	Trade
+	DbTrade,
+	Trade,
+	UpdateTrade
 } from "../../../shared/trades.types";
 import { Timeframe } from "../../../shared/candles.types";
 
@@ -17,7 +17,8 @@ import labelRepository from "../database/labels";
 
 import {
 	calculatePnL,
-	parseOrders,
+	sanitizeTrade,
+	serializeTrade,
 	validateOrderQuantities
 } from "../services/trades";
 
@@ -29,7 +30,12 @@ import {
 	deleteLabelFromTradeSchema,
 	deleteTradeSchema,
 } from "../schemas/trades";
-import { numberToTf, tfToNumber } from "../services/candles";
+
+declare module "fastify" {
+	interface FastifyRequest {
+		trade: DbTrade<number, number>;
+	}
+}
 
 const router: FastifyPluginAsync = async (server) => {
 	const {
@@ -40,22 +46,42 @@ const router: FastifyPluginAsync = async (server) => {
 		deleteTrade,
 	} = tradeRepository(server.prisma);
 
-	const { deleteTradeFromLabel, getLabelById } = labelRepository(server.prisma);
+	const {
+		deleteTradeFromLabel,
+		getLabelById,
+	} = labelRepository(server.prisma);
+
 	const { getSymbolById } = symbolRepository(server.prisma);
 
-	const convertCharts = (charts: DbChart<number>[]) => charts.map(c => ({
-		...c, timeframe: numberToTf(c.timeframe),
-	}));
+	const loadTrade = async (
+		req: FastifyRequest<{ Params: { id: number; }; }>,
+		reply: FastifyReply
+	) => {
+		const id = Number(req.params.id);
+		const trade = await getTradeById(id);
+
+		if (trade == null) {
+			const message = "Trade not found!";
+			return reply.code(404).send({ message });
+		}
+
+		req.trade = trade;
+	};
 
 	interface Get {
 		Querystring: {
 			from?: number;
 			to?: number;
-		};
+		}
 	}
 	server.get<Get>("/", getTradesSchema, async (req, reply) => {
-		const from = req.query.to != null ? Number(req.query.from) : undefined;
-		const to   = req.query.to != null ? Number(req.query.to  ) : undefined;
+		const from = req.query.from != null
+			? Number(req.query.from)
+			: undefined;
+
+		const to   = req.query.to != null
+			? Number(req.query.to)
+			: undefined;
 
 		const trades = await getAllTrades(undefined, from, to);
 
@@ -63,156 +89,130 @@ const router: FastifyPluginAsync = async (server) => {
 			if (trade.pnl != null) continue;
 			trade.pnl = calculatePnL(trade.orders);
 		}
-		return reply.code(200).send({ trades });
+
+		return reply.code(200).send(trades);
 	});
 
-	interface Get { Params: { id: number } }
-	server.get<Get>("/:id", getTradeSchema, async (req, reply) => {
-		const id = Number(req.params.id);
-
-		const trade = await getTradeById(id);
-		if (trade == null) {
-			return reply.code(404).send({ message: 'Trade not found!', });
+	interface GetTrade { Params: { id: number } }
+	server.get<GetTrade>(
+		"/:id",
+		{
+			preHandler: loadTrade,
+			...getTradeSchema,
+		},
+		async (req, reply) => {
+			reply.code(200).send(serializeTrade(req.trade));
 		}
+	);
 
-		const ret: ApiTrade = { ...trade, charts: convertCharts(trade.charts), };
-		return reply.code(200).send({ trade: ret });
-	});
-
-	interface Post { Body: Trade<Chart<Timeframe>, Order<number>>; }
+	interface Post { Body: Trade<Timeframe, number>; }
 	server.post<Post>("/", postTradeSchema, async (req, reply) => {
-		let { target, stop, pnl, symbolId, orders, charts } = req.body;
+		const { symbolId, orders } = req.body;
 
 		if (!validateOrderQuantities(orders)) {
-			return reply.code(400).send({ message: 'Trade is open!' });
+			const message = "Invalid order quantities provided.";
+			return reply.code(400).send({ message });
 		}
 
 		const symbol = await getSymbolById(Number(symbolId));
 		if (symbol == null) {
-			return reply.code(404).send({ message: 'Symbol not found!' });
+			return reply.code(404).send({ message: "Symbol not found!" });
 		}
 
-		// see if it can be removed
-		const transformedOrders = parseOrders(orders);
-
-		const transformedCharts = charts.map(c => ({
-			id: 'id' in c ? c.id : undefined,
-			start: Number(c.start),
-			end: Number(c.end),
-			lines: c.lines,
-			createdAt: c.createdAt,
-			timeframe: tfToNumber(c.timeframe),
-		}));
-
-		const trade: Trade<Chart<number>, Order<Date>> = {
-			...req.body,
-			target: target && Number(target),
-			pnl: pnl && Number(pnl),
-			stop: Number(stop),
-			orders: transformedOrders,
-			charts: transformedCharts,
-		};
-
-		trade.pnl = trade.pnl ?? calculatePnL(trade.orders);
+		const trade = sanitizeTrade(req.body);
 
 		try {
 			const res = await createTrade(trade);
-			const ret: ApiTrade = { ...res, charts: convertCharts(res.charts) };
-
-			return reply.code(201).send({ trade: ret });
+			return reply.code(201).send(serializeTrade(res));
 		} catch(err) {
 			server.log.error(err);
-			return reply.code(400).send({ message: err });
+			if (err instanceof Error) {
+				const { message } = err;
+				return reply.code(400).send({ message });
+			}
+			const message = "Unknown error";
+			return reply.code(400).send({ message });
 		}
 	});
 
 	interface Patch {
-		Params: { tradeId: number };
-		Body: Partial<
-			Trade<ChartUnion<Timeframe>, OrderUnion<number>>
-		>;
-	};
-	server.patch<Patch>('/:tradeId', patchTradeSchema, async (req, reply) => {
-		const id = Number(req.params.tradeId);
-		const trade = await getTradeById(id);
-
-		if (!trade) {
-			const message = "Trade not found.";
-			return reply.code(404).send({ message });
-		}
-		
-		let { target, stop, orders, charts } = req.body;
-
-		if (orders != null && !validateOrderQuantities(orders)) {
-			const message = 'Invalid order quantities provided.';
-			return reply.code(400).send({ message });
-		}
-
-		const transformedOrders = orders != null ?
-			parseOrders(orders) : undefined;
-
-		const transformedCharts = charts != null ? charts.map(c => ({
-			start: Number(c.start),
-			end: Number(c.end),
-			timeframe: tfToNumber(c.timeframe),
-			lines: c.lines,
-			createdAt: c.createdAt,
-			id: 'id' in c ? Number(c.id) : undefined,
-		})) : undefined;
-
-		const payload: Partial<Trade<ChartUnion<number>, OrderUnion<Date>>> = {
-			...req.body,
-			target: target != null ? Number(target) : target,
-			stop: stop != null ? Number(stop) : stop,
-			orders: transformedOrders,
-			charts: transformedCharts,
-		};
-
-		payload.pnl = orders != null ?
-			calculatePnL(payload.orders ?? trade.orders) : trade.pnl;
-
-		try {
-			const res = await updateTrade(id, payload);
-			const ret: ApiTrade = { ...res, charts: convertCharts(res.charts) };
-
-			return reply.code(200).send({ trade: ret });
-		} catch(err) {
-			server.log.error(err);
-			return reply.code(400).send({ message: err });
-		}
-	});
-
-	interface Delete { Params: { id: number; }; }
-	server.delete<Delete>("/:id", deleteTradeSchema, async (req, reply) => {
-		const trade = await getTradeById(req.params.id);
-		if (trade == null) {
-			return reply.code(200).send({ message: "Trade not found" });
-		}
-		await deleteTrade(req.params.id);
-		return reply.code(200).send({ message: "Trade deleted" });
-	});
-
-	interface DeleteLabel { Params: { tradeId: number; labelId: number }; };
-	server.delete<DeleteLabel>(
-		"/:tradeId/labels/:labelId",
-		deleteLabelFromTradeSchema,
+		Params: { id: number };
+		Body: UpdateTrade<Timeframe, number>;
+	}
+	server.patch<Patch>(
+		"/:id",
+		{
+			preHandler: loadTrade,
+			...patchTradeSchema
+		},
 		async (req, reply) => {
-			const tradeId = Number(req.params.tradeId);
-			const labelId = Number(req.params.labelId);
-
-			const trade = await getTradeById(tradeId);
-			if (trade == null) {
-				return reply.code(404).send({ message: "Trade not found!", });
+			if (
+				req.body.orders != null &&
+				!validateOrderQuantities(req.body.orders as any)
+			) {
+				const message = "Invalid order quantities provided.";
+				return reply.code(400).send({ message });
 			}
+
+			const payload = sanitizeTrade(req.body);
+
+			try {
+				const res = await updateTrade(req.trade.id, payload);
+				return reply.code(200).send(serializeTrade(res));
+			} catch(err) {
+				server.log.error(err);
+				if (err instanceof Error) {
+					const { message } = err;
+					return reply.code(400).send({ message });
+				}
+				const message = "Unknown error";
+				return reply.code(400).send({ message });
+			}
+		}
+	);
+
+	interface Delete { Params: { id: number; } }
+	server.delete<Delete>(
+		"/:id",
+		{
+			preHandler: loadTrade,
+			...deleteTradeSchema,
+		},
+		async (req, reply) => {
+			await deleteTrade(req.trade.id);
+
+			return reply.code(200).send({
+				message: "Trade deleted"
+			});
+		}
+	);
+
+	interface DeleteLabel {
+		Params: {
+			id: number;
+			labelId: number;
+		}
+	}
+	server.delete<DeleteLabel>(
+		"/:id/labels/:labelId",
+		{
+			preHandler: loadTrade,
+			...deleteLabelFromTradeSchema
+		},
+		async (req, reply) => {
+			const labelId = Number(req.params.labelId);
 
 			const label = await getLabelById(labelId);
 			if (label == null) {
-				return reply.code(404).send({ message: "Label not found!", });
+				const message = "Label not found!";
+				return reply.code(404).send({ message });
 			}
 
-			await deleteTradeFromLabel(labelId, tradeId);
-			return reply.code(200).send({ message: "Label deleted from trade!" });
-		}
+			await deleteTradeFromLabel(labelId, req.trade.id);
+
+			const message = "Label deleted from trade!";
+			return reply.code(200).send({ message });
+		},
 	);
 };
 

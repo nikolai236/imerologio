@@ -103,7 +103,7 @@ const useTradePayload = (tradeId?: number) => {
 				...rest, createdAt: new Date(createdAt).toISOString()
 			})) as unknown as Chart<Timeframe>[];
 
-		const ret: Trade<Chart<Timeframe>> = {
+		const ret: Trade<Timeframe, number> = {
 			stop,
 			target: target ?? undefined,
 			description,
@@ -120,11 +120,18 @@ const useTradePayload = (tradeId?: number) => {
 			throw new Error("Trade value is not a number");
 		}
 
-		if (validatedOrders.some(({ quantity }) => !Number.isInteger(quantity) || quantity < 1)) {
+		if (
+			validatedOrders.some(
+				({ quantity }) =>
+					!Number.isInteger(quantity) || quantity < 1
+			)
+		) {
 			throw new Error("Quantities should be whole numbers >= 1")
 		}
 
-		const orderThrowCond = (o: Order) => [o.price, o.quantity, o.date].some(r => isNaN(r))
+		const orderThrowCond = (o: Order<any>) =>
+			[o.price, o.quantity, o.date].some(r => isNaN(r));
+
 		if (validatedOrders.some(orderThrowCond)) {
 			throw new Error("Trade value is not a number");
 		}
@@ -133,7 +140,7 @@ const useTradePayload = (tradeId?: number) => {
 	};
 
 	const submitNewTrade = async () => {
-		let trade: Trade<Chart<Timeframe>>;
+		let trade: Trade<Timeframe, number>;
 		try {
 			trade = validate();
 		} catch (err: any) {
@@ -163,7 +170,7 @@ const useTradePayload = (tradeId?: number) => {
 			throw new Error('Trade id is null!.');
 		}
 
-		let trade: Trade<Chart<Timeframe>>;
+		let trade: Trade<Timeframe, number>;
 		try {
 			trade = validate();
 		} catch (err: any) {

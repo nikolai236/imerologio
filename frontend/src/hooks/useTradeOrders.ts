@@ -4,7 +4,7 @@ import type { Entry, Exit, Timeframe } from "../../../shared/candles.types";
 import useTimeframe from "./useTimeframe";
 import type { UTCTimestamp } from "lightweight-charts";
 
-export type TempOrder = Order & {
+export type TempOrder = Order<number> & {
 	tempId: string;
 };
 

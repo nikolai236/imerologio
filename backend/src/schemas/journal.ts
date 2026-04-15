@@ -107,7 +107,7 @@ const DbJournalEntry = Type.Composite([
 		createdAt: DateString,
 		updatedAt: DateString,
 	})
-])
+]);
 
 const UpdateJournalEntry = Type.Composite([
 	Type.Partial(

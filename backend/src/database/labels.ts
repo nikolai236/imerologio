@@ -1,6 +1,5 @@
 import { Prisma, type PrismaClient } from "@prisma/client";
 import type { 
-	LabelTrades,
 	DbLabelEntry,
 	Label,
 	LabelEntry,
@@ -68,65 +67,6 @@ const labelRepository = (db: PrismaClient) => {
 		return labels;
 	};
 
-	const getLabelsWithTrades = async (ids?: number[]) => {
-		const whereClause = ids != null ?
-			Prisma.sql`WHERE l.id=ANY(${ids}::int[])` :
-			Prisma.empty;
-
-		const labels = await db.$queryRaw<LabelTrades[]>`
-			SELECT
-				l.id,
-				l.name,
-				COALESCE(
-					jsonb_agg(
-						jsonb_build_object(
-							'id', t.id,
-							'target', t.target,
-							'stop', t.stop,
-							'pnl', t.pnl,
-							'description', t.description,
-							'symbolId', t."symbolId",
-							'symbol', jsonb_build_object(
-								'id', s.id,
-								'name', s.name,
-								'type', s.type,
-								'description', s.description
-							),
-							'orders',
-								COALESCE((
-									SELECT jsonb_agg(
-										jsonb_build_object(
-											'id', o.id,
-											'quantity', o.quantity,
-											'date', o.date,
-											'price', o.price,
-											'type', o.type,
-											'tradeId', o."tradeId"
-										)
-										ORDER BY o.date ASC
-									)
-									FROM "Order" o
-									WHERE o."tradeId" = t.id
-								), '[]'::jsonb)
-						)
-					) FILTER (WHERE t.id IS NOT NULL),
-					'[]'::jsonb
-				) AS trades
-			FROM "Label" l
-			LEFT JOIN trade_labels tl
-				ON tl."labelId" = l.id
-			LEFT JOIN "Trade" t
-				ON t.id = tl."tradeId"
-				AND t.deleted = false
-			LEFT JOIN "Symbol" s
-				ON s.id = t."symbolId"
-			${whereClause}
-			GROUP BY l.id, l.name
-			ORDER BY l.name
-		`;
-
-		return labels;
-	};
 
 	// gate to all CRUD operations
 	const getLabelById = async (id: number) => {
@@ -209,7 +149,6 @@ const labelRepository = (db: PrismaClient) => {
 		deleteTradeFromLabel,
 		deleteLabel,
 		getLabelsWithTradeIds,
-		getLabelsWithTrades,
 	} as const;
 };
 

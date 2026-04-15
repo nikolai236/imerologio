@@ -19,7 +19,7 @@ export const getLabelsSchema = {
 			400: ErrorMessage,
 			500: ErrorMessage,
 		},
-	},
+	}
 } as const;
 
 export const getLabelPerformance = {
@@ -94,4 +94,4 @@ export const deleteLabelSchema = {
 			500: ErrorMessage,
 		}
 	}
-}
+} as const;
