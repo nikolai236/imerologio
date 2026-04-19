@@ -73,12 +73,12 @@ export default function newsRepository(db: PrismaClient) {
 		}
 
 		if (folderColors != null) {
-			addClause(getOrClause(folderColors, 'folderColor'));
+			addClause(getOrClause(folderColors, "folderColor"));
 		}
 
 		const events = await db.newsEvent.findMany({
 			where,
-			orderBy: { date: 'asc', },
+			orderBy: { date: "asc", },
 		}) as DbNewsEvent<Date>[];
 
 		return events

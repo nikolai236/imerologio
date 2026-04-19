@@ -12,10 +12,12 @@ import JournalEntryPageOuter from "./JournalEntryPageOuter";
 import LabelsPerformancePage from "./LabelsPerformancePage";
 
 function RootLayout() {
-	return (<>
-		<Navbar />
-		<Outlet />
-	</>);
+	return (
+		<>
+			<Navbar />
+			<Outlet />
+		</>
+	);
 }
 
 export default function App() {

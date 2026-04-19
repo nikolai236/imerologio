@@ -84,7 +84,7 @@ export default function candleRepositroy(db: FastifyInstance["duckdb"]) {
 		const sql = `
 			WITH buckets AS (
 				SELECT
-					(time / ?)::BIGINT * ? AS bucket_time,
+					(time // ?) * ? AS bucket_time,
 					time,
 					open,
 					high,
@@ -96,11 +96,11 @@ export default function candleRepositroy(db: FastifyInstance["duckdb"]) {
 			)
 			SELECT
 				bucket_time AS time,
-				first(open ORDER BY time ASC)  AS open,
-				max(high)                      AS high,
-				min(low)                       AS low,
-				last(close ORDER BY time ASC)  AS close,
-				sum(volume)                    AS volume
+				first(open ORDER BY time ASC)   AS open,
+				max(high)                       AS high,
+				min(low)                        AS low,
+				last(close ORDER BY time ASC)   AS close,
+				sum(volume)                     AS volume
 			FROM buckets
 			GROUP BY bucket_time
 			ORDER BY bucket_time`;

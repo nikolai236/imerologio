@@ -12,8 +12,6 @@ import type {
 
 import { numberToTf, tfToNumber } from "./candles";
 
-type MaybeId = { id?: number };
-
 const toNumber = <T>(value: T) =>
 	value != null ? Number(value) : value;
 

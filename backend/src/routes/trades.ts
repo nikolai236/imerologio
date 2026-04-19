@@ -33,7 +33,15 @@ import {
 
 declare module "fastify" {
 	interface FastifyRequest {
-		trade: DbTrade<number, number>;
+		trade?: DbTrade<number, number>;
+	}
+}
+
+function assertTradeLoaded(
+	req: FastifyRequest
+): asserts req is FastifyRequest & { trade: DbTrade<number, number> } {
+	if (req.trade == null) {
+		throw new Error("Trade not loaded!");
 	}
 }
 
@@ -54,8 +62,8 @@ const router: FastifyPluginAsync = async (server) => {
 	const { getSymbolById } = symbolRepository(server.prisma);
 
 	const loadTrade = async (
-		req: FastifyRequest<{ Params: { id: number; }; }>,
-		reply: FastifyReply
+		req: FastifyRequest<{ Params: { id: number; } }>,
+		reply: FastifyReply,
 	) => {
 		const id = Number(req.params.id);
 		const trade = await getTradeById(id);
@@ -79,7 +87,7 @@ const router: FastifyPluginAsync = async (server) => {
 			? Number(req.query.from)
 			: undefined;
 
-		const to   = req.query.to != null
+		const to = req.query.to != null
 			? Number(req.query.to)
 			: undefined;
 
@@ -101,22 +109,23 @@ const router: FastifyPluginAsync = async (server) => {
 			...getTradeSchema,
 		},
 		async (req, reply) => {
-			reply.code(200).send(serializeTrade(req.trade));
+			assertTradeLoaded(req);
+			return reply.code(200).send(serializeTrade(req.trade));
 		}
 	);
 
 	interface Post { Body: Trade<Timeframe, number>; }
 	server.post<Post>("/", postTradeSchema, async (req, reply) => {
-		const { symbolId, orders } = req.body;
 
-		if (!validateOrderQuantities(orders)) {
+		if (!validateOrderQuantities(req.body.orders)) {
 			const message = "Invalid order quantities provided.";
 			return reply.code(400).send({ message });
 		}
 
-		const symbol = await getSymbolById(Number(symbolId));
+		const symbol = await getSymbolById(Number(req.body.symbolId));
 		if (symbol == null) {
-			return reply.code(404).send({ message: "Symbol not found!" });
+			const message = "Symbol not found!";
+			return reply.code(404).send({ message });
 		}
 
 		const trade = sanitizeTrade(req.body);
@@ -126,12 +135,11 @@ const router: FastifyPluginAsync = async (server) => {
 			return reply.code(201).send(serializeTrade(res));
 		} catch(err) {
 			server.log.error(err);
-			if (err instanceof Error) {
-				const { message } = err;
-				return reply.code(400).send({ message });
-			}
-			const message = "Unknown error";
-			return reply.code(400).send({ message });
+			return reply.code(400).send({
+				message: err instanceof Error
+					? err.message
+					: "Unknown error"
+			});
 		}
 	});
 
@@ -146,6 +154,8 @@ const router: FastifyPluginAsync = async (server) => {
 			...patchTradeSchema
 		},
 		async (req, reply) => {
+			assertTradeLoaded(req);
+
 			if (
 				req.body.orders != null &&
 				!validateOrderQuantities(req.body.orders as any)
@@ -161,12 +171,11 @@ const router: FastifyPluginAsync = async (server) => {
 				return reply.code(200).send(serializeTrade(res));
 			} catch(err) {
 				server.log.error(err);
-				if (err instanceof Error) {
-					const { message } = err;
-					return reply.code(400).send({ message });
-				}
-				const message = "Unknown error";
-				return reply.code(400).send({ message });
+				return reply.code(400).send({
+					message: err instanceof Error
+						? err.message
+						: "Unknown error"
+				});
 			}
 		}
 	);
@@ -179,11 +188,11 @@ const router: FastifyPluginAsync = async (server) => {
 			...deleteTradeSchema,
 		},
 		async (req, reply) => {
+			assertTradeLoaded(req);
 			await deleteTrade(req.trade.id);
 
-			return reply.code(200).send({
-				message: "Trade deleted"
-			});
+			const message = "Trade deleted!";
+			return reply.code(200).send({ message });
 		}
 	);
 
@@ -200,6 +209,7 @@ const router: FastifyPluginAsync = async (server) => {
 			...deleteLabelFromTradeSchema
 		},
 		async (req, reply) => {
+			assertTradeLoaded(req);
 			const labelId = Number(req.params.labelId);
 
 			const label = await getLabelById(labelId);

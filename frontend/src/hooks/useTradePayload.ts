@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
+
 import type { Chart, Order, Trade, ApiTrade } from "../../../shared/trades.types";
-import useTradeOrders from "./useTradeOrders";
 import type { Timeframe } from "../../../shared/candles.types";
+
+import useTradeOrders from "./useTradeOrders";
 import useTradeCharts from "./useTradeCharts";
 import useReload from "./useReload";
 import useSymbolId from "./useSymbolId";
@@ -77,7 +79,9 @@ const useTradePayload = (tradeId?: number) => {
 		}
 
 		if (orderSum !== 0) {
-			throw new Error(`Orders must net to 0. Current net quantity is ${orderSum} (BUY is +, SELL is -).`);
+			throw new Error(
+				`Orders must net to 0. Current net quantity is ${orderSum} (BUY is +, SELL is -).`
+			);
 		}
 
 		const validatedOrders = orders.map(({ price, quantity, date, type }) => ({

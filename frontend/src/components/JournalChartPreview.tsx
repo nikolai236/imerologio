@@ -9,6 +9,7 @@ import {
 	HStack,
 	Checkbox,
 } from '@chakra-ui/react';
+import { useState } from 'react';
 
 import type { Timeframe } from '../../../shared/candles.types';
 import type { TempJournalTrade } from '../hooks/useJournalTrades';
@@ -18,14 +19,13 @@ import OhlcLabel from './OhlcLabel';
 import CopyMenu from './CopyMenu';
 import SymbolSelect from './SymbolSelect';
 import EditJournalTrade from './EditJournalTrade';
+import RangeCalendar from './RangeCalendar';
 
 import { isTimeframeValid } from '../hooks/useTradeCharts';
 import useDraft from '../hooks/useDraft';
 import useJournalChartPreview from '../hooks/useJournalChartPreview';
 import useJournalContext from '../hooks/useJournalContext';
 import useJournalChartContext from '../hooks/useJournalChartContext';
-import { useState } from 'react';
-import RangeCalendar from './RangeCalendar';
 
 const formatDateTime = (value: string | Date) =>
 	new Date(value).toLocaleString("en-US", {

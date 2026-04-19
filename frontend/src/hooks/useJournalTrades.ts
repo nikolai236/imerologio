@@ -8,7 +8,6 @@ import type {
 } from "../../../shared/journal.types";
 import type { OrderEnum } from "../../../shared/trades.types";
 import type { TempJournalChart } from "./useJournalCharts";
-import { createTrade } from "../api/trades";
 
 export type TempJournalOrder = (
 	DbJournalOrder<Date> |
@@ -262,21 +261,6 @@ const useJournalTrades = () => {
 		})
 	);
 
-	const saveAsTableTrade = async (
-		{ orders, ...trade }: TempJournalTrade
-	) => {
-		const tableTrade = await createTrade({
-			...trade,
-			charts: [],
-			description: "",
-			orders: orders.map(({ date, ...order }) => ({
-				...order,
-				date: new Date(date).getTime(),
-			})),
-		});
-		return tableTrade;
-	};
-
 	const getOrderSum = (orders: TempJournalOrder[]) =>
 		orders.reduce(
 			(sum, { type, quantity }) =>
@@ -313,7 +297,6 @@ const useJournalTrades = () => {
 		removeOrder,
 
 		setTrades: overwriteTrades,
-		saveAsTableTrade,
 
 		shouldShow,
 	} as const;

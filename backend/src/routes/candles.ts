@@ -64,12 +64,12 @@ const router: FastifyPluginAsync = async (server) => {
 		}
 
 		if (new Date(start).getFullYear() < 2010) {
-			const message = 'Dates before 2010 are not supported';
+			const message = "Dates before 2010 are not supported";
 			return reply.code(404).send({ message });
 		}
 
 		if (!isCandleLengthValid(end - start, timeframe as Timeframe)) {
-			const message = 'More than 25 000 candles requested';
+			const message = "More than 25 000 candles requested";
 			return reply.code(400).send({ message });
 		}
 

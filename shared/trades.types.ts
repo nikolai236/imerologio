@@ -116,7 +116,7 @@ export interface TradeScoringData {
 	risk: number;
 }
 
-export type ApiTrade = DbTrade<Timeframe, Date>
+export type ApiTrade = DbTrade<Timeframe, number>
 
 export interface LabelEntry {
 	name: string;

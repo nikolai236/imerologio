@@ -29,13 +29,13 @@ export async function getTrades(
 	);
 
 	return trades as DbTradeEntry<Date>[];
-};
+}
 
 export async function getTrade(id: number) {
 	const trade = await api.get(`${path}/${id}`);
 	trade.orders.forEach(assureIsDate);
 	return trade as ApiTrade;
-};
+}
 
 export async function editTrade(
 	id: number,
@@ -45,14 +45,14 @@ export async function editTrade(
 	trade.orders.forEach(assureIsDate);
 
 	return trade as ApiTrade;
-};
+}
 
 export async function createTrade(payload: Trade<Timeframe, number>) {
 	const trade = await api.post(path, payload);
 	trade.orders.forEach(assureIsDate);
 
 	return trade as ApiTrade;
-};
+}
 
 export async function deleteTrade(id: number) {
 	try {
@@ -62,5 +62,5 @@ export async function deleteTrade(id: number) {
 		return false;
 	}
 	return true;
-};
+}
 

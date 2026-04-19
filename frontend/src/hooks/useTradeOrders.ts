@@ -48,14 +48,16 @@ const useTradeOrders = (date: Date, stop: number | null) => {
 		orders.filter(o => o.tempId != id)
 	);
 
-	const overwriteOrders = (orders: DbOrder<Date>[]) => setOrders(orders
-		.map(o => ({
-			...o,
-			date: new Date(o.date).getTime(),
-			tempId: uid(),
-		}))
-		.sort((a, b) => a.date - b.date)
-	);
+	const overwriteOrders = (orders: DbOrder<number>[]) =>
+		setOrders(
+			orders
+				.map(o => ({
+					...o,
+					date: new Date(o.date).getTime(),
+					tempId: uid(),
+				}))
+				.sort((a, b) => a.date - b.date)
+		);
 
 	const entryOrder = useMemo(() => {
 		if (orders.length == 0) return null;
