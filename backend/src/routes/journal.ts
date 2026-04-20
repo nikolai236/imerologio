@@ -18,7 +18,9 @@ import {
 	getJournalEntriesSchema,
 	getJournalEntrySchema,
 	patchJournalEntrySchema,
-	postJournalEntrySchema
+	postJournalEntrySchema,
+	publishJournalTradeSchema,
+	unpublishJournalTradeSchema
 } from "../schemas/journal";
 
 import journalRepository from "../database/journal";
@@ -49,6 +51,8 @@ const router: FastifyPluginAsync = async (server) => {
 		getJournalEntry,
 		createJournalEntry,
 		updateJournalEntry,
+		publishJournalTrade,
+		unpublishJournalTrade,
 	} = journalRepository(server.prisma);
 
 	const loadJournalEntry = async (
@@ -119,6 +123,18 @@ const router: FastifyPluginAsync = async (server) => {
 		}
 	});
 
+	interface Publish { Params: { journalTradeId: number } }
+	server.post<Publish>(
+		"/publish/:journalTradeId",
+		publishJournalTradeSchema,
+		async (req, reply) => {
+			const id = Number(req.params.journalTradeId);
+
+			const trade = await publishJournalTrade(id);
+			return reply.code(200).send(trade);
+		}
+	);
+
 	interface Patch {
 		Params: { id: number; }
 		Body: UpdateJournalEntry<string, Timeframe>;
@@ -169,6 +185,18 @@ const router: FastifyPluginAsync = async (server) => {
 				server.log.error(err);
 				return reply.code(400).send({ message: err });
 			}
+		}
+	);
+
+	server.delete<Publish>(
+		"/unpublish/:journalTradeId",
+		unpublishJournalTradeSchema,
+		async (req, reply) => {
+			const id = Number(req.params.journalTradeId);
+			await unpublishJournalTrade(id);
+
+			const message = "Trade unpublished.";
+			return reply.code(200).send({ message });
 		}
 	);
 };

@@ -152,7 +152,7 @@ export default function LabelsPerformancePage() {
 
 			return {
 				id: trade.id,
-				date: formatDate(trade.firstOrderDate),
+				date: formatDate(new Date(trade.firstOrderDate)),
 				pnl: trade.derivedPnl,
 				equity: running,
 			};
@@ -427,7 +427,7 @@ export default function LabelsPerformancePage() {
 															<Table.Row key={trade.id} onClick={() => goToTrade(trade.id)}>
 																<Table.Cell>{trade.id}</Table.Cell>
 																<Table.Cell>
-																	{formatDate(trade.firstOrderDate)}
+																	{formatDate(new Date(trade.firstOrderDate))}
 																</Table.Cell>
 																<Table.Cell textAlign="end">
 																	<Text

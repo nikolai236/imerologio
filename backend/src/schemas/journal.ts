@@ -4,7 +4,8 @@ import {
 	ErrorMessage,
 	IdParams,
 	OrderEnum,
-	TimeframeEnum
+	TimeframeEnum,
+	Trade
 } from "./common";
 
 const JournalOrder = Type.Object({
@@ -33,6 +34,7 @@ const JournalTrade = Type.Object({
 	target: Type.Number(),
 	stop: Type.Number(),
 	pnl: Type.Number(),
+	tradeId: Type.Optional(Type.Union([Type.Null(), Type.Integer()])),
 	symbolId: Type.Integer(),
 	labels: Type.Array(Type.Object({
 		id: Type.Integer(),
@@ -159,6 +161,21 @@ export const postJournalEntrySchema = {
 	}
 } as const;
 
+const PublishParams = Type.Object({
+	journalTradeId: Type.Integer(),
+});
+
+export const publishJournalTradeSchema = {
+	schema: {
+		params: PublishParams,
+		response: {
+			200: Trade,
+			404: ErrorMessage,
+			500: ErrorMessage,
+		}
+	}
+} as const;
+
 export const patchJournalEntrySchema = {
 	schema: {
 		params: IdParams,
@@ -167,6 +184,18 @@ export const patchJournalEntrySchema = {
 			200: DbJournalEntry,
 			400: ErrorMessage,
 			404: ErrorMessage,
+			500: ErrorMessage,
+		}
+	}
+} as const;
+
+export const unpublishJournalTradeSchema = {
+	schema: {
+		params: PublishParams,
+		response: {
+			200: Type.Object({
+				message: Type.String()
+			}),
 			500: ErrorMessage,
 		}
 	}

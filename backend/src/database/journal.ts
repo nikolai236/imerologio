@@ -1,6 +1,7 @@
 import type { PrismaClient } from "@prisma/client";
 import type {
 	DbJournalEntry,
+	DbJournalTrade,
 	JournalEntry,
 	JournalOrder,
 	JournalTrade,
@@ -8,6 +9,8 @@ import type {
 	UpdateJournalOrder,
 	UpdateJournalTrade
 } from "../../../shared/journal.types";
+import tradeRepository from "./trades";
+import { ConflictError, NotFoundError } from "../errors";
 
 const include = {
 	trades: {
@@ -76,7 +79,9 @@ const buildOrdersUpdate = (
 	orders: (UpdateJournalOrder<string> | JournalOrder<string>)[]
 ) => produceOverwriteObj(orders);
 
-const buildTradesUpdate = (trades: (UpdateJournalTrade<string> | JournalTrade<string>)[]) => {
+const buildTradesUpdate = (
+	trades: (UpdateJournalTrade<string> | JournalTrade<string>)[]
+) => {
 	trades = trades.filter(t => t != null) ;
 
 	const existingIds = trades
@@ -160,6 +165,7 @@ export default function journalRepository(db: PrismaClient) {
 				timeframe: c.timeframe,
 				start: c.start,
 				end: c.end,
+				createdAt: c.createdAt,
 				objects: c.objects,
 				symbol: {
 					connect: { id: c.symbolId, },
@@ -278,10 +284,91 @@ export default function journalRepository(db: PrismaClient) {
 		return sanitized as DbJournalEntry<Date, number>;
 	};
 
+	const publishJournalTrade = async (id: number) => {
+		return db.$transaction(async (tx) => {
+			const journalTrade = await tx.journalTrade.findUnique({
+				where: { id },
+				include: {
+					orders: true,
+					labels: {
+						include: {
+							label: true,
+						},
+					},
+				},
+			});
+
+			if (journalTrade == null) {
+				throw new NotFoundError("Journal trade not found");
+			}
+
+			if (journalTrade.tradeId != null) {
+				throw new ConflictError("Journal trade is already published");
+			}
+
+			const { createTrade } = tradeRepository(tx);
+
+			const trade = await createTrade({
+				stop: Number(journalTrade.stop),
+				target: Number(journalTrade.target),
+				symbolId: journalTrade.symbolId,
+				charts: [],
+				description: "",
+				labels: journalTrade.labels.map(({ label }) => label),
+				orders: journalTrade.orders.map(
+					({ id, tradeId, createdAt, updatedAt, ...rest }: any) => rest
+				),
+			});
+
+			await tx.journalTrade.updateMany({
+				where: {
+					id,
+					tradeId: null,
+				},
+				data: {
+					tradeId: trade.id,
+				},
+			});
+
+			return trade;
+		});
+	};
+
+	const unpublishJournalTrade = async (id: number) => {
+		return db.$transaction(async (tx) => {
+			const journalTrade = await tx.journalTrade.findUnique({
+				where: { id },
+			});
+
+			if (journalTrade == null) {
+				throw new NotFoundError("Journal trade not found");
+			}
+
+			if (journalTrade.tradeId == null) {
+				throw new ConflictError("Journal trade is not published");
+			}
+
+			const { deleteTrade } = tradeRepository(tx);
+
+			await deleteTrade(journalTrade.tradeId);
+			await tx.journalTrade.updateMany({
+				where: {
+					id,
+					tradeId: journalTrade.tradeId,
+				},
+				data: {
+					tradeId: null,
+				},
+			});
+		});
+	};
+
 	return {
 		getJournalEntries,
 		getJournalEntry,
 		createJournalEntry,
 		updateJournalEntry,
+		publishJournalTrade,
+		unpublishJournalTrade,
 	} as const;
 }

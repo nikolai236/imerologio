@@ -8,6 +8,7 @@ import type {
 	TradeScoringData,
 	UpdateTrade,
 } from '../../../shared/trades.types';
+import journalRepository from './journal';
 
 const cleanOrder = (o: any): DbOrder<number> => ({
 	...o,
@@ -47,7 +48,7 @@ const produceOverwriteObj = <T extends object>(elements: T[]) => {
 	return { deleteMany, create, upsert } as const;
 };
 
-const cleanTrade = ({ deleted, ...t }: any): any => ({
+export const cleanTrade = ({ deleted, ...t }: any): any => ({
 	...t,
 	stop: Number(t.stop),
 	pnl: t.pnl != null ? Number(t.pnl) : null,
@@ -75,7 +76,9 @@ const include = {
 	symbol: true,
 } as const;
 
-const tradeRepository = (db: PrismaClient) => {
+type DB = PrismaClient | Prisma.TransactionClient;
+
+export default function tradeRepository(db: DB) {
 	const getAllTrades = async (
 		labelIds?: number[],
 		from?: number,
@@ -192,8 +195,8 @@ const tradeRepository = (db: PrismaClient) => {
 			orders: { create: trade.orders },
 			charts: { create: trade.charts  },
 			labels: {
-				create: trade.labels.map((connect) => ({
-					label: { connect },
+				create: trade.labels.map(({ id }) => ({
+					label: { connect: { id } },
 				})),
 			},
 		};
@@ -306,6 +309,4 @@ const tradeRepository = (db: PrismaClient) => {
 		getOrderById,
 		getTradeScoringData,
 	} as const;
-};
-
-export default tradeRepository;
+}

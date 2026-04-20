@@ -2,6 +2,8 @@ import Fastify from "fastify";
 import compress from "@fastify/compress";
 import cors from "@fastify/cors";
 
+import { AppError } from "./errors";
+
 import prismaPlugin from "./plugins/prisma";
 import uploadsPlugin from "./plugins/upload";
 import duckdbPlugin from "./plugins/duckdb";
@@ -67,6 +69,11 @@ export default async function buildApp(logger=true) {
 	});
 
 	app.setErrorHandler((err: any, _req, reply) => {
+		if (err instanceof AppError) {
+			const { message } = err;
+			return reply.status(err.code).send({ message });
+		}
+
 		if (err.statusCode == 400 && err.validation) {
 			const message = err.instancePath + ": " + err.message;
 			return reply.status(400).send({ message })

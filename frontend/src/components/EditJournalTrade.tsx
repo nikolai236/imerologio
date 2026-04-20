@@ -13,6 +13,7 @@ import {
 	VStack,
 	DialogFooter,
 	Flex,
+	Spinner,
 } from "@chakra-ui/react";
 import type { TempJournalTrade } from "../hooks/useJournalTrades";
 import { useEffect, useMemo, useState } from "react";
@@ -26,6 +27,7 @@ import useTimeframe from "../hooks/useTimeframe";
 import type { UTCTimestamp } from "lightweight-charts";
 import SelectLabelButton from "./SelectLabelButton";
 import SelectLabels from "./SelectLabels";
+import usePublishTrade from "../hooks/usePublishTrade";
 
 type Props = {
 	trade: TempJournalTrade | null;
@@ -42,6 +44,7 @@ export default function EditJournalTrade({
 	const [selectedLabelIds, setSelectedLabelIds] = useState(
 		trade.labels.map(label => label.id)
 	);
+
 	useEffect(() => {
 		updateTrade(trade.tempId, {
 			labels: selectedLabelIds.map(id => ({ id }))
@@ -133,6 +136,13 @@ export default function EditJournalTrade({
 		removeOrder(trade.tempId, orderId);
 	};
 
+	const {
+		publishDisabled,
+		isPublished,
+		publishLoading,
+		togglePublished,
+	} = usePublishTrade(trade.tempId);
+
 	return (
 		<DialogRoot
 			size="lg"
@@ -223,6 +233,21 @@ export default function EditJournalTrade({
 							setOpen={setLabelsOpen}
 							reloadLabels={reloadLabels}
 						/>
+
+						<Flex align="center" gap={2} mt={5}>
+							<Button
+								onClick={() => togglePublished()}
+								disabled={publishDisabled}
+								variant="outline"
+							>
+								{!isPublished ? "Publish" : "Unpublish"}
+								{publishLoading && (
+									<Flex justify="center" py={12}>
+										<Spinner size="sm" />
+									</Flex>
+								)}
+							</Button>
+						</Flex>
 					</DialogBody>
 
 					<DialogFooter>

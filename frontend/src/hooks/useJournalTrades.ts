@@ -116,6 +116,12 @@ const recalculateTradePnl = (trade: TempJournalTrade) => {
 const useJournalTrades = () => {
 	const [trades, setTrades] = useState<TempJournalTrade[]>([]);
 
+	const getTrade = useCallback(
+		(id: string) =>
+			trades.find(trade => id === trade.tempId),
+		[trades]
+	);
+
 	const addTrade: AddTrade = (
 		chart: TempJournalChart,
 		startS: number,
@@ -236,6 +242,7 @@ const useJournalTrades = () => {
 				stop,
 				symbolId,
 				labels,
+				tradeId,
 			} = trade;
 
 			const orders = trade.orders
@@ -257,6 +264,7 @@ const useJournalTrades = () => {
 				symbolId,
 				orders,
 				labels,
+				tradeId,
 			};
 		})
 	);
@@ -287,6 +295,7 @@ const useJournalTrades = () => {
 
 	return {
 		trades,
+		getTrade,
 		addTrade,
 		updateTrade,
 		removeTrade,

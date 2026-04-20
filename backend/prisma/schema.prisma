@@ -58,6 +58,8 @@ model Trade {
 	symbolId Int
 	symbol   Symbol @relation(fields: [symbolId], references: [id], onDelete: Cascade)
 
+	journalTrade JournalTrade?
+
 	deleted Boolean @default(false)
 
 	@@index([symbolId])
@@ -179,6 +181,9 @@ model JournalTrade {
 
 	orders JournalOrder[]
 	labels JournalTradeLabel[]
+
+	tradeId Int? @unique
+	trade Trade? @relation(fields: [tradeId], references: [id], onDelete: SetNull)
 
 	journalEntry JournalEntry @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
 	symbol       Symbol       @relation(fields: [symbolId], references: [id], onDelete: Cascade)

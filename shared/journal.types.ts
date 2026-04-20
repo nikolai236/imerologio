@@ -1,4 +1,4 @@
-import type { ChartTimeframe, DbLabel, DbSymbol, OrderEnum } from "./trades.types";
+import type { ChartTimeframe, DbLabel, DbSymbol, DbTrade, OrderEnum } from "./trades.types";
 
 export interface JournalEntry<
 	DateType extends string | Date,
@@ -88,9 +88,11 @@ export interface JournalTrade<
 	stop: number;
 	pnl: number;
 
-	symbolId: number;
 	orders: JournalOrder<DateType>[];
 	labels: (DbLabel | { id: number })[];
+
+	tradeId?: number | null;
+	symbolId: number;
 }
 
 export interface DbJournalTrade<
@@ -99,6 +101,7 @@ export interface DbJournalTrade<
 > extends JournalTrade<DateType> {
 	id: number;
 
+	trade?: DbTrade<number, Date>; // gets stripped during validation
 	orders: DbJournalOrder<DateType>[];
 
 	journalEntryId: number;

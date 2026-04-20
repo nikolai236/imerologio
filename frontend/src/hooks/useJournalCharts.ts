@@ -84,7 +84,7 @@ const useJournalCharts = () => {
 				end,
 				createdAt,
 			}))
-			.sort((a, b) => 
+			.sort((a, b) =>
 				new Date(a.createdAt).getTime() -
 				new Date(b.createdAt).getTime()
 			)

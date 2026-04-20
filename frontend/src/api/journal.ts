@@ -44,3 +44,12 @@ export async function updateJournalEntry(
 	const entry = await api.patch(`${path}/${id}`, payload);
 	return sanitizeDates(entry) as ApiJournalEntry;
 }
+
+export async function publishJournalTrade(id: number) {
+	const trade = await api.post(`${path}/publish/${id}`, {});
+	return trade.id;
+}
+
+export async function unpublishJournalTrade(id: number) {
+	await api.delete(`${path}/unpublish/${id}`);
+}
