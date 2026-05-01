@@ -26,7 +26,6 @@ export default function CreateTradePage() {
 	const { symbols, loadingSymbols } = useFetchSymbols();
 
 	const {
-		tradeId,
 		selectedLabelIds,
 		setSelectedLabelIds,
 
@@ -122,7 +121,6 @@ export default function CreateTradePage() {
 			</VStack>
 
 			<SelectLabels
-				tradeId={tradeId}
 				selectedIds={selectedLabelIds}
 				setSelectedIds={setSelectedLabelIds}
 				labels={labels}

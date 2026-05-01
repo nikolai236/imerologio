@@ -23,7 +23,6 @@ import { createLabel } from "../api/labels";
 type Props = {
 	labels: DbLabelEntry[];
 	open: boolean;
-	tradeId?: number;
 	allowCreate?: boolean;
 	disabled?: boolean;
 	selectedIds: number[];
@@ -38,7 +37,6 @@ export default function SelectLabels({
 	open,
 	labels,
 	allowCreate = true,
-	tradeId,
 	selectedIds,
 
 	setSelectedIds,
@@ -84,7 +82,7 @@ export default function SelectLabels({
 
 			const newLabel = await createLabel({
 				name,
-				tradeIds: tradeId != null ? [tradeId] : [],
+				tradeIds: [],
 			});
 
 			setSelectedIds(ids => ids.includes(newLabel.id) ?

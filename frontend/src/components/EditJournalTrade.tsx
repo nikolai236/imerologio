@@ -1,3 +1,4 @@
+import type { UTCTimestamp } from "lightweight-charts";
 import {
 	Button,
 	DialogBackdrop,
@@ -15,18 +16,20 @@ import {
 	Flex,
 	Spinner,
 } from "@chakra-ui/react";
-import type { TempJournalTrade } from "../hooks/useJournalTrades";
 import { useEffect, useMemo, useState } from "react";
-import OrderRow from "./OrderRow";
-import useJournalContext from "../hooks/useJournalContext";
-import StopInput from "./StopInput";
+
 import type { Price } from "../hooks/useDraft";
-import TargetInput from "./TargetInput";
+import type { TempJournalTrade } from "../hooks/useJournalTrades";
 import { Timeframes } from "../../../shared/candles.types";
-import useTimeframe from "../hooks/useTimeframe";
-import type { UTCTimestamp } from "lightweight-charts";
+
+import StopInput from "./StopInput";
+import OrderRow from "./OrderRow";
+import TargetInput from "./TargetInput";
 import SelectLabelButton from "./SelectLabelButton";
 import SelectLabels from "./SelectLabels";
+
+import useJournalContext from "../hooks/useJournalContext";
+import useTimeframe from "../hooks/useTimeframe";
 import usePublishTrade from "../hooks/usePublishTrade";
 
 type Props = {
@@ -225,7 +228,6 @@ export default function EditJournalTrade({
 							</VStack>
 						</Box>
 						<SelectLabels
-							tradeId={trade.id}
 							selectedIds={selectedLabelIds}
 							setSelectedIds={setSelectedLabelIds}
 							labels={labels}
