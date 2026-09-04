@@ -36,20 +36,42 @@ const useJournalCharts = () => {
 			tempId: uid(),
 			symbolId: null,
 			objects: [],
+			ord: charts.length + 1,
 			createdAt: new Date(Date.now()),
 		};
 
 		const { id, ...payload } = charts.at(-1)!;
 		return {
 			...payload,
+			ord: charts.length + 1,
 			tempId: uid(),
 			createdAt: new Date(Date.now()),
 		};
 	};
 
-	const updateChart = (id: string, payload: UpdateJournalChart<Timeframe>) => setCharts(charts =>
-		charts.map(c => id == c.tempId ? { ...c, ...payload } : c)
-	);
+	const updateChart = (id: string, payload: UpdateJournalChart<Timeframe>) => {
+		const { ord, ...rest } = payload;
+	
+		if (ord != null) {
+			setCharts(charts => {
+				const from = charts.findIndex(c => id == c.tempId);
+				if (from == -1) return charts;
+
+				const [chart] = charts.splice(from, 1);
+				const to = Math.max(0, Math.min(ord! - 1, charts.length));
+				charts.splice(to, 0, chart);
+
+				return charts.map(({ ord, ...c }, i) => ({
+					...c,
+					ord: i + 1,
+				}));
+			});
+		}
+
+		setCharts(charts =>
+			charts.map(c => id == c.tempId ? { ...c, ...rest } : c)
+		);
+	};
 
 	const addChart = () => setCharts(charts => [
 		...charts,
@@ -57,7 +79,11 @@ const useJournalCharts = () => {
 	]);
 
 	const removeChart = (id: string) => setCharts(charts =>
-		charts.filter(c => c.tempId != id)
+		charts
+			.filter(c => c.tempId != id)
+			.map(({ ord, ...c }, i) => ({
+				...c, ord: i + 1,
+			}))
 	);
 
 	type ApiChart =
@@ -73,6 +99,7 @@ const useJournalCharts = () => {
 				start,
 				end,
 				symbolId,
+				ord,
 				createdAt,
 			}) => ({
 				id,
@@ -82,12 +109,10 @@ const useJournalCharts = () => {
 				objects,
 				start,
 				end,
+				ord,
 				createdAt,
 			}))
-			.sort((a, b) =>
-				new Date(a.createdAt).getTime() -
-				new Date(b.createdAt).getTime()
-			)
+			.sort((a, b) => a.ord - b.ord)
 	);
 
 	return {

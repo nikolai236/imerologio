@@ -50,6 +50,7 @@ export interface UpdateJournalEntry<
 export interface JournalChart<
 	TimeframeType extends ChartTimeframe,
 > {
+	ord: number;
 	timeframe: TimeframeType;
 
 	start: number | bigint;

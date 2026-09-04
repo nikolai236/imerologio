@@ -9,7 +9,7 @@ import {
 	HStack,
 	Checkbox,
 } from '@chakra-ui/react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import type { Timeframe } from '../../../shared/candles.types';
 import type { TempJournalTrade } from '../hooks/useJournalTrades';
@@ -127,14 +127,19 @@ export default function JournalChartPreview({
 		setSymbolId,
 	} = useJournalChartContext();
 
+	const { charts } = useJournalContext();
+	const maxOrd = useMemo(() => charts.length, [charts]);
+
 	const {
 		tempId,
 		start,
 		end,
 		timeframe,
+		ord,
 	} = chart;
 
 	const [draftTf, setDraftTf] = useDraft(timeframe);
+	const [draftOrd, setDraftOrd] = useDraft(ord);
 
 	const { updateChart, removeChart } = useJournalContext();
 
@@ -155,6 +160,15 @@ export default function JournalChartPreview({
 			setError(null);
 		}
 	};
+
+	const commitOrd = () => {
+		if (isNaN(Number(draftOrd)) || Number(draftOrd) <= 0 || Number(draftOrd) > maxOrd){
+			return setError("Invalid order");
+		} else {
+			setError(null);
+		}
+		updateChart(tempId, { ord: Number(draftOrd) });
+	}
 
 	const canPlaceTrade =
 		!disabled &&
@@ -208,6 +222,20 @@ export default function JournalChartPreview({
 							onChange={e => setDraftTf(e.target.value)}
 							onBlur={commitTimeframe}
 							placeholder="e.g. 5m or 15000"
+						/>
+					</Box>
+
+					<Box minW="100px">
+						<Text fontSize="xs" color="fg.muted" mb={1}>
+							Ord
+						</Text>
+						<Input
+							type="number"
+							min={1}
+							disabled={disabled}
+							value={draftOrd}
+							onBlur={commitOrd}
+							onChange={e => setDraftOrd(e.target.value)}
 						/>
 					</Box>
 				</Flex>
