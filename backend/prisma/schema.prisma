@@ -86,6 +86,21 @@ model Label {
 
 	symbolId Int?  @unique
 	symbol Symbol? @relation(fields: [symbolId], references: [id], onDelete: Cascade)
+
+  descendants LabelClosure[] @relation("Ancestor")
+  ancestors LabelClosure[] @relation("Descendant")
+}
+
+model LabelClosure {
+	ancestorId   Int
+	descendantId Int
+	depth        Int
+
+	ancestor   Label @relation("Ancestor", fields: [ancestorId], references: [id], onDelete: Cascade)
+	descendant Label @relation("Descendant", fields: [descendantId], references: [id], onDelete: Cascade)
+
+	@@id([ancestorId, descendantId])
+	@@index([descendantId])
 }
 
 model Chart {

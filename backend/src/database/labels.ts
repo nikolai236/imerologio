@@ -39,6 +39,28 @@ const labelRepository = (db: PrismaClient) => {
 		return labels;
 	};
 
+	// const getAllLabels = async (symbols = false) => {
+	// 	const labels = await db.$queryRaw<DbLabelEntry[]>`
+	// 		SELECT
+	// 			l.id,
+	// 			l.name,
+	// 			COUNT(DISTINCT t.id)::int AS "tradeCount"
+	// 		FROM "Label" l
+	// 		LEFT JOIN "LabelClosure" lc
+	// 			ON lc."ancestorId" = l.id
+	// 		LEFT JOIN trade_labels tl
+	// 			ON tl."labelId" = lc."descendantId"
+	// 		LEFT JOIN "Trade" t
+	// 			ON t.id = tl."tradeId"
+	// 			AND t.deleted = false
+	// 		WHERE ${symbols ? Prisma.sql`TRUE` : Prisma.sql`l."symbolId" IS NULL`}
+	// 		GROUP BY l.id, l.name
+	// 		ORDER BY l.name;
+	// 	`;
+
+	// 	return labels;
+	// };
+
 	const getLabelsWithTradeIds = async (allowSymbolLabels=false) => {
 		const whereClause = allowSymbolLabels ?
 			Prisma.empty :
