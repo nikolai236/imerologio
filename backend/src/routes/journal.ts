@@ -37,8 +37,9 @@ const serialize = (
 ): DbJournalEntry<Date, Timeframe> => ({
 	...entry,
 	trades: trades.map(({ journalEntry, ...trade}) => trade),
-	charts: charts.map(({ journalEntry, start, end, timeframe, ...chart }) => ({
+	charts: charts.map(({ journalEntry, start, end, timeframe, ord, ...chart }) => ({
 		...chart,
+		ord: Number(ord),
 		start: Number(start),
 		end: Number(end),
 		timeframe: numberToTf(timeframe),

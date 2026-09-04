@@ -72,6 +72,7 @@ const JournalChart = Type.Object({
 	objects: Type.Any(),
 	symbolId: Type.Integer(),
 
+	ord: Type.Number(),
 	createdAt: DateString,
 });
 

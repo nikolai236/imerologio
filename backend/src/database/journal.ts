@@ -10,7 +10,7 @@ import type {
 	UpdateJournalTrade
 } from "../../../shared/journal.types";
 import tradeRepository from "./trades";
-import { ConflictError, NotFoundError } from "../errors";
+import { ConflictError, NotFoundError, ValidationError } from "../errors";
 
 const include = {
 	trades: {
@@ -162,6 +162,7 @@ export default function journalRepository(db: PrismaClient) {
 	) => {
 		const charts = payload.charts ? {
 			create: payload.charts.map(c => ({
+				ord: c.ord,
 				timeframe: c.timeframe,
 				start: c.start,
 				end: c.end,
@@ -239,9 +240,22 @@ export default function journalRepository(db: PrismaClient) {
 				}),
 			}));
 
+		if (payload.charts != null) {
+			if (payload.charts.some(c => c.ord != undefined)) {
+				throw new ValidationError("Invalid ord values on journal charts");
+			}
+			const ords = (payload.charts.map(c => c.ord) as number[])
+				.sort((a, b) => a - b);
+
+			if (ords.some((o, i) => o !== i + 1)) {
+				throw new ValidationError("Invalid ord values on journal charts");
+			}
+		}
+
 		const modifiedCharts = payload.charts
-			?.map(({ start, end, objects, timeframe, symbolId, createdAt, ...rest }) => ({
+			?.map(({ start, end, objects, timeframe, symbolId, createdAt, ord, ...rest }) => ({
 				...("id" in rest && { id: rest.id }),
+				...(ord != undefined && { ord }),
 				...(start != undefined && { start }),
 				...(end != undefined && { end }),
 				...(objects != undefined && { objects }),

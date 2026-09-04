@@ -227,6 +227,7 @@ model JournalChart {
 	id Int @id @default(autoincrement())
 
 	timeframe Int
+	ord Int
 
 	start BigInt
 	end   BigInt
