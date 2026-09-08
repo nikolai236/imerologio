@@ -21,39 +21,22 @@ import {
 
 import "@xyflow/react/dist/style.css";
 
-import type {
-	DbLabelEntry,
-	DbLabelWithDescendats,
-} from "../../../shared/trades.types";
+import type { DbLabelEntry } from "../../../shared/trades.types";
 
 import {
-	getLabelWithDescendants,
-	getAdjacencyList,
 	addChild,
 	removeChild,
 } from "../api/labels";
+import useLabelsContext from "../hooks/useLabelsContext";
 
-type Props = {
-	labelId: number | null;
-	labels: DbLabelEntry[];
-	onClose: () => void;
-};
+function LabelGraph() {
+	const {
+		list,
+		labelMap,
+		editChildrenId,
+	} = useLabelsContext();
 
-type GraphProps = {
-	rootId: number;
-	list: Record<number, number[]>;
-	labels: DbLabelEntry[];
-};
-
-function LabelGraph({
-	rootId,
-	list,
-	labels,
-}: GraphProps) {
-	const labelMap = useMemo(
-		() => new Map(labels.map(({ id, name }) => [id, name])),
-		[labels]
-	);
+	const rootId = editChildrenId!;
 
 	const nodes = useMemo<Node[]>(() => {
 		const ids = new Set<number>();
@@ -151,32 +134,26 @@ function LabelGraph({
 	);
 }
 
-export default function EditLabelChildren({
-	labelId,
-	labels,
-	onClose,
-}: Props) {
-	const [label, setLabel] = useState<DbLabelWithDescendats | null>(null);
-	const [list, setList] = useState<Record<number, number[]>>({});
+export default function EditLabelChildren() {
+	const {
+		labels,
+		labelMap,
+		editChildrenId: labelId,
+		rootLabel,
+		loadGraphData,
+		list,
+		clearGraphData,
+		closeEditChildren: onClose,
+	} = useLabelsContext();
+
 	const [query, setQuery] = useState("");
 
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
-	const loadData = async (id: number) => {
-		const [currentLabel, currentAdjList] = await Promise.all([
-			getLabelWithDescendants(id),
-			getAdjacencyList(id),
-		]);
-
-		setLabel(currentLabel);
-		setList(currentAdjList);
-	};
-
 	useEffect(() => {
 		if (labelId == null) {
-			setLabel(null);
-			setList({});
+			clearGraphData(),
 			setQuery("");
 			setError(null);
 
@@ -188,7 +165,7 @@ export default function EditLabelChildren({
 			setError(null);
 
 			try {
-				await loadData(labelId);
+				await loadGraphData(labelId);
 			} catch (err: any) {
 				console.error(err);
 				setError(err?.message ?? "Failed to load label");
@@ -204,7 +181,7 @@ export default function EditLabelChildren({
 		if (labelId == null) return;
 
 		const handleKeyDown = (event: KeyboardEvent) => {
-			if (event.key === "Escape") onClose();
+			if (event.key === "Escape") close();
 		};
 
 		window.addEventListener("keydown", handleKeyDown);
@@ -212,16 +189,16 @@ export default function EditLabelChildren({
 		return () => window.removeEventListener(
 			"keydown", handleKeyDown
 		);
-	}, [labelId, onClose]);
+	}, [labelId]);
 
 	const availableLabels = useMemo(() => {
-		if (label == null) return [];
+		if (rootLabel == null) return [];
 
-		const descIds = new Set(label.descendants.map(d => d.id));
+		const descIds = new Set(rootLabel.descendants.map(d => d.id));
 		return labels.filter(
-			l => l.id !== label.id && !descIds.has(l.id)
+			l => l.id !== rootLabel.id && !descIds.has(l.id)
 		);
-	}, [label, labels]);
+	}, [rootLabel, labels]);
 
 	const filteredLabels = useMemo(() => {
 		const q = query.trim().toLowerCase();
@@ -229,15 +206,15 @@ export default function EditLabelChildren({
 		return availableLabels.filter(
 			cand => cand.name.toLowerCase().includes(q)
 		);
-	}, [availableLabels, query,]);
+	}, [availableLabels, query]);
 
 	const handleAdd = async (child: DbLabelEntry) => {
-		if (label == null) return;
+		if (rootLabel == null) return;
 
 		setError(null);
 		try {
-			await addChild(label.id, child.id);
-			await loadData(label.id);
+			await addChild(rootLabel.id, child.id);
+			await loadGraphData(rootLabel.id);
 
 			setQuery("");
 		} catch (err: any) {
@@ -246,12 +223,12 @@ export default function EditLabelChildren({
 	};
 
 	const handleRemove = async (child: DbLabelEntry) => {
-		if (label == null) return;
+		if (rootLabel == null) return;
 
 		setError(null);
 		try {
-			await removeChild(label.id,child.id);
-			await loadData(label.id);
+			await removeChild(rootLabel.id,child.id);
+			await loadGraphData(rootLabel.id);
 		} catch (err: any) {
 			setError(err?.message ?? `Failed to remove "${child.name}"`);
 		}
@@ -293,16 +270,15 @@ export default function EditLabelChildren({
 				<VStack align="stretch" gap={6}>
 					<Flex justify="space-between" align="center">
 						<Box>
-							<Text
-								fontSize="lg"
-								fontWeight="bold"
-							> Edit child labels </Text>
+							<Text fontSize="lg" fontWeight="bold">
+								Edit child labels
+							</Text>
 
-							{label && (
+							{rootLabel && (
 								<Text fontSize="sm" color="fg.muted">
 									Manage children of{" "}
 									<Text as="span" fontWeight="semibold">
-										{label.name}
+										{rootLabel.name}
 									</Text>
 								</Text>
 							)}
@@ -323,11 +299,12 @@ export default function EditLabelChildren({
 							borderWidth="1px"
 							borderColor="red.300"
 							borderRadius="md"
-						> <Text color="red.500">{error}</Text>
+						>
+							<Text color="red.500">{error}</Text>
 						</Box>
 					)}
 
-					{!loading && label && (
+					{!loading && rootLabel && (
 						<>
 							<Box>
 								<Text
@@ -339,11 +316,7 @@ export default function EditLabelChildren({
 								> Descendant graph </Text>
 
 								<Box borderWidth="1px" borderRadius="lg" overflow="hidden">
-									<LabelGraph
-										rootId={label.id}
-										list={list}
-										labels={labels}
-									/>
+									<LabelGraph />
 								</Box>
 							</Box>
 
@@ -357,22 +330,24 @@ export default function EditLabelChildren({
 								> Current children </Text>
 
 								<Flex gap={2} flexWrap="wrap">
-								{(list[label.id] ?? []).map((childId) => {
-									const child = labels.find(l => l.id === childId);
-									if (!child) return null;
+								{(list[rootLabel.id] ?? []).map((childId) => {
+									const childName = labelMap.get(childId);
+									if (childName == null) return null;
 
 									return (
 										<HStack
-											key={child.id}
+											key={childId}
 											borderWidth="1px"
 											borderRadius="full"
 											px={3}
 											py={1.5}
 										>
-											<Text>{child.name}</Text>
+											<Text>{childName}</Text>
 											<CloseButton
 												size="xs"
-												onClick={() => handleRemove(child)}
+												onClick={() => handleRemove({
+													name: childName, id: childId
+												})}
 											/>
 										</HStack>
 									);

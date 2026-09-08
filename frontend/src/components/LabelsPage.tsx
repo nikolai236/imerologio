@@ -11,19 +11,22 @@ import type { DbLabelEntry, Label } from "../../../shared/trades.types";
 import LabelRow from "./LabelRow";
 import useRowErrors from "../hooks/useRowErrors";
 import CreateLabel from "./CreateLabel";
-import useFetchLabels from "../hooks/useFetchLabels";
 
 import { deleteLabel, updateLabel, createLabel } from "../api/labels";
 import EditLabelChildren from "./EditLabelChildren";
+import useLabelsContext from "../hooks/useLabelsContext";
 
-export default function Labels() {
+export default function LabelsPage() {
+	const {
+		labels,
+		reloadLabels,
+		setEditChildrenId,
+	} = useLabelsContext();
+
 	const { rowErrorById, setRowError, clearRowError } = useRowErrors();
-	const { labels, reloadLabels: reload } = useFetchLabels();
 
 	const [draftName, setDraftName] = useState("");
 	const [editingId, setEditingId] = useState<number|null>(null);
-
-	const [editChildrenId, setEditChildrenId] = useState<number | null>(null);
 
 	const startEdit = (label: DbLabelEntry) => {
 		setEditingId(label.id);
@@ -49,12 +52,12 @@ export default function Labels() {
 		if (!ok) return;
 
 		deleteLabel(label.id)
-			.then(() => reload())
+			.then(() => reloadLabels())
 			.catch(console.error);
 	};
 
 	const saveNewLabel = async (label: Label) => {
-		if (label.name == '') {
+		if (label.name == "") {
 			throw new Error("Name cannot be empty.");
 		}
 
@@ -68,7 +71,7 @@ export default function Labels() {
 		}
 	
 		await createLabel(label);
-		reload();
+		reloadLabels();
 	};
 
 	const saveEdit = async (id: number) => {
@@ -95,7 +98,7 @@ export default function Labels() {
 			return;
 		}
 
-		reload();
+		reloadLabels();
 
 		clearRowError(id);
 		setEditingId(null);
@@ -124,16 +127,12 @@ export default function Labels() {
 						onCancelEdit={cancelEdit}
 						onDraftNameChange={onDraftNameChange}
 						onSave={saveEdit}
-						editChildren={(id: number) => setEditChildrenId(id)}
+						editChildren={setEditChildrenId}
 					/>)
 			})}
 			</Stack>
 			<CreateLabel onCreate={saveNewLabel} />
-			<EditLabelChildren
-				labelId={editChildrenId}
-				labels={labels}
-				onClose={() => setEditChildrenId(null)}
-			/>
+			<EditLabelChildren />
 		</Box>
 	);
 }

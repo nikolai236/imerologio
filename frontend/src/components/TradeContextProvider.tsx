@@ -13,5 +13,9 @@ export default function TradeContextProvider({
 	tradeId,
 }: Props) {
 	const value = useTradePayload(tradeId);
-	return <TradeContext.Provider value={value}>{children}</TradeContext.Provider>;
+	return (
+		<TradeContext.Provider value={value}>
+			{children}
+		</TradeContext.Provider>
+	);
 }

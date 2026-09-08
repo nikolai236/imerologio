@@ -2,7 +2,6 @@ import { Navigate, Routes, Route, Outlet } from "react-router-dom";
 import TradesPage from "./TradesPage";
 import Navbar from "./Navbar";
 import Symbols from "./Symbols";
-import Labels from "./Labels";
 import TradePageOuter from "./TradePageOuter";
 import CreateTradePageOuter from "./CreateTradePageOuter";
 import Scoring from "./Scoring";
@@ -10,6 +9,7 @@ import JournalTablePage from "./JournalTablePage";
 import CreateJournalEntryPageOuter from "./CreateJournalEntryPageOuter";
 import JournalEntryPageOuter from "./JournalEntryPageOuter";
 import LabelsPerformancePage from "./LabelsPerformancePage";
+import LabelsPageOuter from "./LabelsPageOuter";
 
 function RootLayout() {
 	return (
@@ -32,7 +32,7 @@ export default function App() {
 				</Route>
 				<Route path="symbols" element={<Symbols />} />
 				<Route path="labels">
-					<Route index element={<Labels />} />
+					<Route index element={<LabelsPageOuter />} />
 					<Route path="performance" element={<LabelsPerformancePage />} />
 				</Route>
 				<Route path="scoring" element={<Scoring />} />
