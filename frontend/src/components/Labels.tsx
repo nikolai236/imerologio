@@ -14,6 +14,7 @@ import CreateLabel from "./CreateLabel";
 import useFetchLabels from "../hooks/useFetchLabels";
 
 import { deleteLabel, updateLabel, createLabel } from "../api/labels";
+import EditLabelChildren from "./EditLabelChildren";
 
 export default function Labels() {
 	const { rowErrorById, setRowError, clearRowError } = useRowErrors();
@@ -21,6 +22,8 @@ export default function Labels() {
 
 	const [draftName, setDraftName] = useState("");
 	const [editingId, setEditingId] = useState<number|null>(null);
+
+	const [editChildrenId, setEditChildrenId] = useState<number | null>(null);
 
 	const startEdit = (label: DbLabelEntry) => {
 		setEditingId(label.id);
@@ -72,7 +75,7 @@ export default function Labels() {
 		if (editingId !== id) return;
 
 		const name = draftName.trim();
-		if (name == '') {
+		if (name == "") {
 			return setRowError(id, "Name cannot be empty.");
 		}
 
@@ -99,7 +102,7 @@ export default function Labels() {
 	};
 
 	return (
-		<Box p={6}>
+		<Box p={6} position="relative">
 			<Flex align="center" mb={4}>
 				<Heading size="md">Labels</Heading>
 				<Spacer />
@@ -121,10 +124,16 @@ export default function Labels() {
 						onCancelEdit={cancelEdit}
 						onDraftNameChange={onDraftNameChange}
 						onSave={saveEdit}
+						editChildren={(id: number) => setEditChildrenId(id)}
 					/>)
 			})}
 			</Stack>
 			<CreateLabel onCreate={saveNewLabel} />
+			<EditLabelChildren
+				labelId={editChildrenId}
+				labels={labels}
+				onClose={() => setEditChildrenId(null)}
+			/>
 		</Box>
 	);
 }

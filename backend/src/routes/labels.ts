@@ -13,6 +13,10 @@ import {
 	deleteLabelSchema,
 	getLabelScoringSchema,
 	getLabelPerformance,
+	removeChildSchema,
+	addChildSchema,
+	getLabelWithDescendatsSchema,
+	getLabelAdjacencyListSchema,
 } from "../schemas/labels";
 import labelsPerformanceService from "../services/performance";
 
@@ -26,6 +30,11 @@ const router: FastifyPluginAsync = async (server) => {
 		createLabel,
 		updateLabel,
 		deleteLabel,
+		getLabelDescendants,
+
+		addChild,
+		removeChild,
+		getAdjacencyList,
 	} = labelRepository(server.prisma);
 
 	const getScores = scoringService(server.prisma);
@@ -100,6 +109,30 @@ const router: FastifyPluginAsync = async (server) => {
 		} as ApiScoringResponse);
 	});
 
+	interface GetAdjacencyList { Params: { id: number } }
+	server.get<GetAdjacencyList>(
+		"/adjacency-list/:id",
+		getLabelAdjacencyListSchema,
+		async (req, reply) => {
+			const rootId = Number(req.params.id);
+			await getLabelById(rootId);
+
+			const list = await getAdjacencyList(rootId);
+			return reply.code(200).send(list);
+		}
+	);
+
+	interface GetLabel { Params: { id: number } }
+	server.get<GetLabel>(
+		"/:id",
+		getLabelWithDescendatsSchema,
+		async (req, reply) => {
+			const id = Number(req.params.id);
+			const label = await getLabelDescendants(id);
+			return reply.code(200).send(label);
+		}
+	);
+
 	interface Post { Body: Label }
 	server.post<Post>("/", postLabelSchema, async (req, reply) => {
 		try {
@@ -111,14 +144,26 @@ const router: FastifyPluginAsync = async (server) => {
 		}
 	});
 
+	interface EditChildren { Params: { parentId: number; childId: number } }
+	server.post<EditChildren>(
+		"/children/:parentId/:childId",
+		addChildSchema,
+		async (req, reply) => {
+			const parentId = Number(req.params.parentId);
+			const childId = Number(req.params.childId);
+
+			await addChild(parentId, childId);
+			const label = await getLabelDescendants(parentId);
+
+			return reply.code(201).send(label);
+		}
+	);
+
 	interface Patch { Params: { id: number; }; Body: UpdateLabel; }
 	server.patch<Patch>("/:id", patchLabelSchema, async (req, reply) => {
 		try {
 			const id = Number(req.params.id);
-			const curr = await getLabelById(id);
-
-			const message = "Label not found!";
-			if (curr == null) return reply.code(404).send({ message, });
+			await getLabelById(id);
 
 			const label = await updateLabel(id, req.body);
 			return reply.code(200).send({ label });
@@ -128,15 +173,25 @@ const router: FastifyPluginAsync = async (server) => {
 		}
 	});
 
+	server.delete<EditChildren>(
+		"/children/:parentId/:childId",
+		removeChildSchema,
+		async (req, reply) => {
+			const parentId = Number(req.params.parentId);
+			const childId = Number(req.params.childId);
+
+			await removeChild(parentId, childId);
+			const label = await getLabelDescendants(parentId);
+
+			return reply.code(200).send(label);
+		}
+	);
+
 	interface Delete { Params: { id: number; }; };
 	server.delete<Delete>("/:id", deleteLabelSchema, async (req, reply) => {
 		const id = Number(req.params.id);
 
-		const label = await getLabelById(id);
-		if (label == null) {
-			return reply.code(404).send({ message: "Label not found!" });
-		}
-
+		await getLabelById(id);
 		await deleteLabel(id);
 		return reply.code(200).send({ message: "Label deleted" });
 	});

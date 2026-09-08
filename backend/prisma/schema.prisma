@@ -77,6 +77,7 @@ model Order {
 	trade   Trade @relation(fields: [tradeId], references: [id], onDelete: Cascade)
 }
 
+// fix onCascade for symbolId on Labels
 model Label {
 	id Int @id @default(autoincrement())
 
@@ -87,17 +88,30 @@ model Label {
 	symbolId Int?  @unique
 	symbol Symbol? @relation(fields: [symbolId], references: [id], onDelete: Cascade)
 
-  descendants LabelClosure[] @relation("Ancestor")
-  ancestors LabelClosure[] @relation("Descendant")
+	parentEdges LabelEdge[] @relation("ParentLabel")
+	childEdges  LabelEdge[] @relation("ChildLabel")
+
+	ancestorPaths LabelClosure[] @relation("LabelClosureDescendant")
+	descendantPaths LabelClosure[] @relation("LabelClosureAncestor")
+}
+
+model LabelEdge {
+	parentId Int
+	childId  Int
+
+	parent Label @relation("ParentLabel", fields: [parentId], references: [id], onDelete: Cascade)
+	child  Label @relation("ChildLabel", fields: [childId], references: [id], onDelete: Cascade)
+
+	@@id([parentId, childId])
+	@@index([childId])
 }
 
 model LabelClosure {
 	ancestorId   Int
 	descendantId Int
-	depth        Int
 
-	ancestor   Label @relation("Ancestor", fields: [ancestorId], references: [id], onDelete: Cascade)
-	descendant Label @relation("Descendant", fields: [descendantId], references: [id], onDelete: Cascade)
+	ancestor Label @relation("LabelClosureAncestor", fields: [ancestorId], references: [id], onDelete: Cascade)
+	descendant Label @relation("LabelClosureDescendant", fields: [descendantId], references: [id], onDelete: Cascade)
 
 	@@id([ancestorId, descendantId])
 	@@index([descendantId])

@@ -130,13 +130,17 @@ export interface UpdateLabel extends Partial<Label> {
 	tradeId?: number;
 }
 
+export interface DbLabel extends Label {
+	id: number;
+}
+
 export interface DbLabelEntry extends LabelEntry {
 	id: number;
 	tradeCount?: number;
 }
 
-export interface DbLabel extends Label {
-	id: number;
+export interface DbLabelWithDescendats extends DbLabelEntry {
+	descendants: DbLabelEntry[];
 }
 
 export interface PerformanceReport {

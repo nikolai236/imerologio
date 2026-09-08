@@ -7,6 +7,7 @@ type Props = {
 	draftName: string;
 	error?: string | null;
 
+	editChildren: (id: number) => void;
 	onStartEdit: (label: DbLabelEntry) => void;
 	onDelete: (label: DbLabelEntry) => void;
 	onCancelEdit: () => void;
@@ -20,6 +21,7 @@ export default function LabelRow({
 	draftName,
 	error,
 
+	editChildren,
 	onStartEdit,
 	onCancelEdit,
 	onDraftNameChange,
@@ -64,6 +66,12 @@ export default function LabelRow({
 					</Text>
 					<Text fontWeight="semibold">{label.tradeCount}</Text>
 				</Box>
+
+				<Button
+					variant="outline"
+					onClick={() => editChildren(label.id)}
+				> Edit Child Labels
+				</Button>
 
 				<HStack>
 					{isEditing ? (

@@ -50,6 +50,39 @@ export const getLabelScoringSchema = {
 	}
 } as const;
 
+export const getLabelAdjacencyListSchema = {
+	schema: {
+		params: IdParams,
+		response: {
+			200: Type.Record(
+					Type.Number(),
+					Type.Array(Type.Number()),
+				),
+			400: ErrorMessage,
+			404: ErrorMessage,
+			500: ErrorMessage,
+		}
+	}
+} as const;
+
+const LabelWithDescendants = Type.Composite([
+	Label,
+	Type.Object({
+		descendants: Type.Array(Label),
+	})
+]);
+
+export const getLabelWithDescendatsSchema = {
+	schema: {
+		params: IdParams,
+		response: {
+			200: LabelWithDescendants,
+			404: ErrorMessage,
+			500: ErrorMessage,
+		}
+	}
+} as const;
+
 export const postLabelSchema = {
 	schema: {
 		body: Type.Omit(
@@ -60,6 +93,23 @@ export const postLabelSchema = {
 				label: Label
 			}),
 			400: ErrorMessage,
+			500: ErrorMessage,
+		}
+	}
+} as const;
+
+const ChildrenReqParams = Type.Object({
+	parentId: Type.Number(),
+	childId: Type.Number(),
+});
+
+export const addChildSchema = {
+	schema: {
+		params: ChildrenReqParams,
+		response: {
+			201: LabelWithDescendants,
+			400: ErrorMessage,
+			404: ErrorMessage,
 			500: ErrorMessage,
 		}
 	}
@@ -82,6 +132,18 @@ export const patchLabelSchema = {
 	}
 } as const;
 
+export const removeChildSchema = {
+	schema: {
+		params: ChildrenReqParams,
+		response: {
+			200: LabelWithDescendants,
+			400: ErrorMessage,
+			404: ErrorMessage,
+			500: ErrorMessage,
+		}
+	}
+} as const;
+
 export const deleteLabelSchema = {
 	schema: {
 		params: IdParams,
@@ -89,8 +151,8 @@ export const deleteLabelSchema = {
 			200: Type.Object({
 				message: Type.String()
 			}),
-			404: ErrorMessage,
 			400: ErrorMessage,
+			404: ErrorMessage,
 			500: ErrorMessage,
 		}
 	}

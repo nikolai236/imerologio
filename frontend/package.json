@@ -19,6 +19,7 @@
     "@lexical/list": "^0.39.0",
     "@lexical/react": "^0.39.0",
     "@lexical/rich-text": "^0.39.0",
+    "@xyflow/react": "^12.11.6",
     "framer-motion": "^12.23.26",
     "lexical": "^0.39.0",
     "lightweight-charts": "^5.0.9",

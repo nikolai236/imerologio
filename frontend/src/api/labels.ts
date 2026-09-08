@@ -1,6 +1,7 @@
 import type {
 	ApiScoringResponse,
 	DbLabelEntry,
+	DbLabelWithDescendats,
 	Label,
 	PerformanceReport,
 	UpdateLabel
@@ -15,7 +16,7 @@ export async function getLabels(symbols=false) {
 
 	const { labels } = await api.get(path, query);
 	return labels as DbLabelEntry[];
-};
+}
 
 export async function getPerformance(
 	includeIds: number[], excludeIds: number[]
@@ -24,6 +25,7 @@ export async function getPerformance(
 		includeIds: includeIds.join(","),
 		excludeIds: excludeIds.join(","),
 	});
+
 	return report as PerformanceReport;
 }
 
@@ -37,22 +39,42 @@ export async function getScoring(filterBe: boolean, beThreshold: number) {
 	});
 
 	return data as ApiScoringResponse;
-};
+}
+
+export async function getAdjacencyList(id: number) {
+	const list = await api.get(`${path}/adjacency-list/${id}`);
+	return list as Record<number, number[]>;
+}
+
+export async function getLabelWithDescendants(id: number) {
+	const label = await api.get(`${path}/${id}`);
+	return label as DbLabelWithDescendats;
+}
 
 export async function createLabel(payload: Label) {
 	const { label } = await api.post(path, payload);
 
 	return label as DbLabelEntry;
-};
+}
 
-export async function updateLabel(id:number, payload: UpdateLabel) {
+export async function addChild(parentId: number, childId: number) {
+	const label = await api.post(`${path}/children/${parentId}/${childId}`, {});
+	return label as DbLabelWithDescendats;
+}
+
+export async function updateLabel(id: number, payload: UpdateLabel) {
 	const { label } = await api.patch(
-		path + `/${id}`, payload
+		`${path}/${id}`, payload
 	);
 
 	return label as DbLabelEntry;
-};
+}
+
+export async function removeChild(parentId: number, childId: number) {
+	const label = await api.delete(`${path}/children/${parentId}/${childId}`);
+	return label as DbLabelWithDescendats;
+}
 
 export async function deleteLabel(id: number) {
-	await api.delete(path + `/${id}`);
-};
+	await api.delete(`${path}/${id}`);
+}
