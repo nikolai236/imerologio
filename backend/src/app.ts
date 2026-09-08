@@ -2,7 +2,7 @@ import Fastify from "fastify";
 import compress from "@fastify/compress";
 import cors from "@fastify/cors";
 
-import { AppError } from "./errors";
+import AppError from "./errors";
 
 import prismaPlugin from "./plugins/prisma";
 import uploadsPlugin from "./plugins/upload";
@@ -51,11 +51,11 @@ export default async function buildApp(logger=true) {
 	// 	console.log("HEADERS:", req.headers["content-type"]);
 	// });
 
-	await app.register(tradesRouter,  { prefix: '/trades'  });
-	await app.register(symbolsRouter, { prefix: '/symbols' });
-	await app.register(labelsRouter,  { prefix: '/labels'  });
-	await app.register(candlesRouter, { prefix: '/candles' });
-	await app.register(newsRouter,    { prefix: '/news'    });
+	await app.register(tradesRouter,  { prefix: "/trades"  });
+	await app.register(symbolsRouter, { prefix: "/symbols" });
+	await app.register(labelsRouter,  { prefix: "/labels"  });
+	await app.register(candlesRouter, { prefix: "/candles" });
+	await app.register(newsRouter,    { prefix: "/news"    });
 	await app.register(journalRouter, { prefix: "/journal"  });
 
 	app.addSchema({

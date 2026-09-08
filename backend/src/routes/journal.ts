@@ -25,6 +25,7 @@ import {
 
 import journalRepository from "../database/journal";
 import { validateOrderQuantities } from "../services/trades";
+import { NotFoundError, ValidationError } from "../errors";
 
 declare module "fastify" {
 	interface FastifyRequest {
@@ -64,8 +65,7 @@ const router: FastifyPluginAsync = async (server) => {
 		const entry = await getJournalEntry(id);
 
 		if (entry == null) {
-			const message = "Journal entry not found";
-			return reply.code(404).send({ message });
+			throw new NotFoundError("Journal entry not found");
 		}
 
 		req.journalEntry = entry;
@@ -104,23 +104,22 @@ const router: FastifyPluginAsync = async (server) => {
 			...chart,
 		})) ?? [];
 
-		const areTradesClosed = entry.trades.every(({ orders }) =>
-			validateOrderQuantities(orders)
+		const areTradesClosed = entry.trades.every(
+			({ orders }) => validateOrderQuantities(orders)
 		);
 
 		if (!areTradesClosed) {
-			const message = "Journal entry trades are open";
-			return reply.code(400).send({ message });
+			throw new ValidationError("Journal entry trades are open");
 		}
 
 		try {
 			const created = await createJournalEntry(entry);
 			const serialized = serialize(created);
-			return reply.code(200).send(serialized);
 
+			return reply.code(200).send(serialized);
 		} catch (err) {
 			server.log.error(err);
-			return reply.code(400).send({ message: err });
+			throw new ValidationError(String(err));
 		}
 	});
 
@@ -130,7 +129,6 @@ const router: FastifyPluginAsync = async (server) => {
 		publishJournalTradeSchema,
 		async (req, reply) => {
 			const id = Number(req.params.journalTradeId);
-
 			const trade = await publishJournalTrade(id);
 			return reply.code(200).send(trade);
 		}
@@ -170,21 +168,19 @@ const router: FastifyPluginAsync = async (server) => {
 			);
 
 			if (!areTradesClosed) {
-				const message = "Journal entry trades are open";
-				return reply.code(400).send({ message });
+				throw new ValidationError("Journal entry trades are open");
 			}
 
 			try {
-
 				const updated = await updateJournalEntry(
 					req.journalEntry!.id, entry
 				);
 				const serialized = serialize(updated);
-				return reply.code(200).send(serialized);
 
+				return reply.code(200).send(serialized);
 			} catch (err) {
 				server.log.error(err);
-				return reply.code(400).send({ message: err });
+				throw new ValidationError(String(err));
 			}
 		}
 	);

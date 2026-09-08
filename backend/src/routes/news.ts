@@ -9,6 +9,7 @@ import {
 	getNewsEventsRangeSchema
 } from "../schemas/news";
 import newsService from "../services/news";
+import { ValidationError } from "../errors";
 
 const router: FastifyPluginAsync = async (server) => {
 	const {
@@ -22,13 +23,13 @@ const router: FastifyPluginAsync = async (server) => {
 		getNewsEventsForDate
 	} = newsService(server.prisma);
 
-	interface IGet {
+	interface Get {
 		Querystring: {
 			date?: DateString;
 			types?: string[];
 		}
 	}
-	server.get<IGet>("/", getNewsEventsSchema, async (req, reply) => {
+	server.get<Get>("/", getNewsEventsSchema, async (req, reply) => {
 		const types = req.query.types;
 		const date = req.query.date
 			? new Date(req.query.date)
@@ -38,13 +39,13 @@ const router: FastifyPluginAsync = async (server) => {
 		return reply.code(200).send({ newsEvents });
 	});
 
-	interface IGetRange {
+	interface GetRange {
 		Querystring: {
 			start: DateString;
 			end: DateString;
 		}
 	}
-	server.get<IGetRange>(
+	server.get<GetRange>(
 		"/range",
 		getNewsEventsRangeSchema,
 		async (req, reply) => {
@@ -58,37 +59,37 @@ const router: FastifyPluginAsync = async (server) => {
 		}
 	);
 
-	interface IGetSingleDayCalendar { Querystring: { date: DateString; } }
-	server.get<IGetSingleDayCalendar>(
+	interface GetSingleDayCalendar { Querystring: { date: DateString; } }
+	server.get<GetSingleDayCalendar>(
 		"/single-day-calendar",
 		getSingleDayCalendarSchema,
 		async (req, reply) => {
 			const { date } = req.query;
 			const calendar = await getSingleDayCalendar(date);
 
-			return reply.status(200).send(calendar);
+			return reply.code(200).send(calendar);
 		},
 	);
 
-	interface IPost { Body: NewsEvent<DateString>; }
-	server.post<IPost>("/", postNewsSchema, async (req, reply) => {
+	interface Post { Body: NewsEvent<DateString>; }
+	server.post<Post>("/", postNewsSchema, async (req, reply) => {
 		try {
 			const newsEvent = await createNewsEvent(req.body);
 			return reply.code(201).send({ newsEvent });
 		} catch (err) {
 			server.log.error(err);
-			return reply.code(400).send({ message: err });
+			throw new ValidationError(String(err));
 		}
 	});
 
-	interface IPostBulk { Body: NewsEvent<DateString>[]; }
-	server.post<IPostBulk>("/bulk", postBulkNewsSchema, async (req, reply) => {
+	interface PostBulk { Body: NewsEvent<DateString>[]; }
+	server.post<PostBulk>("/bulk", postBulkNewsSchema, async (req, reply) => {
 		try {
 			const updated = await createManyNewsEvents(req.body);
 			return reply.code(201).send({ updated });
 		} catch (err) {
 			server.log.error(err);
-			return reply.code(400).send({ message: err });
+			throw new ValidationError(String(err));
 		}
 	});
 };

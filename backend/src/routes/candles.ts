@@ -9,6 +9,7 @@ import {
 	postCandleSymbolSchema
 } from "../schemas/candles";
 import { fillBlanks, isCandleLengthValid, setTimeFrame, tfToNumber } from "../services/candles";
+import { NotFoundError, ValidationError } from "../errors";
 
 const SECOND = 1000;
 const MINUTE = 60 * SECOND
@@ -28,14 +29,15 @@ const router: FastifyPluginAsync = async (server) => {
 		const { symbolId } = req.params;
 
 		const symbol = await getSymbolById(Number(symbolId));
-		if (!symbol) {
-			return reply.code(404).send({ message: "Symbol not found" });
+		if (symbol == null) {
+			throw new NotFoundError("Symbol not found");
 		}
 
 		const isSupported = await isSymbolSupported(symbol.name);
 		const code = isSupported ? 200 : 405;
-		const message = isSupported ?
-			"Symbol is supported" : "Symbol is not supported";
+		const message = isSupported
+			? "Symbol is supported"
+			: "Symbol is not supported";
 
 		return reply.code(code).send({ message });
 	});
@@ -51,26 +53,22 @@ const router: FastifyPluginAsync = async (server) => {
 		const isSuppoted = await isSymbolSupported(symbol);
 
 		if (!isSuppoted) {
-			const message = 'Symbol not supported!';
-			return reply.code(404).send({ message });
+			throw new NotFoundError("Symbol not supported!");
 		}
 
 		const start = Number(req.body.start);
 		const end = Number(req.body.end);
 
-		const notFoundMsg = 'No candles found for range.';
 		if (start >= end) {
-			return reply.code(404).send({ message: notFoundMsg });
+			throw new NotFoundError("No candles found for range.");
 		}
 
 		if (new Date(start).getFullYear() < 2010) {
-			const message = "Dates before 2010 are not supported";
-			return reply.code(404).send({ message });
+			throw new ValidationError("Dates before 2010 are not supported");
 		}
 
 		if (!isCandleLengthValid(end - start, timeframe as Timeframe)) {
-			const message = "More than 25 000 candles requested";
-			return reply.code(400).send({ message });
+			throw new ValidationError("More than 25 000 candles requested");
 		}
 
 		let candles: Candle[] = [];
@@ -88,7 +86,7 @@ const router: FastifyPluginAsync = async (server) => {
 		candles = fillBlanks(candles, tf);
 
 		if (candles.length == 0) {
-			return reply.code(404).send({ message: notFoundMsg });
+			throw new NotFoundError("No candles found for range.");
 		}
 
 		return reply.code(200).send({ candles });

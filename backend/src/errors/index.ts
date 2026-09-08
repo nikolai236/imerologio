@@ -1,9 +1,13 @@
-export class AppError extends Error {
+export default class AppError extends Error {
 	constructor(
 		message: string,
 		public readonly code: number,
 	) {
 		super(message);
+	}
+
+	toString() {
+		return this.message;
 	}
 }
 

@@ -30,6 +30,7 @@ import {
 	deleteLabelFromTradeSchema,
 	deleteTradeSchema,
 } from "../schemas/trades";
+import { NotFoundError, ValidationError } from "../errors";
 
 declare module "fastify" {
 	interface FastifyRequest {
@@ -69,10 +70,8 @@ const router: FastifyPluginAsync = async (server) => {
 		const trade = await getTradeById(id);
 
 		if (trade == null) {
-			const message = "Trade not found!";
-			return reply.code(404).send({ message });
+			throw new NotFoundError("Trade not found!");
 		}
-
 		req.trade = trade;
 	};
 
@@ -116,30 +115,24 @@ const router: FastifyPluginAsync = async (server) => {
 
 	interface Post { Body: Trade<Timeframe, number>; }
 	server.post<Post>("/", postTradeSchema, async (req, reply) => {
-
 		if (!validateOrderQuantities(req.body.orders)) {
-			const message = "Invalid order quantities provided.";
-			return reply.code(400).send({ message });
+			throw new ValidationError("Invalid order quantities provided.");
 		}
 
-		const symbol = await getSymbolById(Number(req.body.symbolId));
+		const symbolId = Number(req.body.symbolId);
+		const symbol = await getSymbolById(symbolId);
+
 		if (symbol == null) {
-			const message = "Symbol not found!";
-			return reply.code(404).send({ message });
+			throw new NotFoundError("Symbol not found!");
 		}
 
 		const trade = sanitizeTrade(req.body);
-
 		try {
 			const res = await createTrade(trade);
 			return reply.code(201).send(serializeTrade(res));
-		} catch(err) {
+		} catch (err) {
 			server.log.error(err);
-			return reply.code(400).send({
-				message: err instanceof Error
-					? err.message
-					: "Unknown error"
-			});
+			throw new ValidationError(String(err));
 		}
 	});
 
@@ -160,8 +153,7 @@ const router: FastifyPluginAsync = async (server) => {
 				req.body.orders != null &&
 				!validateOrderQuantities(req.body.orders as any)
 			) {
-				const message = "Invalid order quantities provided.";
-				return reply.code(400).send({ message });
+				throw new ValidationError("Invalid order quantities provided.");
 			}
 
 			const payload = sanitizeTrade(req.body);
@@ -171,11 +163,7 @@ const router: FastifyPluginAsync = async (server) => {
 				return reply.code(200).send(serializeTrade(res));
 			} catch(err) {
 				server.log.error(err);
-				return reply.code(400).send({
-					message: err instanceof Error
-						? err.message
-						: "Unknown error"
-				});
+				throw new ValidationError(String(err));
 			}
 		}
 	);
@@ -212,12 +200,7 @@ const router: FastifyPluginAsync = async (server) => {
 			assertTradeLoaded(req);
 			const labelId = Number(req.params.labelId);
 
-			const label = await getLabelById(labelId);
-			if (label == null) {
-				const message = "Label not found!";
-				return reply.code(404).send({ message });
-			}
-
+			await getLabelById(labelId);
 			await deleteTradeFromLabel(labelId, req.trade.id);
 
 			const message = "Label deleted from trade!";
