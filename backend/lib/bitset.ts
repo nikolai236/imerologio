@@ -25,6 +25,12 @@ export default class Bitset {
 	}
 }
 
+export const or = (a: Bitset, b: Bitset, out: Bitset) => {
+	for (let i = 0; i < out.array.length; i++) {
+		out.array[i] = a.array[i] | b.array[i];
+	}
+};
+
 export const and = (a: Bitset , b: Bitset, out: Bitset) => {
 	for (let i = 0; i < out.array.length; i++) {
 		out.array[i] = a.array[i] & b.array[i];

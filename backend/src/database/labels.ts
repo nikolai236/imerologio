@@ -162,6 +162,34 @@ const labelRepository = (db: PrismaClient) => {
 		return list;
 	};
 
+	const getAncestorsList = async () => {
+		const closures = await db.labelClosure.findMany({
+			where: {
+				NOT: {
+					ancestorId: {
+						equals: db.labelClosure.fields.descendantId,
+					}
+				}
+			},
+			select: {
+				ancestorId: true,
+				descendantId: true
+			}
+		});
+
+		const ancestorsList: Record<number, number[]> = {}
+		for (const { ancestorId, descendantId } of closures) {
+			ancestorsList[ancestorId] = [];
+			ancestorsList[descendantId] = [];
+		}
+
+		for (const { ancestorId, descendantId } of closures) {
+			ancestorsList[descendantId].push(ancestorId);
+		}
+
+		return ancestorsList;
+	};
+
 	// gate to all CRUD operations
 	const getLabelById = async (id: number) => {
 		const label = await db.label.findFirst({
@@ -467,6 +495,8 @@ const labelRepository = (db: PrismaClient) => {
 
 		addChild,
 		removeChild,
+
+		getAncestorsList,
 		getAdjacencyList,
 	} as const;
 };

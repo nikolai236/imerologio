@@ -2,7 +2,7 @@ import type { PrismaClient } from "@prisma/client";
 import type { TradeScoringData, DbLabel, ScoreSet, Level } from "../../../shared/trades.types";
 import tradeRepository from "../database/trades";
 import labelRepository from "../database/labels";
-import Bitset, { and, countTrailingZeros, popcount } from "../../lib/bitset";
+import Bitset, { and, countTrailingZeros, or, popcount } from "../../lib/bitset";
 
 type Means = {
 	winRate: number;
@@ -128,7 +128,11 @@ const scoreBitset = (set: Bitset, pnls: number[], risks: number[]) => {
 	};
 };
 
-const generateBitsets = (labels: DbLabel[], trades: TradeScoringData[]) => {
+const generateBitsets = (
+	labels: DbLabel[],
+	trades: TradeScoringData[],
+	ancestorList: Record<number, number[]>,
+) => {
 	const tradeIndex = new Map(trades.map((t, i) => [t.id, i]));
 
 	const labelIdBitset = labels.reduce((prev, label) => {
@@ -141,6 +145,18 @@ const generateBitsets = (labels: DbLabel[], trades: TradeScoringData[]) => {
 		prev.set(label.id, bitset);
 		return prev;
 	}, new Map<number, Bitset>());
+
+	for (const label of labels) {
+		const target = labelIdBitset.get(label.id);
+		if (target == null) continue;
+
+		for (const ancestorId of ancestorList[label.id] ?? []) {
+			const src = labelIdBitset.get(ancestorId);
+			if (src == null) continue;
+
+			or(target, src, target);
+		}
+	}
 
 	return labelIdBitset;
 };
@@ -309,17 +325,19 @@ const DEFAULTS: Required<Options> = {
 
 const scoringService = (db: PrismaClient) => {
 	const { getTradeScoringData   } = tradeRepository(db);
-	const { getLabelsWithTradeIds } = labelRepository(db);
+	const { getLabelsWithTradeIds, getAncestorsList } = labelRepository(db);
 
 	const getScores = async (filterBe: boolean, beThreshold: number) => {
 		const options = { ...DEFAULTS };
 
-		const labels = await getLabelsWithTradeIds();
 		let trades = await getTradeScoringData();
 
+		const labels = await getLabelsWithTradeIds();
+		const ancestorList = await getAncestorsList();
+
 		if (filterBe) {
-			trades = trades.filter(({ pnl }) =>
-				Math.abs(pnl) >= beThreshold
+			trades = trades.filter(
+				t => Math.abs(t.pnl) >= beThreshold
 			);
 		}
 		
@@ -333,7 +351,9 @@ const scoringService = (db: PrismaClient) => {
 			Math.ceil(options.minSupportFrac * trades.length)
 		);
 
-		const labelIdsBitsets = generateBitsets(labels, trades);
+		const labelIdsBitsets = generateBitsets(
+			labels, trades, ancestorList
+		);
 
 		const labelIds = labels.map(({ id }) => id);
 		const levels: Level[] = [];
