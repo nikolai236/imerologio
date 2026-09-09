@@ -83,6 +83,8 @@ model Label {
 
 	name   String @unique
 	trades TradeLabel[]
+	description String? @db.Text
+
 	journalTrades JournalTradeLabel[]
 
 	symbolId Int?  @unique

@@ -13,8 +13,7 @@ const path = "/labels";
 
 export async function getLabels(symbols=false) {
 	const query = symbols ? { symbols } : undefined;
-
-	const { labels } = await api.get(path, query);
+	const labels = await api.get(path, query);
 	return labels as DbLabelEntry[];
 }
 
@@ -52,8 +51,7 @@ export async function getLabelWithDescendants(id: number) {
 }
 
 export async function createLabel(payload: Label) {
-	const { label } = await api.post(path, payload);
-
+	const label = await api.post(path, payload);
 	return label as DbLabelEntry;
 }
 
@@ -63,10 +61,7 @@ export async function addChild(parentId: number, childId: number) {
 }
 
 export async function updateLabel(id: number, payload: UpdateLabel) {
-	const { label } = await api.patch(
-		`${path}/${id}`, payload
-	);
-
+	const label = await api.patch(`${path}/${id}`, payload);
 	return label as DbLabelEntry;
 }
 

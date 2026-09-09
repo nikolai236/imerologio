@@ -120,6 +120,7 @@ export type ApiTrade = DbTrade<Timeframe, number>
 
 export interface LabelEntry {
 	name: string;
+	description?: string | null;
 }
 
 export interface Label extends LabelEntry {

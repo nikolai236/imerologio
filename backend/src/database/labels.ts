@@ -37,6 +37,7 @@ const labelRepository = (db: PrismaClient) => {
 			SELECT
 				l.id,
 				l.name,
+				l.description,
 				COUNT(t.id) AS "tradeCount"
 			FROM "Label" l
 			LEFT JOIN trade_labels tl
@@ -230,9 +231,11 @@ const labelRepository = (db: PrismaClient) => {
 	};
 
 	const updateLabel = async (id: number, label: UpdateLabel) => {
-		const { name, tradeId } = label;
+		const { name, tradeId, description } = label;
+		console.log(label);
 		const data = {
 			...(name != null ? { name } : undefined),
+			...(description !== undefined ? { description } : undefined),
 			...(tradeId != null ? {
 				trades: {
 						create: [{

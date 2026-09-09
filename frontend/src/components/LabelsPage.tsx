@@ -9,10 +9,9 @@ import {
 } from "@chakra-ui/react";
 import type { DbLabelEntry, Label } from "../../../shared/trades.types";
 import LabelRow from "./LabelRow";
-import useRowErrors from "../hooks/useRowErrors";
 import CreateLabel from "./CreateLabel";
 
-import { deleteLabel, updateLabel, createLabel } from "../api/labels";
+import { deleteLabel, createLabel } from "../api/labels";
 import EditLabelChildren from "./EditLabelChildren";
 import useLabelsContext from "../hooks/useLabelsContext";
 
@@ -20,30 +19,10 @@ export default function LabelsPage() {
 	const {
 		labels,
 		reloadLabels,
-		setEditChildrenId,
+		setEditChildrenId
 	} = useLabelsContext();
 
-	const { rowErrorById, setRowError, clearRowError } = useRowErrors();
-
-	const [draftName, setDraftName] = useState("");
 	const [editingId, setEditingId] = useState<number|null>(null);
-
-	const startEdit = (label: DbLabelEntry) => {
-		setEditingId(label.id);
-		setDraftName(label.name);
-		clearRowError(label.id);
-	};
-
-	const cancelEdit = () => {
-		if (editingId != null) clearRowError(editingId);
-		setEditingId(null);
-	};
-
-	const onDraftNameChange = (id: number, value: string) => {
-		if (editingId !== id) return;
-		setDraftName(value);
-		clearRowError(id);
-	};
 
 	const onDelete = (label: DbLabelEntry) => {
 		const msg = `Are you sure you want to delete label: "${label.name}"?`;
@@ -74,36 +53,6 @@ export default function LabelsPage() {
 		reloadLabels();
 	};
 
-	const saveEdit = async (id: number) => {
-		if (editingId !== id) return;
-
-		const name = draftName.trim();
-		if (name == "") {
-			return setRowError(id, "Name cannot be empty.");
-		}
-
-		const hasDuplicate = labels
-			.filter(l => l.id != id)
-			.some(l => l.name == name);
-
-		if (hasDuplicate) {
-			setRowError(id, "A label with that name already exists.");
-			return;
-		}
-
-		try {
-			await updateLabel(id, { name });
-		} catch (_err) {
-			setRowError(id, "Couldn't save change.");
-			return;
-		}
-
-		reloadLabels();
-
-		clearRowError(id);
-		setEditingId(null);
-	};
-
 	return (
 		<Box p={6} position="relative">
 			<Flex align="center" mb={4}>
@@ -117,17 +66,12 @@ export default function LabelsPage() {
 				const isEditing = editingId === l.id
 				return (
 					<LabelRow
-						key={l.id}
 						label={l}
 						isEditing={isEditing}
-						draftName={isEditing ? draftName : l.name}
-						error={rowErrorById[l.id] ?? null}
-						onDelete={onDelete}
-						onStartEdit={startEdit}
-						onCancelEdit={cancelEdit}
-						onDraftNameChange={onDraftNameChange}
-						onSave={saveEdit}
+
 						editChildren={setEditChildrenId}
+						onDelete={() => onDelete(l)}
+						setEditingId={setEditingId}
 					/>)
 			})}
 			</Stack>

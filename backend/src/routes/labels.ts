@@ -19,6 +19,7 @@ import {
 	getLabelAdjacencyListSchema,
 } from "../schemas/labels";
 import labelsPerformanceService from "../services/performance";
+import { ValidationError } from "../errors";
 
 const parseIdArray = (ids?: string) =>
 	ids?.split(",").map(Number) ?? [];
@@ -44,7 +45,7 @@ const router: FastifyPluginAsync = async (server) => {
 	server.get<Get>("/", getLabelsSchema, async (req, reply) => {
 		const symbols = Boolean(req.query.symbols);
 		const labels = await getAllLabels(symbols);
-		return reply.code(200).send({ labels });
+		return reply.code(200).send(labels);
 	});
 
 	interface GetPerformance {
@@ -137,7 +138,7 @@ const router: FastifyPluginAsync = async (server) => {
 	server.post<Post>("/", postLabelSchema, async (req, reply) => {
 		try {
 			const label = await createLabel(req.body);
-			return reply.code(201).send({ label });
+			return reply.code(201).send(label);
 		} catch (err) {
 			server.log.error(err);
 			return reply.code(400).send({ message: err });
@@ -166,10 +167,10 @@ const router: FastifyPluginAsync = async (server) => {
 			await getLabelById(id);
 
 			const label = await updateLabel(id, req.body);
-			return reply.code(200).send({ label });
+			return reply.code(200).send(label);
 		} catch (err) {
 			server.log.error(err);
-			return reply.code(400).send({ message: err });
+			throw new ValidationError(String(err));
 		}
 	});
 

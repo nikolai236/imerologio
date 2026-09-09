@@ -2,9 +2,13 @@ import { useMemo, useState } from "react";
 import useFetchLabels from "./useFetchLabels";
 import type { DbLabelWithDescendats } from "../../../shared/trades.types";
 import { getAdjacencyList, getLabelWithDescendants } from "../api/labels";
+import useRowErrors from "./useRowErrors";
 
 const useLabels = () => {
+	const [editingId, setEditingId] = useState<number|null>(null);
+
 	const { labels, reloadLabels } = useFetchLabels();
+	const { rowErrorById, setRowError, clearRowError } = useRowErrors();
 
 	const [editChildrenId, setEditChildrenId] = useState<number | null>(null);
 	const closeEditChildren = () => setEditChildrenId(null);
@@ -46,6 +50,13 @@ const useLabels = () => {
 		editChildrenId,
 		setEditChildrenId,
 		closeEditChildren,
+
+		rowErrorById,
+		setRowError,
+		clearRowError,
+
+		editingId,
+		setEditingId,
 	} as const;
 };
 

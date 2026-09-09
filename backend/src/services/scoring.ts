@@ -51,7 +51,7 @@ const computeMeans = (trades: TradeScoringData[]): Means => {
 		muAll: count ? sum / count : 0,
 		profitFactor: loss  ? profit / loss : null,
 		avgAbsPnl: count ? absSum / count : 1,
-	};
+	} as const;
 };
 
 const computeRedundancyIndex = (
@@ -74,8 +74,9 @@ const computeRedundancyIndex = (
 
 	if (bestMean == -Infinity) return null;
 
-	const redundancy = Math.abs(batchMean ?? 0) < EPS ?
-		null : bestMean / (batchMean ?? 0);
+	const redundancy = Math.abs(batchMean ?? 0) < EPS
+		? null
+		: bestMean / (batchMean ?? 0);
 
 	return redundancy;
 }
@@ -125,7 +126,7 @@ const scoreBitset = (set: Bitset, pnls: number[], risks: number[]) => {
 		totalPnl: sum,
 		profitFactor: profit ? loss ? profit / loss : null : profit,
 		muIn: support ? sum / support : null,
-	};
+	} as const;
 };
 
 const generateBitsets = (
@@ -180,9 +181,12 @@ const buildFirstLevel = (
 			averageRisk,
 			winRate
 		} = scoreBitset(bitset, pnls, risks);
+
 		if (support < minSupport) return prev;
 
-		const combined = getCombinedScore(support, totalPnl, averageRisk);
+		const combined = getCombinedScore(
+			support, totalPnl, averageRisk
+		);
 
 		prev.push({
 			winRate,
@@ -217,8 +221,8 @@ const buildNextLevel = (
 ) => {
 	const prefixLen = k - 2;
 
-	const prevKeysMeans = new Map(prevLevel.map(scoreSet =>
-		[getIdsKey(scoreSet.labelIds), scoreSet.muIn]
+	const prevKeysMeans = new Map(prevLevel.map(
+		set => [getIdsKey(set.labelIds), set.muIn]
 	));
 
 	const passesAprioriPrune = (candIds: number[]) => {
@@ -264,8 +268,9 @@ const buildNextLevel = (
 				const lastB = b.labelIds[b.labelIds.length - 1];
 				if (lastA === lastB) continue;
 
-				const candIds = lastA < lastB ?
-					a.labelIds.concat(lastB) : b.labelIds.concat(lastA);
+				const candIds = lastA < lastB
+					? a.labelIds.concat(lastB)
+					: b.labelIds.concat(lastA);
 
 				if (candIds.length !== k) continue;
 
@@ -291,7 +296,9 @@ const buildNextLevel = (
 				} = scoreBitset(tempBitset, pnls, risks);
 				if (support < minSupport) continue;
 
-				const combined = getCombinedScore(support, totalPnl, averageRisk);
+				const combined = getCombinedScore(
+					support, totalPnl, averageRisk
+				);
 
 				const redundancy = computeRedundancyIndex(
 					muIn, prevKeysMeans, candIds
@@ -324,17 +331,19 @@ const DEFAULTS: Required<Options> = {
 } as const;
 
 const scoringService = (db: PrismaClient) => {
-	const { getTradeScoringData   } = tradeRepository(db);
+	const { getTradeScoringData } = tradeRepository(db);
 	const { getLabelsWithTradeIds, getAncestorsList } = labelRepository(db);
 
 	const getScores = async (filterBe: boolean, beThreshold: number) => {
 		const options = { ...DEFAULTS };
 
-		let trades = await getTradeScoringData();
+		const [tradesTemp, labels, ancestorList] = await Promise.all([
+			getTradeScoringData(),
+			getLabelsWithTradeIds(),
+			getAncestorsList(),
+		]);
 
-		const labels = await getLabelsWithTradeIds();
-		const ancestorList = await getAncestorsList();
-
+		let trades = tradesTemp;
 		if (filterBe) {
 			trades = trades.filter(
 				t => Math.abs(t.pnl) >= beThreshold
@@ -385,7 +394,9 @@ const scoringService = (db: PrismaClient) => {
 		for (let k = 2; k <= options.maxLevels; k++) {
 			if (current.length <= 1) break;
 
-			const next = buildNextLevel(current, k, pnls, risks, minSupport);
+			const next = buildNextLevel(
+				current, k, pnls, risks, minSupport
+			);
 			if (next.length == 0) break;
 
 			let sorted = [...next].sort((a, b) => b.score - a.score);
@@ -403,7 +414,6 @@ const scoringService = (db: PrismaClient) => {
 			}));
 
 			levels.push(scoreSets);
-
 			current = next;
 		}
 

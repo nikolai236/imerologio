@@ -18,6 +18,7 @@ export const IdParams = Type.Object({
 export const Label = Type.Object({
 	id: Type.Optional(Type.Integer()),
 	name: Type.String(),
+	description: Type.Optional(Type.String()),
 
 	tradeId: Type.Optional(Type.Integer()),
 	tradeIds: Type.Optional(Type.Array(Type.Integer())),

@@ -13,9 +13,7 @@ export const getLabelsSchema = {
 			symbols: Type.Optional(Type.Boolean()),
 		})),
 		response: {
-			200: Type.Object({
-				labels: Labels
-			}),
+			200: Labels,
 			400: ErrorMessage,
 			500: ErrorMessage,
 		},
@@ -55,9 +53,9 @@ export const getLabelAdjacencyListSchema = {
 		params: IdParams,
 		response: {
 			200: Type.Record(
-					Type.Number(),
-					Type.Array(Type.Number()),
-				),
+				Type.Number(),
+				Type.Array(Type.Number()),
+			),
 			400: ErrorMessage,
 			404: ErrorMessage,
 			500: ErrorMessage,
@@ -89,9 +87,7 @@ export const postLabelSchema = {
 			Label, ["id", "tradeId"]
 		),
 		response: {
-			201: Type.Object({
-				label: Label
-			}),
+			201: Label,
 			400: ErrorMessage,
 			500: ErrorMessage,
 		}
@@ -122,9 +118,7 @@ export const patchLabelSchema = {
 			Type.Omit(Label, ["id", "tradeIds"])
 		),
 		response: {
-			200: Type.Object({
-				label: Label
-			}),
+			200: Label,
 			400: ErrorMessage,
 			404: ErrorMessage,
 			500: ErrorMessage,

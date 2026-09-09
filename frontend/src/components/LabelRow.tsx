@@ -1,33 +1,108 @@
-import { Box, Input, Flex, Text, HStack, Button } from "@chakra-ui/react";
-import { type DbLabelEntry, } from "../../../shared/trades.types";
+import {
+	Box,
+	Input,
+	Flex,
+	Text,
+	HStack,
+	Button,
+	Textarea,
+} from "@chakra-ui/react";
+import { memo, useMemo, useState } from "react";
+import type { DbLabelEntry, UpdateLabel } from "../../../shared/trades.types";
+import useLabelsContext from "../hooks/useLabelsContext";
+import { updateLabel } from "../api/labels";
 
 type Props = {
 	label: DbLabelEntry;
 	isEditing: boolean;
-	draftName: string;
-	error?: string | null;
 
 	editChildren: (id: number) => void;
-	onStartEdit: (label: DbLabelEntry) => void;
-	onDelete: (label: DbLabelEntry) => void;
-	onCancelEdit: () => void;
-	onDraftNameChange: (id: number, value: string) => void;
-	onSave: (id: number) => void;
+	setEditingId: (id: number | null) => void
+	onDelete: () => void;
 };
 
-export default function LabelRow({
+function LabelRow({
 	label,
-	isEditing,
-	draftName,
-	error,
-
 	editChildren,
-	onStartEdit,
-	onCancelEdit,
-	onDraftNameChange,
 	onDelete,
-	onSave,
 }: Props) {
+	const {
+		labels,
+		reloadLabels,
+
+		rowErrorById,
+		setRowError,
+		clearRowError,
+
+		editingId,
+		setEditingId,
+	} = useLabelsContext();
+
+	const error = useMemo(
+		() => rowErrorById[label.id] ?? null,
+		[rowErrorById]
+	);
+
+	const isEditing = useMemo(
+		() => label.id === editingId,
+		[editingId]
+	);
+
+	const [draftName, setDraftName] = useState(label.name);
+	const [draftDescription, setDraftDescription] = useState(
+		label.description ?? ""
+	);
+
+	const startEdit = () => {
+		setEditingId(label.id);
+		setDraftName(label.name);
+		setDraftDescription(label.description ?? "");
+		clearRowError(label.id);
+	};
+
+	const cancelEdit = () => {
+		clearRowError(label.id);
+		setEditingId(null);
+	};
+
+	const onDraftNameChange = (value: string) => {
+		setDraftName(value);
+		clearRowError(label.id);
+	};
+
+	const saveEdit = async () => {
+		const { id } = label;
+
+		const name = draftName.trim();
+		if (name == "") {
+			return setRowError(id, "Name cannot be empty.");
+		}
+
+		const description = draftDescription.trim() || null;
+
+		const hasDuplicate = labels
+			.filter(l => l.id != id)
+			.some(l => l.name == name);
+
+		if (hasDuplicate) {
+			setRowError(id, "A label with that name already exists.");
+			return;
+		}
+
+		try {
+			const payload: UpdateLabel = { name, description };
+			await updateLabel(id, payload);
+		} catch (_err) {
+			setRowError(id, "Couldn't save change.");
+			return;
+		}
+
+		reloadLabels();
+
+		clearRowError(id);
+		setEditingId(null);
+	};
+
 	return (
 		<Box borderWidth="1px" borderRadius="md" p={4}>
 			{error ? (
@@ -48,11 +123,14 @@ export default function LabelRow({
 					<Text fontSize="sm" color="fg.muted">
 						Name
 					</Text>
+
 					{isEditing ? (
 						<Input
 							value={draftName}
-							onChange={(e) => onDraftNameChange(label.id, e.target.value)}
-							placeholder="Symbol name"
+							onChange={(e) =>
+								onDraftNameChange(e.target.value)
+							}
+							placeholder="Label name"
 							maxW="360px"
 						/>
 					) : (
@@ -70,34 +148,81 @@ export default function LabelRow({
 				<Button
 					variant="outline"
 					onClick={() => editChildren(label.id)}
-				> Edit Child Labels
+				>
+					Edit Child Labels
 				</Button>
 
 				<HStack>
 					{isEditing ? (
 						<>
-							<Button onClick={() => onSave(label.id)}>Save</Button>
-							<Button variant="outline" onClick={onCancelEdit}>
+							<Button onClick={saveEdit}>
+								Save
+							</Button>
+
+							<Button
+								variant="outline"
+								onClick={cancelEdit}
+							>
 								Cancel
 							</Button>
 						</>
 					) : (
 						<>
-							<Button variant="outline" onClick={() => onStartEdit(label)}>
+							<Button
+								variant="outline"
+								onClick={startEdit}
+							>
 								Edit
 							</Button>
+
 							<Button
 								colorScheme="red"
 								variant="outline"
-								onClick={() => onDelete(label)}
+								onClick={onDelete}
 							>
 								Delete
 							</Button>
 						</>
 					)}
 				</HStack>
-
 			</Flex>
+
+			{isEditing ? (
+				<Box mt={4}>
+					<Text
+						fontSize="sm"
+						color="fg.muted"
+						mb={1}
+					>
+						Description
+					</Text>
+
+					<Textarea
+						value={draftDescription}
+						onChange={(e) =>
+							setDraftDescription(e.target.value)
+						}
+						placeholder="Label description"
+						resize="vertical"
+					/>
+				</Box>
+			) : label.description ? (
+				<Box mt={4}>
+					<Text
+						fontSize="sm"
+						color="fg.muted"
+						mb={1}
+					>
+						Description
+					</Text>
+
+					<Text whiteSpace="pre-wrap">
+						{label.description}
+					</Text>
+				</Box>
+			) : null}
 		</Box>
 	);
 }
+
+export default memo(LabelRow);
