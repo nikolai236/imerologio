@@ -1,6 +1,6 @@
 import type { PrismaClient } from "@prisma/client";
 
-import type { DbChart, PerformanceReport } from "../../../shared/trades.types";
+import type { PerformanceReport } from "../../../shared/trades.types";
 
 import { calculatePnL } from "./trades";
 import { numberToTf } from "./candles";

@@ -79,7 +79,16 @@ const computeRedundancyIndex = (
 		: bestMean / (batchMean ?? 0);
 
 	return redundancy;
-}
+};
+
+const areHierarchiesRelated = (
+	a: number,
+	b: number,
+	ancestorMap: Map<number, Set<number>>
+) =>
+	ancestorMap.get(a)?.has(b) ||
+	ancestorMap.get(b)?.has(a) ||
+	false;
 
 const getCombinedScore = (support: number, totalPnl: number, risk: number) => {
 	const supportWeight = Math.log1p(support);
@@ -218,6 +227,7 @@ const buildNextLevel = (
 	pnls: number[],
 	risks: number[],
 	minSupport: number,
+	ancestorMap: Map<number, Set<number>>,
 ) => {
 	const prefixLen = k - 2;
 
@@ -245,7 +255,7 @@ const buildNextLevel = (
 		else map.set(key, [set]);
 
 		return map;
-	}, new Map<string, WorkingScoreSet[]>);
+	}, new Map<string, WorkingScoreSet[]>());
 
 	const visited = new Set<string>();
 	const out: WorkingScoreSet[] = [];
@@ -266,7 +276,10 @@ const buildNextLevel = (
 
 				const lastA = a.labelIds[a.labelIds.length - 1];
 				const lastB = b.labelIds[b.labelIds.length - 1];
+
 				if (lastA === lastB) continue;
+
+				if (areHierarchiesRelated(lastA, lastB, ancestorMap)) continue;
 
 				const candIds = lastA < lastB
 					? a.labelIds.concat(lastB)
@@ -274,6 +287,7 @@ const buildNextLevel = (
 
 				if (candIds.length !== k) continue;
 
+				// sanity check not needed
 				const key = getIdsKey(candIds);
 				if (visited.has(key)) {
 					console.error("Duplicates produced");
@@ -294,6 +308,7 @@ const buildNextLevel = (
 					averageRisk,
 					winRate,
 				} = scoreBitset(tempBitset, pnls, risks);
+
 				if (support < minSupport) continue;
 
 				const combined = getCombinedScore(
@@ -364,6 +379,11 @@ const scoringService = (db: PrismaClient) => {
 			labels, trades, ancestorList
 		);
 
+		const ancestorMap = new Map(
+			Object.entries(ancestorList)
+				.map(([id, list]) => [Number(id), new Set(list)])
+		);
+
 		const labelIds = labels.map(({ id }) => id);
 		const levels: Level[] = [];
 
@@ -395,7 +415,7 @@ const scoringService = (db: PrismaClient) => {
 			if (current.length <= 1) break;
 
 			const next = buildNextLevel(
-				current, k, pnls, risks, minSupport
+				current,k, pnls, risks, minSupport, ancestorMap
 			);
 			if (next.length == 0) break;
 
