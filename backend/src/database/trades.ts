@@ -9,6 +9,7 @@ import type {
 	UpdateTrade,
 } from '../../../shared/trades.types';
 import journalRepository from './journal';
+import { ValidationError } from '../errors';
 
 const cleanOrder = (o: any): DbOrder<number> => ({
 	...o,
@@ -271,9 +272,23 @@ export default function tradeRepository(db: DB) {
 
 	const getTradesForLabels = async (
 		includeIds: number[],
-		excludeIds: number[]
+		excludeIds?: number[]
 	) => {
-		const trades = await db.trade.findMany({
+		excludeIds ??= [];
+		const set = new Set([...excludeIds, ...includeIds]);
+
+		const getLabels = async () => db.label.findMany({
+			where: {
+				id: {
+					in: [...set.values()]
+				},
+			},
+			select: {
+				id: true
+			}
+		});
+
+		const getTrades = async () => db.trade.findMany({
 			where: {
 				AND: [
 					...includeIds.map(labelId => ({
@@ -295,6 +310,14 @@ export default function tradeRepository(db: DB) {
 			},
 			include
 		});
+
+		const [trades, labels] = await Promise.all([
+			getTrades(), getLabels()
+		]);
+
+		if (labels.length !== set.size) {
+			throw new ValidationError("Unknown labels included")
+		}
 
 		return trades.map(cleanTrade) as DbTrade<number, number>[];
 	};

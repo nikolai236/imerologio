@@ -17,9 +17,11 @@ import {
 	addChildSchema,
 	getLabelWithDescendatsSchema,
 	getLabelAdjacencyListSchema,
+	getLabelComparisonSchema,
 } from "../schemas/labels";
 import labelsPerformanceService from "../services/performance";
 import { ValidationError } from "../errors";
+import comparisonService from "../services/comparison";
 
 const parseIdArray = (ids?: string) =>
 	ids?.split(",").map(Number) ?? [];
@@ -39,6 +41,7 @@ const router: FastifyPluginAsync = async (server) => {
 	} = labelRepository(server.prisma);
 
 	const getScores = scoringService(server.prisma);
+	const getCombinations = comparisonService(server.prisma);
 	const getPerformance = labelsPerformanceService(server.prisma);
 
 	interface Get { Querystring: { symbols?: boolean; } }
@@ -82,33 +85,52 @@ const router: FastifyPluginAsync = async (server) => {
 			beThreshold?: number;
 		}
 	}
-	server.get<GetScoring>("/scoring", getLabelScoringSchema, async (req, reply) => {
-		const filterBe = req.query.filterBe ?? false;
-		const beThreshold = req.query.beThreshold ?? 0;
+	server.get<GetScoring>(
+		"/scoring",
+		getLabelScoringSchema,
+		async (req, reply) => {
+			const filterBe = req.query.filterBe ?? false;
+			const beThreshold = req.query.beThreshold ?? 0;
 
-		if (filterBe && req.query.beThreshold == null) {
-			return reply.code(400).send({
-				message: "Please provide breakeven threshold",
-			});
+			if (filterBe && req.query.beThreshold == null) {
+				return reply.code(400).send({
+					message: "Please provide breakeven threshold",
+				});
+			}
+
+			const {
+				means: { muAll: mean, profitFactor, total, winRate },
+				minSupport,
+				tradeCount,
+				levels,
+			} = await getScores(filterBe, beThreshold);
+
+			return reply.code(200).send({
+				winRate,
+				total,
+				profitFactor,
+				mean,
+				levels,
+				minSupport,
+				tradeCount,
+			} as ApiScoringResponse);
 		}
+	);
 
-		const {
-			means: { muAll: mean, profitFactor, total, winRate },
-			minSupport,
-			tradeCount,
-			levels,
-		} = await getScores(filterBe, beThreshold);
-
-		return reply.code(200).send({
-			winRate,
-			total,
-			profitFactor,
-			mean,
-			levels,
-			minSupport,
-			tradeCount,
-		} as ApiScoringResponse);
-	});
+	interface GetComparison {
+		Querystring: {
+			ids: number[];
+		}
+	}
+	server.get<GetComparison>(
+		"/comparison",
+		getLabelComparisonSchema,
+			async (req, reply) => {
+			const labelIds = req.query.ids;
+			const data = await getCombinations(labelIds);
+			return reply.code(200).send(data);
+		}
+	);
 
 	interface GetAdjacencyList { Params: { id: number } }
 	server.get<GetAdjacencyList>(

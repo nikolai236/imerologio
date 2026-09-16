@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
 	Box,
 	Flex,
@@ -18,11 +17,11 @@ import useLabelsContext from "../hooks/useLabelsContext";
 export default function LabelsPage() {
 	const {
 		labels,
+		editingId,
+		setEditingId,
 		reloadLabels,
 		setEditChildrenId
 	} = useLabelsContext();
-
-	const [editingId, setEditingId] = useState<number|null>(null);
 
 	const onDelete = (label: DbLabelEntry) => {
 		const msg = `Are you sure you want to delete label: "${label.name}"?`;

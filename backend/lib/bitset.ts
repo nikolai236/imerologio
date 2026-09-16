@@ -5,6 +5,12 @@ export default class Bitset {
 		this.array = new Uint32Array(Math.ceil(size / 32));
 	}
 
+	copy(): Bitset {
+		const ret = new Bitset(this.size);
+		ret.array.set(this.array);
+		return ret;
+	}
+
 	setBit(i: number) {
 		if (i >= 0 && i < this.size) {
 			this.array[i >> 5] |= 1 << (i & 31);
@@ -23,6 +29,35 @@ export default class Bitset {
 		if (i < 0 || i >= this.size) return;
 		return (this.array[i >> 5] & (1 << (i & 31))) !== 0;
 	}
+
+	getSetIndices() {
+		const indices: number[] = [];
+
+		for (let j = 0; j < this.array.length; j++) {
+			let word = this.array[j];
+
+			while (word !== 0) {
+				const lsb = word & -word;
+				const bit = countTrailingZeros(lsb);
+				const index = (j << 5) + bit;
+
+				if (index < this.size) {
+					indices.push(index);
+				}
+
+				word ^= lsb;
+			}
+		}
+
+		return indices;
+	}
+
+	popcount() {
+		return this.array.reduce(
+			(support, word) => support + popcount(word),
+			0,
+		);
+	}
 }
 
 export const or = (a: Bitset, b: Bitset, out: Bitset) => {
@@ -34,6 +69,12 @@ export const or = (a: Bitset, b: Bitset, out: Bitset) => {
 export const and = (a: Bitset , b: Bitset, out: Bitset) => {
 	for (let i = 0; i < out.array.length; i++) {
 		out.array[i] = a.array[i] & b.array[i];
+	}
+};
+
+export const andNot = (a: Bitset , b: Bitset, out: Bitset) => {
+	for (let i = 0; i < out.array.length; i++) {
+		out.array[i] = a.array[i] & ~b.array[i];
 	}
 };
 

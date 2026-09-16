@@ -1,5 +1,6 @@
 import type {
 	ApiScoringResponse,
+	ComparisonReport,
 	DbLabelEntry,
 	DbLabelWithDescendats,
 	Label,
@@ -38,6 +39,11 @@ export async function getScoring(filterBe: boolean, beThreshold: number) {
 	});
 
 	return data as ApiScoringResponse;
+}
+
+export async function getComparison(labelIds: number[]) {
+	const data = await api.get(`${path}/comparison`, { labelIds });
+	return data as ComparisonReport;
 }
 
 export async function getAdjacencyList(id: number) {

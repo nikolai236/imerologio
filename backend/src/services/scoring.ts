@@ -99,7 +99,7 @@ const getCombinedScore = (support: number, totalPnl: number, risk: number) => {
 	return Math.log1p(Math.abs(edge)) * Math.sign(edge);
 };
 
-const scoreBitset = (set: Bitset, pnls: number[], risks: number[]) => {
+export const scoreBitset = (set: Bitset, pnls: number[], risks: number[]) => {
 	let support = 0, sum = 0, profit = 0, loss = 0, riskSum = 0, wins = 0;
 
 	for (let j = 0; j < set.array.length; j++) {
@@ -138,7 +138,7 @@ const scoreBitset = (set: Bitset, pnls: number[], risks: number[]) => {
 	} as const;
 };
 
-const generateBitsets = (
+export const generateBitsets = (
 	labels: DbLabel[],
 	trades: TradeScoringData[],
 	ancestorList: Record<number, number[]>,
@@ -148,7 +148,7 @@ const generateBitsets = (
 	const labelIdBitset = labels.reduce((prev, label) => {
 		const len = trades.length;
 		const bitset = label.tradeIds
-			.map((id) => tradeIndex.get(id))
+			.map(tradeIndex.get)
 			.filter((i): i is number => i != null)
 			.reduce((prev, i) => prev.setBit(i), new Bitset(len));
 
@@ -262,12 +262,6 @@ const buildNextLevel = (
 
 	const tempBitset = new Bitset(pnls.length);
 
-	const cloneBitset = (src: Bitset) => {
-		const ret = new Bitset(pnls.length);
-		ret.array.set(src.array);
-		return ret;
-	};
-
 	for (const [, group] of groups) {
 		for (let i = 0; i < group.length; i++) {
 			for (let j = i + 1; j < group.length; j++) {
@@ -322,7 +316,7 @@ const buildNextLevel = (
 				out.push({
 					winRate,
 					labelIds: candIds,
-					bitset: cloneBitset(tempBitset),
+					bitset: tempBitset.copy(),
 					support,
 					risk: averageRisk,
 					redundancy,
@@ -347,15 +341,15 @@ const DEFAULTS: Required<Options> = {
 
 const scoringService = (db: PrismaClient) => {
 	const { getTradeScoringData } = tradeRepository(db);
-	const { getLabelsWithTradeIds, getAncestorsList } = labelRepository(db);
+	const { getLabelsWithTradeIds, getClosureLists } = labelRepository(db);
 
 	const getScores = async (filterBe: boolean, beThreshold: number) => {
 		const options = { ...DEFAULTS };
 
-		const [tradesTemp, labels, ancestorList] = await Promise.all([
+		const [tradesTemp, labels, { ancestorsList }] = await Promise.all([
 			getTradeScoringData(),
 			getLabelsWithTradeIds(),
-			getAncestorsList(),
+			getClosureLists(),
 		]);
 
 		let trades = tradesTemp;
@@ -376,11 +370,11 @@ const scoringService = (db: PrismaClient) => {
 		);
 
 		const labelIdsBitsets = generateBitsets(
-			labels, trades, ancestorList
+			labels, trades, ancestorsList
 		);
 
 		const ancestorMap = new Map(
-			Object.entries(ancestorList)
+			Object.entries(ancestorsList)
 				.map(([id, list]) => [Number(id), new Set(list)])
 		);
 

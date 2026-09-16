@@ -1,5 +1,5 @@
 import { Type } from "@sinclair/typebox";
-import { IdParams, ErrorMessage, Labels, Label, ScoringResponse, NullableNumber, Trade } from "./common";
+import { IdParams, ErrorMessage, Labels, Label, ScoringResponse, NullableNumber, Trade, ComparisonReport } from "./common";
 
 const PerformanceReport = Type.Object({
 	profitFactor: NullableNumber,
@@ -42,6 +42,19 @@ export const getLabelScoringSchema = {
 		})),
 		response: {
 			200: ScoringResponse,
+			400: ErrorMessage,
+			500: ErrorMessage,
+		}
+	}
+} as const;
+
+export const getLabelComparisonSchema = {
+	schema: {
+		querystring: Type.Object({
+			ids: Type.Array(Type.Integer()),
+		}),
+		response: {
+			200: ComparisonReport,
 			400: ErrorMessage,
 			500: ErrorMessage,
 		}

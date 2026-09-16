@@ -144,6 +144,27 @@ export interface DbLabelWithDescendats extends DbLabelEntry {
 	descendants: DbLabelEntry[];
 }
 
+export interface ComparisonEntry {
+	support: number;
+	winRate: number;
+	averageRisk: number;
+	totalPnl: number;
+	profitFactor: number | null;
+	muIn: number | null;
+
+	include: number[];
+	exclude: number[];
+
+	tradeIds: number[];
+}
+
+export type ComparisonReport = {
+	generalized: ComparisonEntry[],
+	exclusion: ComparisonEntry[],
+	replacement: ComparisonEntry[],
+	insertion: ComparisonEntry[],
+};
+
 export interface PerformanceReport {
 	profitFactor: number | null;
 	winRate: number;

@@ -163,7 +163,7 @@ const labelRepository = (db: PrismaClient) => {
 		return list;
 	};
 
-	const getAncestorsList = async () => {
+	const getClosureLists = async () => {
 		const closures = await db.labelClosure.findMany({
 			where: {
 				NOT: {
@@ -188,7 +188,17 @@ const labelRepository = (db: PrismaClient) => {
 			ancestorsList[descendantId].push(ancestorId);
 		}
 
-		return ancestorsList;
+		const descendantsList: Record<number, number[]> = {}
+		for (const { ancestorId, descendantId } of closures) {
+			descendantsList[ancestorId] = [];
+			descendantsList[descendantId] = [];
+		}
+
+		for (const { ancestorId, descendantId } of closures) {
+			descendantsList[ancestorId].push(descendantId);
+		}
+
+		return { ancestorsList, descendantsList };
 	};
 
 	// gate to all CRUD operations
@@ -486,6 +496,23 @@ const labelRepository = (db: PrismaClient) => {
 		});
 	};
 
+	const findLabels = async (labelIds: number[]) => {
+		const labels = await db.label.findMany({
+			where: {
+				id: {
+					in: labelIds
+				},
+			},
+			select: {
+				id: true
+			}
+		});
+
+		if (labels.length !== new Set(labelIds).size) {
+			throw new ValidationError("Labels not found");
+		}
+	};
+
 	return {
 		getAllLabels,
 		getLabelById,
@@ -495,11 +522,12 @@ const labelRepository = (db: PrismaClient) => {
 		deleteLabel,
 		getLabelsWithTradeIds,
 		getLabelDescendants,
+		findLabels,
 
 		addChild,
 		removeChild,
 
-		getAncestorsList,
+		getClosureLists,
 		getAdjacencyList,
 	} as const;
 };

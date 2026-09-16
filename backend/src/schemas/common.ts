@@ -155,3 +155,26 @@ export const ScoringResponse = Type.Object({
 	levels: Type.Array(Type.Array(ScoreSet)),
 
 }, { additionalProperties: false });
+
+const ComparisonEntry = Type.Object({
+	support: Type.Number(),
+	winRate: Type.Number(),
+	averageRisk: Type.Number(),
+	totalPnl: Type.Number(),
+	profitFactor: NullableNumber,
+	muIn: NullableNumber,
+
+	include: Type.Array(Type.Integer()),
+	exclude: Type.Array(Type.Integer()),
+
+	tradeIds: Type.Array(Type.Integer()),
+});
+
+const ComparisonEntries = Type.Array(ComparisonEntry);
+
+export const ComparisonReport = Type.Object({
+	generalized: ComparisonEntries,
+	exclusion: ComparisonEntries,
+	replacement: ComparisonEntries,
+	insertion: ComparisonEntries,
+});
