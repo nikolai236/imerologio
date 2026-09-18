@@ -13,7 +13,7 @@ import {
 	Wrap,
 	WrapItem,
 } from "@chakra-ui/react";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import { ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
 
@@ -523,7 +523,13 @@ function SeasonalityTable({
 	);
 }
 
-function TradeLinks({ tradeIds }: { tradeIds: number[] }) {
+function TradeLinks({
+	tradeIds,
+	tradesById,
+}: {
+	tradeIds: number[];
+	tradesById: Map<number, TradeScoringData>;
+}) {
 	return (
 		<Box>
 			<Heading size="sm" mb={3}>
@@ -531,7 +537,9 @@ function TradeLinks({ tradeIds }: { tradeIds: number[] }) {
 			</Heading>
 
 			<Wrap>
-				{tradeIds.map((id) => (
+			{tradeIds.map((id) => {
+				const trade = tradesById.get(id);
+				return (
 					<WrapItem key={id}>
 						<RouterLink
 							to={`/trades/${id}`}
@@ -543,14 +551,29 @@ function TradeLinks({ tradeIds }: { tradeIds: number[] }) {
 								px={2}
 								py={1}
 							>
-								<HStack gap={1}>
+								<HStack gap={2}>
 									<Text>#{id}</Text>
+
+									{trade && (
+									<>
+										<Text>
+											{new Date(trade.date).toLocaleDateString()}
+										</Text>
+
+										<Text>
+											{trade.pnl >= 0 ? "+" : ""}
+											{trade.pnl.toFixed(2)}
+										</Text>
+									</>
+									)}
+
 									<ExternalLink size={11} />
 								</HStack>
 							</Badge>
 						</RouterLink>
 					</WrapItem>
-				))}
+				);
+			})}
 			</Wrap>
 		</Box>
 	);
@@ -794,6 +817,7 @@ function ComparisonTableEntry({
 
 							<TradeLinks
 								tradeIds={entry.tradeIds}
+								tradesById={tradesById}
 							/>
 						</Flex>
 					</Table.Cell>
@@ -856,8 +880,10 @@ export default function Comparison() {
 		[labels],
 	);
 
-	const getName = (id: number) =>
-		labelsById.get(id) ?? `#${id}`;
+	const getName = useCallback(
+		(id: number) => labelsById.get(id) ?? `#${id}`,
+		[labelsById]
+	);
 
 	const tradesById = useMemo(
 		() => new Map(
@@ -1026,9 +1052,7 @@ export default function Comparison() {
 							p={4}
 						>
 							<SeasonalityTable
-								tradeIds={
-									report.original.tradeIds
-								}
+								tradeIds={report.original.tradeIds}
 								tradesById={tradesById}
 							/>
 						</Box>
@@ -1041,9 +1065,8 @@ export default function Comparison() {
 							p={4}
 						>
 							<TradeLinks
-								tradeIds={
-									report.original.tradeIds
-								}
+								tradeIds={report.original.tradeIds}
+								tradesById={tradesById}
 							/>
 						</Box>
 
