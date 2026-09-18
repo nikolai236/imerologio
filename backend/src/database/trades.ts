@@ -157,7 +157,7 @@ export default function tradeRepository(db: DB) {
 				quantity,
 				price,
 				date,
-				type,
+				type
 			FROM "Order"
 			ORDER BY "tradeId", date ASC
 		) entry
@@ -186,7 +186,7 @@ export default function tradeRepository(db: DB) {
 			id,
 			pnl: Number(pnl),
 			risk: Math.abs(entryPrice - stop) * entryQuantity,
-			date: entryDate,
+			date: new Date(entryDate),
 			direction,
 		} as TradeScoringData));
 	};

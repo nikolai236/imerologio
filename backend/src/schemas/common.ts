@@ -176,7 +176,7 @@ const TradeScoringData = Type.Object({
 	pnl: Type.Number(),
 	risk: Type.Number(),
 	id: Type.Integer(),
-	date: Type.Date(),
+	date: DateString,
 	direction: OrderEnum,
 });
 
