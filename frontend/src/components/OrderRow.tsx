@@ -1,6 +1,6 @@
 import { Box, Text, NativeSelect, Flex, Input, Button } from "@chakra-ui/react";
 import DatePicker from "./DatePicker";
-import type { Order, OrderEnum } from "../../../shared/trades.types";
+import type { Order, OrderTypeEnum } from "../../../shared/trades.types";
 import useDraft, { usePriceDraft } from "../hooks/useDraft";
 
 type Props = {
@@ -10,7 +10,7 @@ type Props = {
 
 	price: number,
 	date: number;
-	type: OrderEnum;
+	type: OrderTypeEnum;
 	quantity: number;
 
 	destroy:  () => void;
@@ -52,7 +52,7 @@ export default function OrderRow({
 						<NativeSelect.Field
 							value={type}
 							onChange={(e) => onUpdate({
-								type: e.target.value as OrderEnum
+								type: e.target.value as OrderTypeEnum
 							})}
 						>
 							<option value="BUY">BUY</option>

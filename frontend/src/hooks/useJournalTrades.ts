@@ -6,7 +6,7 @@ import type {
 	JournalOrder,
 	JournalTrade
 } from "../../../shared/journal.types";
-import type { OrderEnum } from "../../../shared/trades.types";
+import type { OrderTypeEnum } from "../../../shared/trades.types";
 import type { TempJournalChart } from "./useJournalCharts";
 
 export type TempJournalOrder = (
@@ -58,7 +58,7 @@ const uid = () =>
 const generateNewOrder = (
 	epochS: number,
 	price: number,
-	type: OrderEnum,
+	type: OrderTypeEnum,
 ): TempJournalOrder => ({
 	quantity: 1,
 	date: new Date(epochS * SECOND),

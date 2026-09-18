@@ -143,7 +143,9 @@ export default function tradeRepository(db: DB) {
 				0
 			) AS pnl,
 			entry.price AS "entryPrice",
-			entry.quantity AS "entryQuantity"
+			entry.quantity AS "entryQuantity",
+			entry.type AS direction,
+			entry.date AS "entryDate"
 		FROM "Trade" t
 
 		LEFT JOIN "Order" o
@@ -153,7 +155,9 @@ export default function tradeRepository(db: DB) {
 			SELECT DISTINCT ON ("tradeId")
 				"tradeId",
 				quantity,
-				price
+				price,
+				date,
+				type,
 			FROM "Order"
 			ORDER BY "tradeId", date ASC
 		) entry
@@ -161,14 +165,29 @@ export default function tradeRepository(db: DB) {
 
 		WHERE t.deleted = false
 
-		GROUP BY t.id, entry.price, entry.quantity
+		GROUP BY
+			t.id,
+			entry.price,
+			entry.quantity,
+			entry.type,
+			entry.date
 		ORDER BY t.id;
 		`;
 
-		return data.map(({ id, stop, pnl, entryPrice, entryQuantity }) => ({
+		return data.map(({
+			id,
+			stop,
+			pnl,
+			entryPrice,
+			entryQuantity,
+			entryDate,
+			direction,
+		}) => ({
 			id,
 			pnl: Number(pnl),
-			risk: Math.abs(entryPrice - stop) * entryQuantity
+			risk: Math.abs(entryPrice - stop) * entryQuantity,
+			date: entryDate,
+			direction,
 		} as TradeScoringData));
 	};
 

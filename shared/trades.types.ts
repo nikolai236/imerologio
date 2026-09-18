@@ -15,8 +15,8 @@ export const OrderTypeValues = [
 	"SELL"
 ] as const;
 
-export type OrderEnum  = typeof OrderTypeValues[number];
-export type SymbolEnum = typeof SymbolTypeValues[number];
+export type OrderTypeEnum  = typeof OrderTypeValues[number];
+export type SymbolTypeEnum = typeof SymbolTypeValues[number];
 
 export interface Order<
 	DateType extends Date | number
@@ -24,7 +24,7 @@ export interface Order<
 	quantity: number;
 	date: DateType;
 	price: number;
-	type: OrderEnum;
+	type: OrderTypeEnum;
 }
 
 export interface DbOrder<
@@ -40,7 +40,7 @@ export interface UpdateOrder<
 
 export interface Symbol {
 	name: string;
-	type: SymbolEnum;
+	type: SymbolTypeEnum;
 	description: string;
 }
 
@@ -114,6 +114,8 @@ export interface TradeScoringData {
 	id: number;
 	pnl: number;
 	risk: number;
+	date: Date;
+	direction: OrderTypeEnum;
 }
 
 export type ApiTrade = DbTrade<Timeframe, number>
@@ -160,10 +162,11 @@ export interface ComparisonEntry {
 
 export type ComparisonReport = {
 	original: ComparisonEntry;
-	generalized: ComparisonEntry[],
-	exclusion: ComparisonEntry[],
-	replacement: ComparisonEntry[],
-	insertion: ComparisonEntry[],
+	generalized: ComparisonEntry[];
+	exclusion: ComparisonEntry[];
+	replacement: ComparisonEntry[];
+	insertion: ComparisonEntry[];
+	tradesObj: Record<number, TradeScoringData>;
 };
 
 export interface PerformanceReport {

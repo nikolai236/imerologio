@@ -9,7 +9,7 @@ import {
 	Textarea
 } from "@chakra-ui/react";
 import {
-	type SymbolEnum,
+	type SymbolTypeEnum,
 	type DbSymbol,
 	type Symbol,
 	SymbolTypeValues
@@ -20,7 +20,7 @@ type Props = {
 	isEditing: boolean;
 	name: string;
 	description: string,
-	type: SymbolEnum;
+	type: SymbolTypeEnum;
 	error?: string | null;
 
 	onStartEdit: (symbol: DbSymbol) => void;
@@ -86,7 +86,7 @@ export default function SymbolRow({
 						<NativeSelect.Field
 							value={type}
 							onChange={(e) => updateDraft(id, {
-								type: e.currentTarget.value as SymbolEnum
+								type: e.currentTarget.value as SymbolTypeEnum
 							})}
 						> {SymbolTypeValues.map((t) => (<option key={t} value={t}>{t}</option>))}
 						</NativeSelect.Field>

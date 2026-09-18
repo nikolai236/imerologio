@@ -162,17 +162,35 @@ const comparisonService = (db: PrismaClient) => {
 				exclude: [],
 			}));
 
+		const original = {
+			...score(originalBitset),
+			tradeIds: originalBitset.getSetIndices().map(i => trades[i].id),
+			include: labelIds,
+			exclude: [],
+		};
+
+		const tradeIds = [
+			original,
+			...generalizedCombos,
+			...combsWithExclusion,
+			...combosWithReplacement,
+			...combosWithInsertion,
+		].map(c => c.tradeIds).flat();
+
+		const tradesMap = new Map(trades.map(t => [t.id, t]));
+
+		const tradesObj = [...new Set(tradeIds)].reduce((prev, id) => ({
+			...prev,
+			[id]: tradesMap.get(id),
+		}), {});
+
 		return {
-			original: {
-				...score(originalBitset),
-				tradeIds: originalBitset.getSetIndices().map(i => trades[i].id),
-				include: labelIds,
-				exclude: [],
-			},
+			original,
 			generalized: generalizedCombos,
 			exclusion: combsWithExclusion,
 			replacement: combosWithReplacement,
 			insertion: combosWithInsertion,
+			tradesObj,
 		} as ComparisonReport;
 	};
 

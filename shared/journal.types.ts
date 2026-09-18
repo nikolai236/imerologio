@@ -1,4 +1,4 @@
-import type { ChartTimeframe, DbLabel, DbSymbol, DbTrade, OrderEnum } from "./trades.types";
+import type { ChartTimeframe, DbLabel, DbSymbol, DbTrade, OrderTypeEnum } from "./trades.types";
 
 export interface JournalEntry<
 	DateType extends string | Date,
@@ -132,7 +132,7 @@ export interface JournalOrder<
 	quantity: number;
 	date: DateType;
 	price: number;
-	type: OrderEnum;
+	type: OrderTypeEnum;
 }
 
 export interface DbJournalOrder<

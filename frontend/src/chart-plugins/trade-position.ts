@@ -8,7 +8,7 @@ import type {
 } from "lightweight-charts";
 
 import type { Entry, Exit } from "../../../shared/candles.types";
-import type { OrderEnum } from "../../../shared/trades.types";
+import type { OrderTypeEnum } from "../../../shared/trades.types";
 
 import { PluginBase, positionPoint, type Point } from "./plugin-base";
 import Rectangle from "./rectangle";
@@ -112,7 +112,7 @@ export default class TradePosition extends PluginBase {
 
 	_entry: Entry & { tempId?: string };
 	_exits: (Exit & { tempId?: string })[];
-	_direction: OrderEnum;
+	_direction: OrderTypeEnum;
 	
 	_stop: number;
 	_target?: number;
@@ -137,7 +137,7 @@ export default class TradePosition extends PluginBase {
 		entries: Entry[],
 		exits: Exit[],
 		stop: number,
-		direction: OrderEnum,
+		direction: OrderTypeEnum,
 		target?: number,
 		tempId?: string,
 	) {

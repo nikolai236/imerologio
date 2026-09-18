@@ -172,10 +172,22 @@ const ComparisonEntry = Type.Object({
 
 const ComparisonEntries = Type.Array(ComparisonEntry);
 
+const TradeScoringData = Type.Object({
+	pnl: Type.Number(),
+	risk: Type.Number(),
+	id: Type.Integer(),
+	date: Type.Date(),
+	direction: OrderEnum,
+});
+
 export const ComparisonReport = Type.Object({
 	original: ComparisonEntry,
 	generalized: ComparisonEntries,
 	exclusion: ComparisonEntries,
 	replacement: ComparisonEntries,
 	insertion: ComparisonEntries,
+	tradesObj: Type.Record(
+		Type.Number(),
+		TradeScoringData,
+	),
 });

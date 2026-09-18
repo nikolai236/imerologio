@@ -13,20 +13,19 @@ import {
 	Wrap,
 	WrapItem,
 } from "@chakra-ui/react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import { ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
 
 import type {
 	ComparisonEntry,
 	ComparisonReport,
-	DbTradeEntry,
+	TradeScoringData,
 } from "../../../shared/trades.types";
 import SelectLabels from "./SelectLabels";
 import { getComparison } from "../api/labels";
 import useFetchLabels from "../hooks/useFetchLabels";
 import SelectLabelButton from "./SelectLabelButton";
-import { getTrades } from "../api/trades";
 
 type ComparisonType =
 	| "generalized"
@@ -313,17 +312,17 @@ const WEEKDAYS = [
 
 function buildSeasonality(
 	tradeIds: number[],
-	tradesById: Map<number, DbTradeEntry<Date>>,
+	tradesById: Map<number, TradeScoringData>,
 	mode: SeasonalityMode,
 ): SeasonalityRow[] {
-	const groups = new Map<string, DbTradeEntry<Date>[]>();
+	const groups = new Map<string, TradeScoringData[]>();
 
 	for (const id of tradeIds) {
 		const trade = tradesById.get(id);
 
 		if (!trade) continue;
 
-		const date = new Date(trade.entryDate);
+		const date = new Date(trade.date);
 
 		let key: string;
 		let label: string;
@@ -414,7 +413,7 @@ function SeasonalityTable({
 	tradesById,
 }: {
 	tradeIds: number[];
-	tradesById: Map<number, DbTradeEntry<Date>>;
+	tradesById: Map<number, TradeScoringData>;
 }) {
 	const [mode, setMode] =
 		useState<SeasonalityMode>("month");
@@ -566,7 +565,7 @@ function ComparisonTable({
 	entries: ComparisonEntry[];
 	original: ComparisonEntry;
 	getName: (id: number) => string;
-	tradesById: Map<number, DbTradeEntry<Date>>;
+	tradesById: Map<number, TradeScoringData>;
 }) {
 	const [expanded, setExpanded] =
 		useState<number | null>(null);
@@ -667,7 +666,7 @@ function ComparisonTableEntry({
 	entry: ComparisonEntry;
 	original: ComparisonEntry;
 	getName: (id: number) => string;
-	tradesById: Map<number, DbTradeEntry<Date>>;
+	tradesById: Map<number, TradeScoringData>;
 	isExpanded: boolean;
 	onToggle: () => void;
 }) {
@@ -839,7 +838,6 @@ export default function Comparison() {
 	const [labelsOpen, setLabelsOpen] = useState(false);
 
 	const [report, setReport] = useState<ComparisonReport | null>(null);
-	const [trades, setTrades] = useState<DbTradeEntry<Date>[]>([]);
 
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -858,37 +856,15 @@ export default function Comparison() {
 		[labels],
 	);
 
-	const orignalTradeIds = useMemo(
-		() => new Set(report?.original.tradeIds ?? []),
-		[report]
-	);
-
 	const getName = (id: number) =>
 		labelsById.get(id) ?? `#${id}`;
 
-	useEffect(() => {
-		setLoading(true);
-
-		getTrades()
-			.then(
-				trades => trades.filter(
-					t => orignalTradeIds.has(t.id)
-				)
-			)
-			.then(setTrades)
-			.catch(console.error)
-			.finally(() => setLoading(false));
-	}, [orignalTradeIds]);
-
 	const tradesById = useMemo(
-		() =>
-			new Map(
-				trades.map((trade) => [
-					trade.id,
-					trade,
-				]),
-			),
-		[trades],
+		() => new Map(
+			Object.entries(report?.tradesObj ?? {})
+				.map(([k, t]) => [Number(k), t])
+		),
+		[report],
 	);
 
 	const handleCompare = async () => {

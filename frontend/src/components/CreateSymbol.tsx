@@ -17,12 +17,12 @@ import {
 } from "@chakra-ui/react";
 import { useState } from "react";
 
-import type { Symbol, SymbolEnum } from "../../../shared/trades.types";
+import type { Symbol, SymbolTypeEnum } from "../../../shared/trades.types";
 import PlusButton from "./PlusButton";
 
 type Props = {
 	onCreate: (symbol: Symbol) => Promise<void>;
-	defaultType?: SymbolEnum;
+	defaultType?: SymbolTypeEnum;
 	disabled?: boolean;
 };
 
@@ -34,7 +34,7 @@ export default function CreateSymbolPage({
 	const { open, onOpen, onClose, setOpen } = useDisclosure();
 
 	const [name,      setName]    = useState("");
-	const [type,      setType]    = useState<SymbolEnum>(defaultType);
+	const [type,      setType]    = useState<SymbolTypeEnum>(defaultType);
 	const [error,     setError]   = useState<string | null>(null);
 	const [isLoading, setLoading] = useState(false);
 
@@ -110,7 +110,7 @@ export default function CreateSymbolPage({
 								<NativeSelect.Root>
 									<NativeSelect.Field
 										value={type}
-										onChange={(e) => setType(e.currentTarget.value as SymbolEnum)}
+										onChange={(e) => setType(e.currentTarget.value as SymbolTypeEnum)}
 									>
 										<option value="Futures">Futures</option>
 										<option value="CFD">CFD</option>
