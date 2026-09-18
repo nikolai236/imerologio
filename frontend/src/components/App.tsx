@@ -10,6 +10,7 @@ import CreateJournalEntryPageOuter from "./CreateJournalEntryPageOuter";
 import JournalEntryPageOuter from "./JournalEntryPageOuter";
 import LabelsPerformancePage from "./LabelsPerformancePage";
 import LabelsPageOuter from "./LabelsPageOuter";
+import Comparison from "./Comparison";
 
 function RootLayout() {
 	return (
@@ -35,7 +36,10 @@ export default function App() {
 					<Route index element={<LabelsPageOuter />} />
 					<Route path="performance" element={<LabelsPerformancePage />} />
 				</Route>
-				<Route path="scoring" element={<Scoring />} />
+				<Route path="scoring">
+					<Route index element={<Scoring />} />
+					<Route path="comparison" element={<Comparison />} />
+				</Route>
 				<Route path="journal">
 					<Route index element={<JournalTablePage />} />
 					<Route path="create" element={<CreateJournalEntryPageOuter />} />

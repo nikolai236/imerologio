@@ -41,9 +41,6 @@ const useBitsets = (labelIds: number[], labelIdsBitsets: Map<number, Bitset>) =>
 	} as const;
 };
 
-const generateKey = (ids: number[]) =>
-	[...ids].sort((a, b) => a - b).join(",");
-
 const comparisonService = (db: PrismaClient) => {
 	const { getTradeScoringData } = tradeRepository(db);
 	const { getLabelsWithTradeIds, getClosureLists, findLabels } = labelRepository(db);
@@ -77,12 +74,12 @@ const comparisonService = (db: PrismaClient) => {
 		);
 
 		const originalForbiddenIds = new Set(labelIds.flatMap(
-			id => [...ancestorsList[id], ...descendantsList[id]]
+			id => [...ancestorsList[id] ?? [], ...descendantsList[id] ?? []]
 		))
 		
 		const forbiddenIds = generalizedIds
 			.map(ids => new Set(ids.flatMap(
-				id => [...ancestorsList[id], ...descendantsList[id]]
+				id => [...ancestorsList[id] ?? [], ...descendantsList[id] ?? []]
 			)));
 
 		const generalized = generalizedIds.map(
@@ -166,6 +163,12 @@ const comparisonService = (db: PrismaClient) => {
 			}));
 
 		return {
+			original: {
+				...score(originalBitset),
+				tradeIds: originalBitset.getSetIndices().map(i => trades[i].id),
+				include: labelIds,
+				exclude: [],
+			},
 			generalized: generalizedCombos,
 			exclusion: combsWithExclusion,
 			replacement: combosWithReplacement,

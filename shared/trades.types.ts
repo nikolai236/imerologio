@@ -159,6 +159,7 @@ export interface ComparisonEntry {
 }
 
 export type ComparisonReport = {
+	original: ComparisonEntry;
 	generalized: ComparisonEntry[],
 	exclusion: ComparisonEntry[],
 	replacement: ComparisonEntry[],

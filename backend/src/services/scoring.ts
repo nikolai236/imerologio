@@ -57,7 +57,7 @@ const computeMeans = (trades: TradeScoringData[]): Means => {
 const computeRedundancyIndex = (
 	batchMean: number | null,
 	prevKeysMeans: Map<string, number>,
-	candIds: number[]
+	candIds: number[],
 ) => {
 	let bestMean: number = -Infinity;
 	for (let r = 0; r < candIds.length; r++) {
@@ -148,7 +148,7 @@ export const generateBitsets = (
 	const labelIdBitset = labels.reduce((prev, label) => {
 		const len = trades.length;
 		const bitset = label.tradeIds
-			.map(tradeIndex.get)
+			.map(id => tradeIndex.get(id))
 			.filter((i): i is number => i != null)
 			.reduce((prev, i) => prev.setBit(i), new Bitset(len));
 

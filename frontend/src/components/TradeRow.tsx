@@ -6,7 +6,7 @@ import type { DbTradeEntry } from "../../../shared/trades.types";
 import { epochToDateStrInTZ } from "../lib/timezones";
 
 type Props = {
-	trade: DbTradeEntry
+	trade: DbTradeEntry<Date>
 	onDelete: () => Promise<void>;
 };
 

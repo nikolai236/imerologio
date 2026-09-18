@@ -88,11 +88,10 @@ export default function Scoring() {
 
 	const kOptions = useMemo(
 		() =>
-			Array.from(
-				{ length: Math.max(1, maxObservedK) },
-				(_, i) => i + 1
-			),
-		[maxObservedK]
+			Array.from({
+				length: Math.max(1, maxObservedK)
+			},(_, i) => i + 1
+		), [maxObservedK]
 	);
 
 	const { xTickHeight, bottomMargin } = useMemo(() => {

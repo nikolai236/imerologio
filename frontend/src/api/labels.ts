@@ -41,8 +41,8 @@ export async function getScoring(filterBe: boolean, beThreshold: number) {
 	return data as ApiScoringResponse;
 }
 
-export async function getComparison(labelIds: number[]) {
-	const data = await api.get(`${path}/comparison`, { labelIds });
+export async function getComparison(ids: number[]) {
+	const data = await api.get(`${path}/comparison`, { ids });
 	return data as ComparisonReport;
 }
 

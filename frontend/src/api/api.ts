@@ -13,7 +13,18 @@ async function makeReq(
 	let url = API_BASE + path;
 
 	if (params != null && Object.keys(params).length > 0) {
-		const query = new URLSearchParams(params);
+		const query = new URLSearchParams();
+
+		for (const [key, value] of Object.entries(params)) {
+			if (Array.isArray(value)) {
+				for (const item of value) {
+					query.append(key, String(item));
+				}
+			} else if (value != null) {
+				query.append(key, String(value));
+			}
+		}
+
 		url += `?${query.toString()}`;
 	}
 

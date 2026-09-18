@@ -28,7 +28,12 @@ export default async function buildApp(logger=true) {
 		}
 	};
 	const app = Fastify({
-        logger: logger && { transport },
+		logger: logger && { transport },
+		ajv: {
+			customOptions: {
+				coerceTypes: "array",
+			},
+		},
     });
 
 	await app.register(cors, {

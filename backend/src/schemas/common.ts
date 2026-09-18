@@ -157,7 +157,7 @@ export const ScoringResponse = Type.Object({
 }, { additionalProperties: false });
 
 const ComparisonEntry = Type.Object({
-	support: Type.Number(),
+	support: Type.Integer(),
 	winRate: Type.Number(),
 	averageRisk: Type.Number(),
 	totalPnl: Type.Number(),
@@ -173,6 +173,7 @@ const ComparisonEntry = Type.Object({
 const ComparisonEntries = Type.Array(ComparisonEntry);
 
 export const ComparisonReport = Type.Object({
+	original: ComparisonEntry,
 	generalized: ComparisonEntries,
 	exclusion: ComparisonEntries,
 	replacement: ComparisonEntries,
