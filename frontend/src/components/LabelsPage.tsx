@@ -61,10 +61,11 @@ export default function LabelsPage() {
 			</Flex>
 
 			<Stack gap={3}>
-			{labels.map((l) => {
+			{labels.map((l, i) => {
 				const isEditing = editingId === l.id
 				return (
 					<LabelRow
+						key={i}
 						label={l}
 						isEditing={isEditing}
 

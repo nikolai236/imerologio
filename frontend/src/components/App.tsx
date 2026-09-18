@@ -36,8 +36,8 @@ export default function App() {
 					<Route index element={<LabelsPageOuter />} />
 					<Route path="performance" element={<LabelsPerformancePage />} />
 				</Route>
-				<Route path="scoring">
-					<Route index element={<Scoring />} />
+				<Route path="analytics">
+					<Route path="scoring" element={<Scoring />} />
 					<Route path="comparison" element={<Comparison />} />
 				</Route>
 				<Route path="journal">
