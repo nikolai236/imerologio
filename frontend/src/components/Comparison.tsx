@@ -987,9 +987,7 @@ export default function Comparison() {
 							mt={3}
 						>
 							{selectedLabelIds.length} label
-							{selectedLabelIds.length !== 1
-								? "s"
-								: ""}{" "}
+							{selectedLabelIds.length !== 1 ? "s" : ""}
 							selected
 						</Text>
 					)}

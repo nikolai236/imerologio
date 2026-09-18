@@ -48,12 +48,13 @@ const comparisonService = (db: PrismaClient) => {
 	const getCombinations = async (labelIds: number[]) => {
 		if (labelIds.length < 2) throw new ValidationError(">=2 labels needed");
 
-		const [trades, labels, { ancestorsList, descendantsList }] = await Promise.all([
-			getTradeScoringData(),
-			getLabelsWithTradeIds(),
-			getClosureLists(),
-			findLabels(labelIds),
-		]);
+		const [trades, labels, { ancestorsList, descendantsList }] =
+			await Promise.all([
+				getTradeScoringData(),
+				getLabelsWithTradeIds(),
+				getClosureLists(),
+				findLabels(labelIds),
+			]);
 
 		if (labelIds.length > new Set(labelIds).size) {
 			throw new ValidationError("Duplicate label ids provided");
@@ -77,21 +78,27 @@ const comparisonService = (db: PrismaClient) => {
 			id => [...ancestorsList[id] ?? [], ...descendantsList[id] ?? []]
 		))
 		
-		const forbiddenIds = generalizedIds
-			.map(ids => new Set(ids.flatMap(
-				id => [...ancestorsList[id] ?? [], ...descendantsList[id] ?? []]
-			)));
+		const forbiddenIds = generalizedIds.map(
+			ids => new Set(ids.flatMap(
+				id => [
+					...ancestorsList[id] ?? [],
+					...descendantsList[id] ?? []
+				]
+			))
+		);
 
-		const generalizedEntries = generalizedIds.map(
-			(ids, i) => [null, ids, createBitsetForIds(i)]
-		) as [null, number[], Bitset][];
+		type Entries = [number[], number[], Bitset][];
+
+		const generalizedEntries = generalizedIds.map<Entries[number]>(
+			(ids, i) => [[], ids, createBitsetForIds(i)]
+		);
 
 		const exculsionEntries = generalizedEntries
-			.map(([_, includeIds, a], i) => {
-				const b = labelIdsBitsets.get(labelIds[i])!.copy();
-				andNot(a, b, b);
-				return [labelIds[i], includeIds, b];
-			}) as [number, number[], Bitset][];
+			.map<Entries[number]>(([_, includeIds, generilizedSet], i) => {
+				const labelSet = labelIdsBitsets.get(labelIds[i])!.copy();
+				andNot(generilizedSet, labelSet, labelSet);
+				return [[labelIds[i]], includeIds, labelSet];
+			});
 
 		const allLabelIds = labels
 			.map(l => l.id)
@@ -99,58 +106,48 @@ const comparisonService = (db: PrismaClient) => {
 
 		const insertionEntries = allLabelIds
 			.filter(id => !originalForbiddenIds.has(id))
-			.map(id => {
-				const ret = originalBitset.copy();
-				const curr = labelIdsBitsets.get(id)!;
-				and(ret, curr, ret);
+			.map<Entries[number]>(id => {
+				const final = originalBitset.copy();
+				const labelSet = labelIdsBitsets.get(id)!;
+				and(final, labelSet, final);
 
 				const ids = labelIds.concat(id);
-				return [null, ids, ret];
-			}) as [null, number[], Bitset][];
+				return [[], ids, final];
+			});
 
 		const replacementEntries = generalizedEntries
-			.flatMap(([_exc, _inc, a], i) => allLabelIds
+			.flatMap(([_exc, _inc, generalizedSet], i) => allLabelIds
 				.filter(id => !forbiddenIds[i].has(id))
-				.map(id => {
-					const ret = a.copy();
-					const curr = labelIdsBitsets.get(id)!;
-					and(ret, curr, ret);
+				.map<Entries[number]>(id => {
+					const final = generalizedSet.copy();
+					const labelSet = labelIdsBitsets.get(id)!;
+					and(final, labelSet, final);
 
 					const ids = generalizedIds[i].concat(id);
-					return [null, ids, ret];
+					return [[], ids, final];
 				})
-			) as [null, number[], Bitset][];
+			);
 
 		const pnls = trades.map(({ pnl }) => pnl);
 		const risks = trades.map(({ risk }) => risk);
 
-		const score = (b: Bitset) => scoreBitset(b, pnls, risks);
-
 		const generateCombos = (
-			entries: [null, number[], Bitset][] | [number, number[], Bitset][]
-		): ComparisonEntry[] => entries.map(([excludeId, include, set]) => ({
-				...score(set),
+			entries: Entries
+		): ComparisonEntry[] => entries.map(([exclude, include, set]) => ({
+				...scoreBitset(set, pnls, risks),
 				tradeIds: set.getSetIndices().map(i => trades[i].id),
 				include,
-				exclude: excludeId != null ? [excludeId] : []
+				exclude,
 			}));
 
-		// no need for support check since it has support >= original 
+		const filter = (entries: Entries) =>
+			entries.filter(([_a, _b, set]) => set.popcount() >= minSupport);
+
+		const [original]  = generateCombos([[[], labelIds, originalBitset]]);
 		const generalized = generateCombos(generalizedEntries);
-
-		const exclusion = generateCombos(
-			exculsionEntries.filter(([_a, _b, set]) => set.popcount() >= minSupport)
-		);
-
-		const insertion: ComparisonEntry[] = generateCombos(
-			insertionEntries.filter(([_a, _b, set]) => set.popcount() >= minSupport)
-		);
-
-		const replacement: ComparisonEntry[] = generateCombos(
-			replacementEntries.filter(([_a, _b, set]) => set.popcount() >= minSupport)
-		);
-
-		const [original] = generateCombos([[null, labelIds, originalBitset]]);
+		const exclusion   = generateCombos(filter(exculsionEntries));
+		const replacement = generateCombos(filter(replacementEntries));
+		const insertion   = generateCombos(filter(insertionEntries));
 
 		const tradeIds = [
 			original,
@@ -158,10 +155,9 @@ const comparisonService = (db: PrismaClient) => {
 			...exclusion,
 			...replacement,
 			...insertion,
-		].map(c => c.tradeIds).flat();
+		].flatMap(c => c.tradeIds);
 
 		const tradesMap = new Map(trades.map(t => [t.id, t]));
-
 		const tradesObj = Object.fromEntries(
 			[...new Set(tradeIds)].map(id => [id, tradesMap.get(id)!])
 		);
