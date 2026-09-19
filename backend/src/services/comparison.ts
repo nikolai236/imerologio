@@ -65,14 +65,6 @@ const generateEstimate = (generalized: ComparisonEntry[]): ComparisonEntry => {
 		}
 	}
 
-	const grossProfit = generalized
-		.filter(({ totalPnl }) => totalPnl > 0)
-		.reduce((sum, { totalPnl }) => sum + totalPnl, 0);
-
-	const grossLoss = generalized
-		.filter(({ totalPnl }) => totalPnl < 0)
-		.reduce((sum, { totalPnl }) => sum + Math.abs(totalPnl), 0);
-
 	return {
 		support: 0,
 		totalPnl: 0,
