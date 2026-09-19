@@ -15,7 +15,7 @@ import {
 } from "@chakra-ui/react";
 import { useCallback, useMemo, useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
-import { ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 
 import type {
 	ComparisonEntry,
@@ -75,24 +75,14 @@ function Delta({
 	neutral = false
 }: DeltaProps) {
 	if (Math.abs(value) < 0.000001) {
-		return (
-			<Text fontSize="xs" opacity={0.55}>
-				—
-			</Text>
-		);
+		return <Text fontSize="xs" opacity={0.55}> — </Text>;
 	}
 
 	return (
 		<Text
 			fontSize="xs"
 			fontWeight="medium"
-			color={
-				neutral
-					? "fg.muted"
-					: value > 0
-						? "green.fg"
-						: "red.fg"
-			}
+			color={neutral ? "fg.muted" : value > 0 ? "green.fg" : "red.fg"}
 		>
 			{percent ? fmtSignedPercent(value) : fmtSigned(value)}
 		</Text>
@@ -110,13 +100,7 @@ function LabelBadges({
 	getName,
 	excluded = false,
 }: LabelBadgesProps) {
-	if (!ids.length) {
-		return (
-			<Text fontSize="sm" opacity={0.5}>
-				—
-			</Text>
-		);
-	}
+	if (!ids.length) return <Text fontSize="sm" opacity={0.5}> — </Text>;
 
 	return (
 		<Wrap>
@@ -128,8 +112,7 @@ function LabelBadges({
 					px={2}
 					py={0.5}
 				>
-					{excluded && "× "}
-					{getName(id)}
+					{excluded && "× "}{getName(id)}
 				</Badge>
 			</WrapItem>
 		))}
@@ -268,11 +251,7 @@ function OriginalSummary({
 
 				<MetricStat
 					label={estimated ? "Est. μIn" : "μIn"}
-					value={
-						metrics.muIn != null
-							? fmt(metrics.muIn)
-							: "—"
-					}
+					value={metrics.muIn != null ? fmt(metrics.muIn) : "—"}
 				/>
 			</SimpleGrid>
 		</Box>
@@ -376,7 +355,6 @@ function buildSeasonality(
 		}
 
 		const arr = groups.get(key) ?? [];
-
 		arr.push(trade);
 
 		groups.set(key, arr);
@@ -411,15 +389,9 @@ function buildSeasonality(
 				key,
 				label,
 				trades: group.length,
-				winRate:
-					group.length > 0
-						? wins / group.length
-						: 0,
+				winRate: group.length > 0 ? wins / group.length : 0,
 				totalPnl,
-				averagePnl:
-					group.length > 0
-						? totalPnl / group.length
-						: 0,
+				averagePnl: group.length > 0 ? totalPnl / group.length : 0,
 			};
 		})
 		.sort((a, b) => Number(a.key) - Number(b.key));
@@ -453,9 +425,7 @@ function SeasonalityTable({
 
 				<Tabs.Root
 					value={mode}
-					onValueChange={(e) =>
-						setMode(e.value as SeasonalityMode)
-					}
+					onValueChange={(e) => setMode(e.value as SeasonalityMode)}
 					variant="enclosed"
 					size="sm"
 				>
@@ -558,10 +528,7 @@ function TradeLinks({
 				const trade = tradesById.get(id);
 				return (
 					<WrapItem key={id}>
-						<RouterLink
-							to={`/trades/${id}`}
-							target="_blank"
-						>
+						<RouterLink to={`/trades/${id}`} target="_blank">
 							<Badge
 								variant="outline"
 								cursor="pointer"
@@ -607,8 +574,7 @@ function ComparisonTable({
 	getName: (id: number) => string;
 	tradesById: Map<number, TradeScoringData>;
 }) {
-	const [expanded, setExpanded] =
-		useState<number | null>(null);
+	const [expanded, setExpanded] = useState<number | null>(null);
 
 	if (!entries.length) {
 		return (
@@ -644,10 +610,6 @@ function ComparisonTable({
 						</Table.ColumnHeader>
 
 						<Table.ColumnHeader textAlign="end">
-							Avg risk
-						</Table.ColumnHeader>
-
-						<Table.ColumnHeader textAlign="end">
 							Total PnL
 						</Table.ColumnHeader>
 
@@ -660,7 +622,7 @@ function ComparisonTable({
 						</Table.ColumnHeader>
 
 						<Table.ColumnHeader textAlign="end">
-							Trades
+							Avg risk
 						</Table.ColumnHeader>
 
 						<Table.ColumnHeader w="40px" />
@@ -679,13 +641,7 @@ function ComparisonTable({
 								getName={getName}
 								tradesById={tradesById}
 								isExpanded={isExpanded}
-								onToggle={() =>
-									setExpanded(
-										isExpanded
-											? null
-											: index,
-									)
-								}
+								onToggle={() => setExpanded(isExpanded ? null : index)}
 							/>
 						);
 					})}
@@ -737,46 +693,29 @@ function ComparisonTableEntry({
 
 				<MetricCell
 					value={fmtInt(entry.support)}
-					delta={
-						entry.support - original.support
-					}
+					delta={original.support && entry.support - original.support}
 					neutral
 				/>
 
 				<MetricCell
 					value={fmtPercent(entry.winRate)}
-					delta={
-						entry.winRate - original.winRate
-					}
+					delta={original.support && entry.winRate - original.winRate}
 					percent
 				/>
 
 				<MetricCell
-					value={fmt(entry.averageRisk)}
-					delta={
-						entry.averageRisk -
-						original.averageRisk
-					}
-				/>
-
-				<MetricCell
 					value={fmtSigned(entry.totalPnl)}
-					delta={
-						entry.totalPnl -
-						original.totalPnl
-					}
+					delta={original.support && entry.totalPnl - original.totalPnl}
 				/>
 
 				<Table.Cell textAlign="end">
 					<Text>{fmtPf(entry.profitFactor)}</Text>
 
-					{pfDelta != null ? (
-						<Delta value={pfDelta} />
-					) : (
-						<Text fontSize="xs" opacity={0.5}>
-							—
-						</Text>
-					)}
+				{original.support && pfDelta != null ? (
+					<Delta value={pfDelta} />
+				) : (
+					<Text fontSize="xs" opacity={0.5}> — </Text>
+				)}
 				</Table.Cell>
 
 				<Table.Cell textAlign="end">
@@ -786,26 +725,17 @@ function ComparisonTableEntry({
 							: "—"}
 					</Text>
 
-					{muDelta != null ? (
-						<Delta value={muDelta} />
-					) : (
-						<Text fontSize="xs" opacity={0.5}>
-							—
-						</Text>
-					)}
+				{original.support && muDelta != null ? (
+					<Delta value={muDelta} />
+				) : (
+					<Text fontSize="xs" opacity={0.5}> — </Text>
+				)}
 				</Table.Cell>
 
-				<Table.Cell textAlign="end">
-					{fmtInt(entry.tradeIds.length)}
-				</Table.Cell>
-
-				<Table.Cell textAlign="end">
-					{isExpanded ? (
-						<ChevronUp size={16} />
-					) : (
-						<ChevronDown size={16} />
-					)}
-				</Table.Cell>
+				<MetricCell
+					value={fmt(entry.averageRisk)}
+					delta={original.support && entry.averageRisk - original.averageRisk}
+				/>
 			</Table.Row>
 
 			{isExpanded && (
@@ -878,22 +808,14 @@ export default function Comparison() {
 	const [selectedLabelIds, setSelectedLabelIds] = useState<number[]>([]);
 	const [labelsOpen, setLabelsOpen] = useState(false);
 
-	const [report, setReport] = useState<ComparisonReport | null>(null);
-
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
-
-	const [comparisonType, setComparisonType] =
-		useState<ComparisonType>("generalized");
+	
+	const [report, setReport] = useState<ComparisonReport | null>(null);
+	const [comparisonType, setComparisonType] = useState<ComparisonType>("generalized");
 
 	const labelsById = useMemo(
-		() =>
-			new Map(
-				labels.map((label) => [
-					label.id,
-					label.name,
-				]),
-			),
+		() => new Map(labels.map(({ id, name }) => [id, name])),
 		[labels],
 	);
 
@@ -988,10 +910,7 @@ export default function Comparison() {
 						<Button
 							onClick={handleCompare}
 							loading={loading}
-							disabled={
-								loading ||
-								selectedLabelIds.length === 0
-							}
+							disabled={loading || selectedLabelIds.length === 0}
 						>
 							Compare
 						</Button>
@@ -1119,123 +1038,65 @@ export default function Comparison() {
 							<Tabs.Root
 								value={comparisonType}
 								onValueChange={(e) =>
-									setComparisonType(
-										e.value as ComparisonType,
-									)
+									setComparisonType(e.value as ComparisonType)
 								}
 								variant="enclosed"
 							>
 								<Tabs.List>
 									<Tabs.Trigger value="generalized">
 										Generalized
-										<CountBadge
-											count={
-												report.generalized
-													.length
-											}
-										/>
+										<CountBadge count={report.generalized.length} />
 									</Tabs.Trigger>
 
 									<Tabs.Trigger value="exclusion">
 										Exclusion
-										<CountBadge
-											count={
-												report.exclusion
-													.length
-											}
-										/>
+										<CountBadge count={report.exclusion.length} />
 									</Tabs.Trigger>
 
 									<Tabs.Trigger value="replacement">
 										Replacement
-										<CountBadge
-											count={
-												report.replacement
-													.length
-											}
-										/>
+										<CountBadge count={report.replacement.length} />
 									</Tabs.Trigger>
 
 									<Tabs.Trigger value="insertion">
 										Insertion
-										<CountBadge
-											count={
-												report.insertion
-													.length
-											}
-										/>
+										<CountBadge count={report.insertion.length} />
 									</Tabs.Trigger>
 								</Tabs.List>
 
-								<Tabs.Content
-									value="generalized"
-									pt={4}
-								>
+								<Tabs.Content value="generalized" pt={4}>
 									<ComparisonTable
-										entries={
-											report.generalized
-										}
-										original={
-											report.original
-										}
+										entries={report.generalized}
+										original={report.original}
 										getName={getName}
-										tradesById={
-											tradesById
-										}
+										tradesById={tradesById}
 									/>
 								</Tabs.Content>
 
-								<Tabs.Content
-									value="exclusion"
-									pt={4}
-								>
+								<Tabs.Content value="exclusion" pt={4}>
 									<ComparisonTable
-										entries={
-											report.exclusion
-										}
-										original={
-											report.original
-										}
+										entries={report.exclusion}
+										original={report.original}
 										getName={getName}
-										tradesById={
-											tradesById
-										}
+										tradesById={tradesById}
 									/>
 								</Tabs.Content>
 
-								<Tabs.Content
-									value="replacement"
-									pt={4}
-								>
+								<Tabs.Content value="replacement" pt={4}>
 									<ComparisonTable
-										entries={
-											report.replacement
-										}
-										original={
-											report.original
-										}
+										entries={report.replacement}
+										original={report.original}
 										getName={getName}
-										tradesById={
-											tradesById
-										}
+										tradesById={tradesById}
 									/>
 								</Tabs.Content>
 
-								<Tabs.Content
-									value="insertion"
-									pt={4}
-								>
+								<Tabs.Content value="insertion" pt={4}>
 									<ComparisonTable
-										entries={
-											report.insertion
-										}
-										original={
-											report.original
-										}
+										entries={report.insertion}
+										original={report.original}
 										getName={getName}
-										tradesById={
-											tradesById
-										}
+										tradesById={tradesById}
 									/>
 								</Tabs.Content>
 							</Tabs.Root>

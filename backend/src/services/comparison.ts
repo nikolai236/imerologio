@@ -53,7 +53,6 @@ const generateEstimate = (generalized: ComparisonEntry[]): ComparisonEntry => {
 		if (entry.support === 0) continue;
 
 		const weight = Math.sqrt(entry.support);
-
 		weightSum += weight;
 
 		winRate += entry.winRate * weight;
@@ -88,7 +87,7 @@ const generateEstimate = (generalized: ComparisonEntry[]): ComparisonEntry => {
 		include: [],
 		tradeIds: [],
 	};
-}
+};
 
 const comparisonService = (db: PrismaClient) => {
 	const { getTradeScoringData } = tradeRepository(db);
@@ -138,9 +137,9 @@ const comparisonService = (db: PrismaClient) => {
 
 		type Entries = [number[], number[], Bitset][];
 
-		const generalizedEntries = generalizedIds.map<Entries[number]>(
-			(ids, i) => [[], ids, createBitsetForIds(i)]
-		);
+		const generalizedEntries = generalizedIds
+			.map<Entries[number]>((ids, i) => [[], ids, createBitsetForIds(i)])
+			.filter(([_exc, _inc, set]) => set.popcount() > 0);
 
 		const exculsionEntries = generalizedEntries
 			.map<Entries[number]>(([_, includeIds, generilizedSet], i) => {
