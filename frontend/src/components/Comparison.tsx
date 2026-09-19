@@ -188,11 +188,16 @@ function LabelCombination({
 
 function OriginalSummary({
 	entry,
+	estimate,
 	getName,
 }: {
 	entry: ComparisonEntry;
+	estimate: ComparisonEntry;
 	getName: (id: number) => string;
 }) {
+	const estimated = entry.support === 0;
+	const metrics = estimated ? estimate : entry;
+
 	return (
 		<Box
 			bg="bg.surface"
@@ -219,9 +224,17 @@ function OriginalSummary({
 					/>
 				</Box>
 
-				<Badge variant="outline">
-					{fmtInt(entry.tradeIds.length)} trades
-				</Badge>
+				<HStack>
+					{estimated && (
+						<Badge variant="subtle">
+							Estimated
+						</Badge>
+					)}
+
+					<Badge variant="outline">
+						{fmtInt(entry.tradeIds.length)} trades
+					</Badge>
+				</HStack>
 			</Flex>
 
 			<SimpleGrid
@@ -234,28 +247,32 @@ function OriginalSummary({
 				/>
 
 				<MetricStat
-					label="Win rate"
-					value={fmtPercent(entry.winRate)}
+					label={estimated ? "Est. win rate" : "Win rate"}
+					value={fmtPercent(metrics.winRate)}
 				/>
 
 				<MetricStat
-					label="Average risk"
-					value={fmt(entry.averageRisk)}
+					label={estimated ? "Est. average risk" : "Average risk"}
+					value={fmt(metrics.averageRisk)}
 				/>
 
 				<MetricStat
-					label="Total PnL"
-					value={fmtSigned(entry.totalPnl)}
+					label={estimated ? "Est. total PnL" : "Total PnL"}
+					value={fmtSigned(metrics.totalPnl)}
 				/>
 
 				<MetricStat
-					label="Profit factor"
-					value={fmtPf(entry.profitFactor)}
+					label={estimated ? "Est. profit factor" : "Profit factor"}
+					value={fmtPf(metrics.profitFactor)}
 				/>
 
 				<MetricStat
-					label="μIn"
-					value={entry.muIn != null ? fmt(entry.muIn) : "—"}
+					label={estimated ? "Est. μIn" : "μIn"}
+					value={
+						metrics.muIn != null
+							? fmt(metrics.muIn)
+							: "—"
+					}
 				/>
 			</SimpleGrid>
 		</Box>
@@ -987,7 +1004,7 @@ export default function Comparison() {
 							mt={3}
 						>
 							{selectedLabelIds.length} label
-							{selectedLabelIds.length !== 1 ? "s" : ""}
+							{selectedLabelIds.length !== 1 ? "s " : " "}
 							selected
 						</Text>
 					)}
@@ -1038,6 +1055,7 @@ export default function Comparison() {
 				{report && (
 					<>
 						<OriginalSummary
+							estimate={report.estimate}
 							entry={report.original}
 							getName={getName}
 						/>

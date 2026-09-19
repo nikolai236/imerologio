@@ -182,6 +182,7 @@ const TradeScoringData = Type.Object({
 
 export const ComparisonReport = Type.Object({
 	original: ComparisonEntry,
+	estimate: ComparisonEntry,
 	generalized: ComparisonEntries,
 	exclusion: ComparisonEntries,
 	replacement: ComparisonEntries,

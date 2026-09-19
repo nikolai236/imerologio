@@ -41,6 +41,63 @@ const useBitsets = (labelIds: number[], labelIdsBitsets: Map<number, Bitset>) =>
 	} as const;
 };
 
+const generateEstimate = (generalized: ComparisonEntry[]): ComparisonEntry => {
+	let weightSum = 0;
+
+	let winRate = 0;
+	let averageRisk = 0;
+	let muIn = 0;
+	let profitFactor = 0;
+
+	for (const entry of generalized) {
+		if (entry.support === 0) continue;
+
+		const weight = Math.sqrt(entry.support);
+
+		weightSum += weight;
+
+		winRate += entry.winRate * weight;
+		averageRisk += entry.averageRisk * weight;
+		muIn += (entry.muIn ?? 0) * weight;
+
+		if (entry.profitFactor != null) {
+			profitFactor += entry.profitFactor * weight;
+		}
+	}
+
+	const grossProfit = generalized
+		.filter(({ totalPnl }) => totalPnl > 0)
+		.reduce((sum, { totalPnl }) => sum + totalPnl, 0);
+
+	const grossLoss = generalized
+		.filter(({ totalPnl }) => totalPnl < 0)
+		.reduce((sum, { totalPnl }) => sum + Math.abs(totalPnl), 0);
+
+	return {
+		support: 0,
+		totalPnl: 0,
+		winRate:
+			weightSum > 0
+				? winRate / weightSum
+				: 0,
+		averageRisk:
+			weightSum > 0
+				? averageRisk / weightSum
+				: 0,
+		muIn:
+			weightSum > 0
+				? muIn / weightSum
+				: 0,
+		profitFactor:
+			weightSum > 0
+				? profitFactor / weightSum
+				: null,
+		exclude: [],
+		include: [],
+		tradeIds: [],
+	};
+}
+
 const comparisonService = (db: PrismaClient) => {
 	const { getTradeScoringData } = tradeRepository(db);
 	const { getLabelsWithTradeIds, getClosureLists, findLabels } = labelRepository(db);
@@ -164,6 +221,7 @@ const comparisonService = (db: PrismaClient) => {
 
 		return {
 			original,
+			estimate: generateEstimate(generalized),
 			generalized,
 			exclusion,
 			replacement,
