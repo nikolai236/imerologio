@@ -241,12 +241,13 @@ export default function journalRepository(db: PrismaClient) {
 			}));
 
 		if (payload.charts != null) {
-			if (payload.charts.some(c => c.ord != undefined)) {
+			if (payload.charts.some(c => c.ord == undefined)) {
 				throw new ValidationError("Invalid ord values on journal charts");
 			}
+
 			const ords = (payload.charts.map(c => c.ord) as number[])
 				.sort((a, b) => a - b);
-
+			
 			if (ords.some((o, i) => o !== i + 1)) {
 				throw new ValidationError("Invalid ord values on journal charts");
 			}

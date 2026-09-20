@@ -841,6 +841,7 @@ export default function Comparison() {
 		try {
 			const result = await getComparison(selectedLabelIds);
 			setReport(result);
+			console.log(result.estimate);
 		} catch (err) {
 			setError(
 				err instanceof Error
@@ -937,9 +938,7 @@ export default function Comparison() {
 						borderRadius="lg"
 						p={4}
 					>
-						<Text color="red.400">
-							{error}
-						</Text>
+						<Text color="red.400">{error}</Text>
 					</Box>
 				)}
 

@@ -98,6 +98,7 @@ const generateNewTrade = (
 
 	return {
 		tempId: uid(),
+		tradeId: null,
 		pnl,
 		target,
 		stop,
@@ -224,8 +225,7 @@ const useJournalTrades = () => {
 	});
 
 	const getOrders = useCallback(
-		(tradeId: string) =>
-			trades.find(t => t.tempId == tradeId)?.orders ?? null,
+		(id: string) => trades.find(t => t.tempId == id)?.orders ?? null,
 		[trades]
 	);
 

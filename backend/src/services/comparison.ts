@@ -108,11 +108,8 @@ const comparisonService = (db: PrismaClient) => {
 			throw new ValidationError("Duplicate label ids provided");
 		}
 
-		const labelIdsBitsets = generateBitsets(
-			labels, trades, ancestorsList
-		);
-
-		const minSupport = 0.05 * trades.length;
+		const minSupport = 5 // 0.025 * trades.length;
+		const labelIdsBitsets = generateBitsets(labels, trades, ancestorsList);
 
 		const generalizedIds = labelIds
 			.sort((a, b) => a - b)
