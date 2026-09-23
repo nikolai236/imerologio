@@ -93,8 +93,8 @@ const comparisonService = (db: PrismaClient) => {
 	const { getTradeScoringData } = tradeRepository(db);
 	const { getLabelsWithTradeIds, getClosureLists, findLabels } = labelRepository(db);
 
-	const getCombinations = async (labelIds: number[]) => {
-		if (labelIds.length < 2) throw new ValidationError(">=2 labels needed");
+	const getCombinations = async (labelIds: number[]): Promise<ComparisonReport> => {
+		if (labelIds.length === 0) throw new ValidationError("No labels provided");
 
 		const [trades, labels, { ancestorsList, descendantsList }] =
 			await Promise.all([
@@ -108,20 +108,66 @@ const comparisonService = (db: PrismaClient) => {
 			throw new ValidationError("Duplicate label ids provided");
 		}
 
-		const minSupport = 5 // 0.025 * trades.length;
+		const minSupport = 5; // 0.025 * trades.length;
 		const labelIdsBitsets = generateBitsets(labels, trades, ancestorsList);
 
-		const generalizedIds = labelIds
-			.sort((a, b) => a - b)
-			.map((_, i, ids) => ids.filter((_, j) => j !== i));
+		const originalForbiddenIds = new Set(labelIds.flatMap(
+			id => [...ancestorsList[id] ?? [], ...descendantsList[id] ?? []]
+		));
 
 		const { originalBitset, createBitsetForIds } = useBitsets(
 			labelIds, labelIdsBitsets
 		);
 
-		const originalForbiddenIds = new Set(labelIds.flatMap(
-			id => [...ancestorsList[id] ?? [], ...descendantsList[id] ?? []]
-		))
+		const allLabelIds = labels
+			.map(l => l.id)
+			.filter(id => !labelIds.includes(id));
+
+		const pnls = trades.map(({ pnl }) => pnl);
+		const risks = trades.map(({ risk }) => risk);
+
+		const generateCombos = (entries: Entries): ComparisonEntry[] =>
+			entries.map(([exclude, include, set]) => ({
+				...scoreBitset(set, pnls, risks),
+				tradeIds: set.getSetIndices().map(i => trades[i].id),
+				include,
+				exclude,
+			}));
+
+		type Entries = [number[], number[], Bitset][];
+		const filter = (entries: Entries) =>
+			entries.filter(([_a, _b, set]) => set.popcount() >= minSupport);
+
+		if (labelIds.length === 1) {
+			const [labelId] = labelIds;
+
+			const insertionEntries = allLabelIds
+			.map<Entries[number]>(id => {
+				const final = originalBitset.copy();
+				const labelSet = labelIdsBitsets.get(id)!;
+				and(final, labelSet, final);
+
+				const ids = labelIds.concat(id);
+				return [[], ids, final];
+			});
+			
+			const [original] = generateCombos([[[], [labelId], originalBitset]]);
+			const insertion  = generateCombos(filter(insertionEntries));
+
+			return {
+				original,
+				estimate: original, // should be null
+				generalized: [],
+				exclusion: [],
+				insertion,
+				replacement: [],
+				tradesObj: {},
+			};
+		}
+
+		const generalizedIds = labelIds
+			.sort((a, b) => a - b)
+			.map((_, i, ids) => ids.filter((_, j) => j !== i));
 		
 		const forbiddenIds = generalizedIds.map(
 			ids => new Set(ids.flatMap(
@@ -132,22 +178,16 @@ const comparisonService = (db: PrismaClient) => {
 			))
 		);
 
-		type Entries = [number[], number[], Bitset][];
-
 		const generalizedEntries = generalizedIds
 			.map<Entries[number]>((ids, i) => [[], ids, createBitsetForIds(i)])
 			.filter(([_exc, _inc, set]) => set.popcount() > 0);
 
-		const exculsionEntries = generalizedEntries
+		const exclusionEntries = generalizedEntries
 			.map<Entries[number]>(([_, includeIds, generilizedSet], i) => {
 				const labelSet = labelIdsBitsets.get(labelIds[i])!.copy();
 				andNot(generilizedSet, labelSet, labelSet);
 				return [[labelIds[i]], includeIds, labelSet];
 			});
-
-		const allLabelIds = labels
-			.map(l => l.id)
-			.filter(id => !labelIds.includes(id));
 
 		const insertionEntries = allLabelIds
 			.filter(id => !originalForbiddenIds.has(id))
@@ -173,24 +213,9 @@ const comparisonService = (db: PrismaClient) => {
 				})
 			);
 
-		const pnls = trades.map(({ pnl }) => pnl);
-		const risks = trades.map(({ risk }) => risk);
-
-		const generateCombos = (
-			entries: Entries
-		): ComparisonEntry[] => entries.map(([exclude, include, set]) => ({
-				...scoreBitset(set, pnls, risks),
-				tradeIds: set.getSetIndices().map(i => trades[i].id),
-				include,
-				exclude,
-			}));
-
-		const filter = (entries: Entries) =>
-			entries.filter(([_a, _b, set]) => set.popcount() >= minSupport);
-
 		const [original]  = generateCombos([[[], labelIds, originalBitset]]);
 		const generalized = generateCombos(generalizedEntries);
-		const exclusion   = generateCombos(filter(exculsionEntries));
+		const exclusion   = generateCombos(filter(exclusionEntries));
 		const replacement = generateCombos(filter(replacementEntries));
 		const insertion   = generateCombos(filter(insertionEntries));
 
