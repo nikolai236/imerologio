@@ -171,7 +171,7 @@ const comparisonService = (db: PrismaClient) => {
 				exclusion: [],
 				insertion,
 				replacement: [],
-				tradesObj: {},
+				tradesObj,
 			};
 		}
 
