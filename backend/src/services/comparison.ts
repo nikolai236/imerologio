@@ -138,18 +138,27 @@ const comparisonService = (db: PrismaClient) => {
 		const filter = (entries: Entries) =>
 			entries.filter(([_a, _b, set]) => set.popcount() >= minSupport);
 
+		const getTrades = (compEntries: ComparisonEntry[]) => {
+			const tradeIds = compEntries.flatMap(c => c.tradeIds);
+			const tradesMap = new Map(trades.map(t => [t.id, t]));
+
+			return Object.fromEntries(
+				[...new Set(tradeIds)].map(id => [id, tradesMap.get(id)!])
+			);
+		}
+
 		if (labelIds.length === 1) {
 			const [labelId] = labelIds;
 
 			const insertionEntries = allLabelIds
-			.map<Entries[number]>(id => {
-				const final = originalBitset.copy();
-				const labelSet = labelIdsBitsets.get(id)!;
-				and(final, labelSet, final);
+				.map<Entries[number]>(id => {
+					const final = originalBitset.copy();
+					const labelSet = labelIdsBitsets.get(id)!;
+					and(final, labelSet, final);
 
-				const ids = labelIds.concat(id);
-				return [[], ids, final];
-			});
+					const ids = labelIds.concat(id);
+					return [[], ids, final];
+				});
 			
 			const [original] = generateCombos([[[], [labelId], originalBitset]]);
 			const insertion  = generateCombos(filter(insertionEntries));
@@ -157,12 +166,7 @@ const comparisonService = (db: PrismaClient) => {
 			const tradeIds = [
 				...original.tradeIds,
 				...insertion.flatMap(c => c.tradeIds),
-			];
-
-			const tradesMap = new Map(trades.map(t => [t.id, t]));
-			const tradesObj = Object.fromEntries(
-				[...new Set(tradeIds)].map(id => [id, tradesMap.get(id)!])
-			);
+			]
 
 			return {
 				original,
@@ -171,7 +175,7 @@ const comparisonService = (db: PrismaClient) => {
 				exclusion: [],
 				insertion,
 				replacement: [],
-				tradesObj,
+				tradesObj: getTrades([ original, ...insertion]),
 			};
 		}
 
@@ -229,19 +233,6 @@ const comparisonService = (db: PrismaClient) => {
 		const replacement = generateCombos(filter(replacementEntries));
 		const insertion   = generateCombos(filter(insertionEntries));
 
-		const tradeIds = [
-			original,
-			...generalized,
-			...exclusion,
-			...replacement,
-			...insertion,
-		].flatMap(c => c.tradeIds);
-
-		const tradesMap = new Map(trades.map(t => [t.id, t]));
-		const tradesObj = Object.fromEntries(
-			[...new Set(tradeIds)].map(id => [id, tradesMap.get(id)!])
-		);
-
 		return {
 			original,
 			estimate: generateEstimate(generalized),
@@ -249,7 +240,13 @@ const comparisonService = (db: PrismaClient) => {
 			exclusion,
 			replacement,
 			insertion,
-			tradesObj,
+			tradesObj: getTrades([
+				original,
+				...generalized,
+				...exclusion,
+				...replacement,
+				...insertion,
+			]),
 		} as ComparisonReport;
 	};
 
