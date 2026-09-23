@@ -154,6 +154,16 @@ const comparisonService = (db: PrismaClient) => {
 			const [original] = generateCombos([[[], [labelId], originalBitset]]);
 			const insertion  = generateCombos(filter(insertionEntries));
 
+			const tradeIds = [
+				...original.tradeIds,
+				...insertion.flatMap(c => c.tradeIds),
+			];
+
+			const tradesMap = new Map(trades.map(t => [t.id, t]));
+			const tradesObj = Object.fromEntries(
+				[...new Set(tradeIds)].map(id => [id, tradesMap.get(id)!])
+			);
+
 			return {
 				original,
 				estimate: original, // should be null
